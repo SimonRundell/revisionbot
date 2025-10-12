@@ -1,0 +1,80 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment and Config files (SENSITIVE DATA)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Config files with sensitive data
+.config.json
+config.json
+api/.config.json
+public/.config.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Protect actual database exports (with real data)
+data/*.sql
+!data/database_template.sql
+
+# Protect CSV files that might contain real student data
+data/*.csv
+!data/sample_students.csv
+
+# Protect test documentation that might contain sensitive examples
+docs/test_*.csv
+docs/*_test.csv
+
+# PHP logs and temporary files
+*.tmp
+response_log.txt
+error.log
+access.log
+server.log
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Composer vendor directory
+vendor/
+
+# PHP temporary files
+*.phptmp
+
+# Coverage and test files
+coverage/
+*.lcov
+.nyc_output
