@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import CryptoJS from 'crypto-js';
 import SelectLocale from './SelectLocale';
+import { parseApiResponse } from './utils/apiHelpers';
 
 function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccessMessage }) {
     const [email, setEmail] = useState('');
@@ -39,12 +40,26 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
             hasClientHash: !!jsonData.clientHash 
         });
         
-        const response = await axios.post(config.api + '/insertUser.php', jsonData);
-        const data = response.data;
-        setSendSuccessMessage(data.message);
-        sendRegisterEmail(email, password);
-        setShowRegister(false);
+        try {
+            const response = await axios.post(config.api + '/InsertUser.php', jsonData);
+            
+            const parsedData = parseApiResponse(
+                response.data,
+                null, // We'll handle success manually
+                setSendErrorMessage,
+                'Registration successful',
+                'Registration failed'
+            );
 
+            if (parsedData !== null) {
+                setSendSuccessMessage('Registration successful');
+                sendRegisterEmail(email, password);
+                setShowRegister(false);
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            setSendErrorMessage('Network error. Please try again.');
+        }
     };
 
     const sendRegisterEmail = async (email, password) => {

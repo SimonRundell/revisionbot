@@ -43,9 +43,7 @@ function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccess
 
 useEffect(() => {
     // Fetch subjects from the server when the component mounts
-    const apiCall = () => axios.get(config.api + '/getsubjects.php', {
-        headers: { 'Authorization': `Bearer ${currentUser.token}` }
-    });
+    const apiCall = () => axios.get(config.api + '/getSubjects.php');
 
     handleApiCall(
         apiCall,
@@ -226,7 +224,7 @@ const handleCreateSubject = async () => {
             setShowSubjectModal(false);
             setNewSubject('');
             // Refresh subjects list
-            const refreshApiCall = () => axios.get(config.api + '/getsubjects.php', {
+            const refreshApiCall = () => axios.get(config.api + '/getSubjects.php', {
                 headers: { 'Authorization': `Bearer ${currentUser.token}` }
             });
             handleApiCall(refreshApiCall, setSubjects, setIsLoading, null, setSendErrorMessage);
@@ -552,7 +550,7 @@ const handleConfirmDelete = async () => {
                 setQuestions([]); // Clear questions
                 setSelectedSubject(''); // Reset subject selection
                 setSelectedTopic(''); // Reset topic selection
-                const refreshApiCall = () => axios.get(config.api + '/getsubjects.php', {
+                const refreshApiCall = () => axios.get(config.api + '/getSubjects.php', {
                     headers: { 'Authorization': `Bearer ${currentUser.token}` }
                 });
                 handleApiCall(refreshApiCall, setSubjects, setIsLoading, null, setSendErrorMessage);
@@ -847,7 +845,7 @@ const handleImportFile = async (event) => {
             setSendSuccessMessage('Data imported successfully');
             
             // Refresh all data
-            const refreshSubjects = () => axios.get(config.api + '/getsubjects.php', {
+            const refreshSubjects = () => axios.get(config.api + '/getSubjects.php', {
                 headers: { 'Authorization': `Bearer ${currentUser.token}` }
             });
             handleApiCall(refreshSubjects, setSubjects, setIsLoading, null, setSendErrorMessage);
@@ -1049,7 +1047,7 @@ const handleImportFile = async (event) => {
                 </div>
             )}
 
-            {selectedSubject && topics.length > 0 && (
+            {selectedSubject && (
                 <div className="subject-dropdown-container">
                     <label htmlFor="topic-select">Topic:</label>
                     <select 
@@ -1068,6 +1066,14 @@ const handleImportFile = async (event) => {
                         </option>
                     ))}
                 </select>
+                </div>
+            )}
+
+            {selectedSubject && topics.length === 0 && (
+                <div className="no-topics-message">
+                    <p style={{ color: '#666', fontStyle: 'italic', marginTop: '15px' }}>
+                        No topics found for this subject. Use the dropdown above to create your first topic.
+                    </p>
                 </div>
             )}
 
@@ -1091,7 +1097,7 @@ const handleImportFile = async (event) => {
                 </div>
             )}
 
-            {selectedTopic && questions.length > 0 && (
+            {selectedTopic && (
                 <div className="topics-section">
                     <div className="questions-header">
                         <h3>Questions:</h3>
@@ -1198,7 +1204,7 @@ const handleImportFile = async (event) => {
                 </div>
             )}
 
-            {selectedTopic && questions.length === 0 && !isLoading && (
+            {/* {selectedTopic && questions.length === 0 && !isLoading && (
                 <div className="no-topics-message">
                     <h3>No questions found for this topic.</h3>
                     <button 
@@ -1211,7 +1217,7 @@ const handleImportFile = async (event) => {
                         + Add First Question
                     </button>
                 </div>
-            )}
+            )} */}
 
             {/* Subject Creation Modal */}
             {showSubjectModal && (
@@ -1294,7 +1300,7 @@ const handleImportFile = async (event) => {
                                 type="text"
                                 value={newTopic}
                                 onChange={(e) => setNewTopic(e.target.value)}
-                                placeholder="Enter topic name (e.g., Networking, Problem Solving)"
+                                placeholder="Enter topic name"
                                 className="full-width-input"
                             />
                         </div>

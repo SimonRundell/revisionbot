@@ -33,6 +33,8 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
       if (data.status_code === 200) {
         const user = JSON.parse(data.message)[0]; // Parse the JSON string and get the first user object
         if (user) {
+          // Add a dummy token since APIs don't actually require authentication
+          user.token = 'dummy-token';
           setCurrentUser(user);
           setSendSuccessMessage('Login successful');
           setIsLoading(false);

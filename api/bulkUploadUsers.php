@@ -1,23 +1,13 @@
 <?php
 require_once 'setup.php';
-require_once 'vendor/autoload.php';
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
 
 // TODO: Add proper admin authentication check
 // For now, matching the existing API pattern (no authentication)
 // This should be secured in production
 
-// Debug: Log the request details
-error_log("Bulk upload request received");
-error_log("FILES: " . json_encode($_FILES));
-error_log("POST: " . json_encode($_POST));
-
 // Check if file was uploaded
 if (!isset($_FILES['csvFile'])) {
-    send_response(false, 'No CSV file found in request.');
+    send_response('No CSV file found in request.', 400);
     exit;
 }
 
@@ -49,7 +39,7 @@ if ($_FILES['csvFile']['error'] !== UPLOAD_ERR_OK) {
             $errorMessage .= 'Unknown upload error.';
             break;
     }
-    send_response(false, $errorMessage);
+    send_response($errorMessage, 400);
     exit;
 }
 
@@ -58,7 +48,7 @@ if ($_FILES['csvFile']['error'] !== UPLOAD_ERR_OK) {
 $defaultPassword = isset($_POST['defaultPassword']) ? trim($_POST['defaultPassword']) : 'student123';
 
 if (empty($defaultPassword)) {
-    send_response(false, 'Default password is required.');
+    send_response('Default password is required.', 400);
     exit;
 }
 
@@ -72,8 +62,19 @@ $errors = [];
 $created_count = 0;
 $emails_sent = 0;
 
+
+
 if (($handle = fopen($csvFile, "r")) !== FALSE) {
     $header = fgetcsv($handle); // Get header row
+    
+    // Remove BOM from first column if present
+    if (!empty($header[0])) {
+        $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]); // Remove UTF-8 BOM
+        $header[0] = preg_replace('/^\xFF\xFE/', '', $header[0]); // Remove UTF-16 LE BOM
+        $header[0] = preg_replace('/^\xFE\xFF/', '', $header[0]); // Remove UTF-16 BE BOM
+    }
+    
+
     
     // Validate header
     $requiredColumns = ['email', 'name'];
@@ -83,7 +84,7 @@ if (($handle = fopen($csvFile, "r")) !== FALSE) {
     // Check if required columns exist
     foreach ($requiredColumns as $required) {
         if (!in_array($required, $header)) {
-            send_response(false, "Missing required column: $required");
+            send_response("Missing required column: $required", 400);
             exit;
         }
     }
@@ -123,12 +124,12 @@ if (($handle = fopen($csvFile, "r")) !== FALSE) {
     }
     fclose($handle);
 } else {
-    send_response(false, 'Could not read CSV file.');
+    send_response('Could not read CSV file.', 400);
     exit;
 }
 
 if (empty($csvData)) {
-    send_response(false, 'No valid data found in CSV file. Errors: ' . implode(', ', $errors));
+    send_response('No valid data found in CSV file. Errors: ' . implode(', ', $errors), 400);
     exit;
 }
 
@@ -210,7 +211,7 @@ try {
     // Rollback transaction on error
     $mysqli->rollback();
     error_log("Bulk upload failed: " . $e->getMessage());
-    send_response(false, 'Database error occurred during bulk upload: ' . $e->getMessage());
+    send_response('Database error occurred during bulk upload: ' . $e->getMessage(), 500);
 }
 
 function sendWelcomeEmail($email, $name, $password) {

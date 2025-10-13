@@ -3,6 +3,7 @@ import axios from 'axios'
 import {Drawer, Spin} from 'antd'
 import CryptoJS from 'crypto-js'
 import SelectLocale from './SelectLocale'
+import { parseApiResponse } from './utils/apiHelpers'
 
 function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMessage, setSendErrorMessage,
                         setShowAccountManager, showAccountManager}) {
@@ -56,7 +57,6 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
     }
 
     const updateAccount = async () => {
-
         setIsLoading(true);
 
         // Hash new password if provided
@@ -83,7 +83,15 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            if (response.data.status_code === 200) {
+            const parsedData = parseApiResponse(
+                response.data,
+                null, // We'll handle success manually
+                setSendErrorMessage,
+                'User details updated.',
+                'Failed to update user details'
+            );
+
+            if (parsedData !== null) {
                 setSendSuccessMessage('User details updated.');
                 // set currentUser with new details
                 setCurrentUser(prevUser => ({
@@ -94,18 +102,15 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                     userLocale: locale,
                     avatar: avatar
                 }));
-
-            } else {
-                setSendErrorMessage(response.data.message);
             }
         } catch (error) {
-            console.error('Error adding user:', error);
+            console.error('Error updating user:', error);
             setSendErrorMessage('Network error. Please try again.');
+        } finally {
+            setIsLoading(false);
+            setPassword(''); // Clear password field after update
+            setShowAccountManager(false);
         }
-        setIsLoading(false);
-        setPassword(''); // Clear password field after update
-        setShowAccountManager(false);
-
     }
 
     return (

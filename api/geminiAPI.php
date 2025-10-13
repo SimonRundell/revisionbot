@@ -10,8 +10,8 @@ include 'setup.php';
     $prompt .= $receivedData['useranswer'] . "--->";
     $prompt .= "Please give me detailed feedback in HTML in this exact format--->";
     $prompt .= "<h4>The Question</h4><p>{Output the question}</p>";
-    $prompt .= "<h4>The Markscheme</h4><p>{Output what the markscheme says}</p>";
-    // $prompt .= "<h4>Your Reponse</h4><p>{What I responded with}</p>";
+    // $prompt .= "<h4>The Markscheme</h4><p>{Output what the markscheme says}</p>";
+    $prompt .= "<h4>Your Reponse</h4><p>{What I responded with}</p>";
     $prompt .= "<h4>AI Feedback</h4><p>{Assessment of how well I have met each point on the mark scheme and noting any areas for improvement based on both the markscheme and your own knowledge on the subject}</p>";
     $prompt .= "<h4>Model Example</h4><p>{A model example to demonstrate how it can be done properly}</p>";
 
