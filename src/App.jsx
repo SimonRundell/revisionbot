@@ -39,7 +39,7 @@ function App() {
         console.error('Error fetching config:', error);
         messageApi.error('Error fetching config');
       });
-  }, []);
+  }, [messageApi]);
 
 useEffect(() => {
     if (sendSuccessMessage) {
@@ -72,11 +72,18 @@ useEffect(() => {
 
         <div className="app-header">
           <div className="app-header-menu">
-            <h1>AI Exam Revision Robot</h1>
-            <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
-                  studentMode={studentMode} setStudentMode={setStudentMode}
-                  currentUser={currentUser} />
-        </div>
+            <div className="app-title-image">
+              <img src="/title_bw.png" alt="AI Exam Revision Robot" />
+            </div>
+            <div className="app-menu-container">
+              <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
+                    studentMode={studentMode} setStudentMode={setStudentMode}
+                    currentUser={currentUser} />
+            </div>
+          </div>
+          <div className="app-robot">
+            <img src="/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
+          </div>
         <AccountBlock config={config}
                       currentUser={currentUser} 
                       setCurrentUser={setCurrentUser}

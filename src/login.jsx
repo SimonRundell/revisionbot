@@ -15,7 +15,8 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
     setIsLoading(true);
     // Hash the password with MD5
     const hashedPassword = CryptoJS.MD5(password).toString();
-    const JSONData = { email: email, passwordHash: hashedPassword };
+    // Convert email to lowercase for case-insensitive login
+    const JSONData = { email: email.toLowerCase(), passwordHash: hashedPassword };
 
     // console.log("JSONData:", JSONData);
 
@@ -68,11 +69,22 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
         <Register config={config} setShowRegister={setShowRegister}
         setSendErrorMessage={setSendErrorMessage} setSendSuccessMessage={setSendSuccessMessage} />
       ) : (
-        <div className="login-container">
-          <div className="login-header">
+        <>
+          {/* Title image */}
+          <div className="login-title">
+            <img src="/title_bw.png" alt="AI Revision Bot" />
           </div>
-          <div className="login-form">
-            <form onSubmit={handleSubmit}>
+          
+          <div className="login-container">
+            {/* Robot image positioned over the login box */}
+            <div className="login-robot">
+              <img src="/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
+            </div>
+            
+            <div className="login-header">
+            </div>
+            <div className="login-form">
+              <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>eMail</label>
                 <input
@@ -95,12 +107,13 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
                 <button type="submit">Login</button>
               </div>
             </form>
-            <div className="topgap">
-              <button onClick={() => setShowRegister(true)}>Register</button>
+              <div className="topgap">
+                <button onClick={() => setShowRegister(true)}>Register</button>
+              </div>
             </div>
+            <p className="small">Beta Test</p>
           </div>
-          <p className="small">This system is in the early stages of development and may be unstable.</p>
-        </div>
+        </>
       )}
     </>
   );

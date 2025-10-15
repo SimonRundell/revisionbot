@@ -113,7 +113,7 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
             locale: user.userLocale,
             avatar: user.avatar,
             avatarPreview: user.avatar || '/default_avatar.png',
-            admin: user.admin || false
+            admin: Boolean(user.admin) // Convert to proper boolean (handles 0, 1, null, undefined)
         });
         setEditModalVisible(true);
     };
@@ -198,6 +198,8 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
             admin: editForm.admin ? 1 : 0
         };
         console.log("updating user with ", jsonData);
+        console.log("editForm.admin type:", typeof editForm.admin, "value:", editForm.admin);
+        console.log("admin conversion result:", editForm.admin ? 1 : 0);
 
         try {
             const response = await axios.post(config.api + '/updateUser.php', jsonData, {

@@ -14,6 +14,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
     const [department, setDepartment] = useState(currentUser.userLocation)
     const [locale, setLocale] = useState(currentUser.userLocale)
     const [avatar, setAvatar] = useState(currentUser.avatar)
+    const [admin, setAdmin] = useState(currentUser.admin)
     const [isLoading, setIsLoading] = useState(false)
     const [avatarPreview, setAvatarPreview] = useState(currentUser.avatar || '/default_avatar.png')
     
@@ -74,7 +75,8 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
             email: eMail,
             userLocation: department,
             userLocale: locale,
-            avatar: avatar
+            avatar: avatar,
+            admin: admin
         };
         console.log("updating user with ", jsonData)
 
@@ -100,7 +102,8 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                     email: eMail,
                     userLocation: department,
                     userLocale: locale,
-                    avatar: avatar
+                    avatar: avatar,
+                    admin: admin
                 }));
             }
         } catch (error) {

@@ -17,7 +17,8 @@ if (!$stmt) {
     log_info("User update prepare failed: " . $mysqli->error);
     send_response("User update prepare failed: " . $mysqli->error, 500);
 } else {
-$stmt->bind_param("sssssisi", $receivedData['email'],
+    $emailLower = strtolower($receivedData['email']);
+    $stmt->bind_param("sssssisi", $emailLower,
                              $receivedData['userName'],
                              $receivedData['passwordHash'],
                              $receivedData['userLocation'],
@@ -29,7 +30,7 @@ if (!$stmt->execute()) {
         log_info("Execute failed: " . $stmt->error);
         send_response("User update failed: " . $stmt->error, 500);
     } else {
-        log_info("User successfully updated: " . $receivedData['email']);
+        log_info("User successfully updated: " . $emailLower);
         send_response("User successfully updated", 200);
     }
 }

@@ -11,7 +11,8 @@ include 'setup.php';
         log_info("User create prepare failed: " . $mysqli->error);
         send_response("User create prepare failed: " . $mysqli->error, 500);
     } else {
-        $stmt->bind_param("sssssssi", $receivedData['email'], 
+        $emailLower = strtolower($receivedData['email']);
+        $stmt->bind_param("sssssssi", $emailLower, 
                                  $receivedData['passwordHash'], 
                                  $receivedData['userName'],
                                  $receivedData['userLocation'],

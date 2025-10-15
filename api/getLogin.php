@@ -1,7 +1,7 @@
 <?php
 include 'setup.php';
 
-$query = "SELECT * FROM tbluser WHERE email = ? AND passwordHash = ?";
+$query = "SELECT * FROM tbluser WHERE LOWER(email) = LOWER(?) AND passwordHash = ?";
 $stmt = $mysqli->prepare($query);
 
 if (!$stmt) {

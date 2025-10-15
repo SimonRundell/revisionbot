@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {Spin} from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
+import { formatAttachmentSize, getFileIconMeta } from './utils/fileAttachments';
 
 function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccessMessage}) {
 
@@ -23,7 +24,10 @@ function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccess
     const [showBulkActions, setShowBulkActions] = useState(false);
     const [showStatistics, setShowStatistics] = useState(false);
     const [statistics, setStatistics] = useState(null);
-    const [showExportImport, setShowExportImport] = useState(false);
+    const [showBackupData, setShowBackupData] = useState(false);
+    const [showBulkQuestionModal, setShowBulkQuestionModal] = useState(false);
+    const [questionCsvFile, setQuestionCsvFile] = useState(null);
+    const [bulkQuestionProgress, setBulkQuestionProgress] = useState('');
     
     // Form states
     const [newSubject, setNewSubject] = useState('');
@@ -54,7 +58,7 @@ useEffect(() => {
         'Subjects loaded successfully.',
         'Failed to load subjects.'
     );
-}, []);
+}, [config.api, setSendErrorMessage, setSendSuccessMessage]);
 
 const handleSubjectChange = (event) => {
     const subjectId = event.target.value;
@@ -142,7 +146,10 @@ const handleFileUpload = async (event) => {
     const allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'application/pdf', 'text/plain', 'text/csv',
-        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/zip', 'application/x-zip-compressed'
     ];
 
     const processedFiles = [];
@@ -168,6 +175,7 @@ const handleFileUpload = async (event) => {
                 isBase64: true
             });
         } catch (error) {
+            console.error('Error processing file for new question attachment:', error);
             setSendErrorMessage(`Error processing file ${file.name}`);
         }
     }
@@ -186,14 +194,6 @@ const convertToBase64 = (file) => {
 
 const removeFile = (index) => {
     setNewQuestionFiles(prev => prev.filter((_, i) => i !== index));
-};
-
-const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 // Modal handlers
@@ -232,6 +232,7 @@ const handleCreateSubject = async () => {
             setSendErrorMessage('Failed to create subject');
         }
     } catch (error) {
+        console.error('Error creating subject:', error);
         setSendErrorMessage('Error creating subject');
     } finally {
         setIsLoading(false);
@@ -282,6 +283,7 @@ const handleCreateTopic = async () => {
             setSendErrorMessage('Failed to create topic');
         }
     } catch (error) {
+        console.error('Error creating topic:', error);
         setSendErrorMessage('Error creating topic');
     } finally {
         setIsLoading(false);
@@ -445,7 +447,10 @@ const handleEditFileUpload = async (event) => {
     const allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'application/pdf', 'text/plain', 'text/csv',
-        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/zip', 'application/x-zip-compressed'
     ];
 
     const processedFiles = [];
@@ -471,6 +476,7 @@ const handleEditFileUpload = async (event) => {
                 isBase64: true
             });
         } catch (error) {
+            console.error('Error processing file for edit question attachment:', error);
             setSendErrorMessage(`Error processing file ${file.name}`);
         }
     }
@@ -584,7 +590,140 @@ const handleConfirmDelete = async () => {
         }
     } catch (error) {
         console.error(`Error deleting ${type}:`, error);
-        setSendErrorMessage(`Error deleting ${type}`);
+
+        const status = error.response?.status;
+        const responseMessage = error.response?.data?.message;
+
+        if (status === 404) {
+            // Treat "not found" as a successful deletion to keep the UI consistent
+            const alreadyDeletedMessage = responseMessage || `The ${type} was not found. It may have already been deleted.`;
+            setSendSuccessMessage(alreadyDeletedMessage);
+            setShowDeleteModal(false);
+            setDeleteTarget(null);
+            refreshAction();
+        } else {
+            setSendErrorMessage(`Error deleting ${type}`);
+        }
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+const openBulkQuestionModal = () => {
+    if (!selectedTopic) {
+        setSendErrorMessage('Please select a topic before uploading questions');
+        return;
+    }
+    setQuestionCsvFile(null);
+    setBulkQuestionProgress('');
+    setShowBulkQuestionModal(true);
+};
+
+const closeBulkQuestionModal = () => {
+    setShowBulkQuestionModal(false);
+    setQuestionCsvFile(null);
+    setBulkQuestionProgress('');
+};
+
+const handleQuestionCsvSelect = (event) => {
+    const file = event.target.files[0];
+    if (file && (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv'))) {
+        setQuestionCsvFile(file);
+        setBulkQuestionProgress('');
+    } else {
+        setSendErrorMessage('Please select a valid CSV file');
+        setQuestionCsvFile(null);
+        event.target.value = '';
+    }
+};
+
+const handleBulkQuestionUpload = async () => {
+    if (!selectedTopic) {
+        setSendErrorMessage('Please select a topic before uploading questions');
+        return;
+    }
+
+    if (!questionCsvFile) {
+        setSendErrorMessage('Please select a CSV file first');
+        return;
+    }
+
+    setIsLoading(true);
+    setBulkQuestionProgress('Processing CSV file...');
+
+    try {
+        const formData = new FormData();
+        formData.append('csvFile', questionCsvFile);
+        formData.append('topicId', selectedTopic);
+
+        const response = await axios.post(
+            config.api + '/bulkUploadQuestions.php',
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${currentUser.token}`
+                }
+            }
+        );
+
+        if (response.data.status_code === 200) {
+            const createdCount = response.data.created_count ?? 0;
+            const skippedCount = response.data.skipped_count ?? 0;
+            const warnings = response.data.warnings ?? [];
+            const baseMessage = response.data.message || 'Bulk upload completed.';
+
+            let progressMessage = `${baseMessage} ${createdCount} question${createdCount === 1 ? '' : 's'} added.`.trim();
+
+            if (skippedCount > 0) {
+                progressMessage += ` ${skippedCount} row${skippedCount === 1 ? '' : 's'} skipped.`;
+            }
+
+            if (warnings.length > 0) {
+                progressMessage += ` Warnings: ${warnings.join(' | ')}`;
+            }
+
+            setBulkQuestionProgress(progressMessage);
+            setSendSuccessMessage(progressMessage);
+
+            const refreshApiCall = () => axios.post(
+                config.api + '/getQuestions.php',
+                { topicid: selectedTopic },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    }
+                }
+            );
+            await handleApiCall(
+                refreshApiCall,
+                setQuestions,
+                setIsLoading,
+                null,
+                setSendErrorMessage,
+                'Questions refreshed',
+                'Failed to refresh questions'
+            );
+
+            setQuestionCsvFile(null);
+
+            if (skippedCount === 0 && warnings.length === 0) {
+                setTimeout(() => {
+                    setShowBulkQuestionModal(false);
+                    setBulkQuestionProgress('');
+                }, 1500);
+            }
+        } else {
+            const errorMessage = response.data.message || 'Bulk question upload failed';
+            setSendErrorMessage(errorMessage);
+            setBulkQuestionProgress(`Upload failed: ${errorMessage}`);
+        }
+    } catch (error) {
+        console.error('Bulk question upload error:', error);
+        const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+        setSendErrorMessage(`Error uploading questions: ${errorMessage}`);
+        setBulkQuestionProgress(`Upload failed: ${errorMessage}`);
     } finally {
         setIsLoading(false);
     }
@@ -771,7 +910,9 @@ const toggleStatistics = () => {
     setShowStatistics(!showStatistics);
 };
 
-// Export/Import handlers
+const selectedTopicDetails = topics.find(topic => String(topic.id) === String(selectedTopic));
+
+// Backup Data handlers
 const handleExport = async (type, subjectId = null, topicId = null) => {
     try {
         const exportData = { type };
@@ -946,66 +1087,7 @@ const handleImportFile = async (event) => {
                 </div>
             )}
 
-            <div className="export-import-section">
-                <div 
-                    className="export-import-header"
-                    onClick={() => setShowExportImport(!showExportImport)}
-                >
-                    <h3>Export/Import Data</h3>
-                    <span className={`export-import-toggle ${showExportImport ? 'expanded' : ''}`}>
-                        ▼
-                    </span>
-                </div>
-                <div className={`export-import-content ${showExportImport ? 'expanded' : ''}`}>
-                    <div className="export-import-controls">
-                    <div className="export-controls">
-                        <h4>Export</h4>
-                        <div className="export-buttons">
-                            <button 
-                                onClick={() => handleExport('all')}
-                                className="export-btn"
-                            >
-                                Export All Data
-                            </button>
-                            {selectedSubject && (
-                                <button 
-                                    onClick={() => handleExport('subject', selectedSubject)}
-                                    className="export-btn"
-                                >
-                                    Export Current Subject
-                                </button>
-                            )}
-                            {selectedTopic && (
-                                <button 
-                                    onClick={() => handleExport('topic', null, selectedTopic)}
-                                    className="export-btn"
-                                >
-                                    Export Current Topic
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    <div className="import-controls">
-                        <h4>Import</h4>
-                        <div className="file-input-wrapper">
-                            <input
-                                id="import-file"
-                                type="file"
-                                accept=".json"
-                                onChange={handleImportFile}
-                                className="file-input-hidden"
-                            />
-                            <label htmlFor="import-file" className="file-input-button">
-                                Choose JSON File
-                            </label>
-                        </div>
-                        <small className="import-info">
-                            Import quiz data from previously exported JSON file
-                        </small>
-                    </div>
-                    </div>
-                </div>
-            </div>
+
             
             <div className="subject-dropdown-container">
                 <label htmlFor="subject-select">Subject:</label>
@@ -1186,15 +1268,22 @@ const handleImportFile = async (event) => {
                             );
                         })}
                     </ul>
-                    <button 
-                        onClick={() => {
-                            setNewQuestionTopic(selectedTopic);
-                            setShowQuestionModal(true);
-                        }}
-                        className="topgap"
-                    >
-                        + Add New Question
-                    </button>
+                    <div className="question-action-buttons">
+                        <button 
+                            onClick={() => {
+                                setNewQuestionTopic(selectedTopic);
+                                setShowQuestionModal(true);
+                            }}
+                        >
+                            + Add New Question
+                        </button>
+                        <button 
+                            onClick={openBulkQuestionModal}
+                            className="bulk-upload-questions-button"
+                        >
+                            📥 Bulk Upload Questions
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -1203,21 +1292,6 @@ const handleImportFile = async (event) => {
                     <h3>No topics found for this subject.</h3>
                 </div>
             )}
-
-            {/* {selectedTopic && questions.length === 0 && !isLoading && (
-                <div className="no-topics-message">
-                    <h3>No questions found for this topic.</h3>
-                    <button 
-                        onClick={() => {
-                            setNewQuestionTopic(selectedTopic);
-                            setShowQuestionModal(true);
-                        }}
-                        className="topgap"
-                    >
-                        + Add First Question
-                    </button>
-                </div>
-            )} */}
 
             {/* Subject Creation Modal */}
             {showSubjectModal && (
@@ -1379,13 +1453,13 @@ const handleImportFile = async (event) => {
                             />
                         </div>
                         <div className="subject-dropdown-container">
-                            <label htmlFor="new-question-files">Upload Files (Images, PDFs, Documents):</label>
+                            <label htmlFor="new-question-files">Upload Files (Images will display, others will be attached):</label>
                             <div className="file-input-wrapper leftgap">
                                 <input
                                     id="new-question-files"
                                     type="file"
                                     multiple
-                                    accept="image/*,application/pdf,text/*,.doc,.docx"
+                                    accept="image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.zip"
                                     onChange={handleFileUpload}
                                     className="file-input-hidden"
                                 />
@@ -1397,26 +1471,37 @@ const handleImportFile = async (event) => {
                             {newQuestionFiles.length > 0 && (
                                 <div className="uploaded-files-list">
                                     <h4>Uploaded Files:</h4>
-                                    {newQuestionFiles.map((file, index) => (
-                                        <div key={index} className="uploaded-file-item">
-                                            <span className="file-info">
-                                                📎 {file.name} ({formatFileSize(file.size)})
-                                            </span>
-                                            <button 
-                                                type="button"
-                                                onClick={() => removeFile(index)}
-                                                className="remove-file-btn"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
+                                    {newQuestionFiles.map((file, index) => {
+                                        const { label, classSuffix } = getFileIconMeta(file.type || '', file.name || '');
+                                        const sizeLabel = formatAttachmentSize(file.size);
+
+                                        return (
+                                            <div key={index} className="uploaded-file-item">
+                                                <div className="attachment-file-info">
+                                                    <div className={`attachment-file-icon attachment-file-icon--${classSuffix}`}>
+                                                        {label}
+                                                    </div>
+                                                    <div className="attachment-file-details">
+                                                        <span className="file-info">{file.name}</span>
+                                                        {sizeLabel && <span className="attachment-file-meta">{sizeLabel}</span>}
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => removeFile(index)}
+                                                    className="remove-file-btn"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                             
                             <div className="file-upload-info">
                                 <small>
-                                    Supported: Images, PDFs, Word docs, Text files (Max 5MB each)
+                                    Supported: Images, PDFs, Word docs, Excel, Powerpoint, Text and Zip files (Max 5MB each)
                                 </small>
                             </div>
                         </div>
@@ -1506,7 +1591,7 @@ const handleImportFile = async (event) => {
                                     id="edit-question-files"
                                     type="file"
                                     multiple
-                                    accept="image/*,application/pdf,text/*,.doc,.docx"
+                                    accept="image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.zip"
                                     onChange={handleEditFileUpload}
                                     className="file-input-hidden"
                                 />
@@ -1518,20 +1603,31 @@ const handleImportFile = async (event) => {
                             {editQuestionFiles.length > 0 && (
                                 <div className="uploaded-files-list">
                                     <h4>Uploaded Files:</h4>
-                                    {editQuestionFiles.map((file, index) => (
-                                        <div key={index} className="uploaded-file-item">
-                                            <span className="file-info">
-                                                📎 {file.name} ({formatFileSize(file.size)})
-                                            </span>
-                                            <button 
-                                                type="button"
-                                                onClick={() => removeEditFile(index)}
-                                                className="remove-file-btn"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
+                                    {editQuestionFiles.map((file, index) => {
+                                        const { label, classSuffix } = getFileIconMeta(file.type || '', file.name || '');
+                                        const sizeLabel = formatAttachmentSize(file.size);
+
+                                        return (
+                                            <div key={index} className="uploaded-file-item">
+                                                <div className="attachment-file-info">
+                                                    <div className={`attachment-file-icon attachment-file-icon--${classSuffix}`}>
+                                                        {label}
+                                                    </div>
+                                                    <div className="attachment-file-details">
+                                                        <span className="file-info">{file.name}</span>
+                                                        {sizeLabel && <span className="attachment-file-meta">{sizeLabel}</span>}
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => removeEditFile(index)}
+                                                    className="remove-file-btn"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                             
@@ -1557,6 +1653,92 @@ const handleImportFile = async (event) => {
                                     setEditQuestionFiles([]);
                                 }}
                                 className="topgap"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Question Upload Modal */}
+            {showBulkQuestionModal && (
+                <div className="modal">
+                    <div className="modal-content bulk-upload-modal">
+                        <span 
+                            className="close" 
+                            onClick={closeBulkQuestionModal}
+                        >
+                            &times;
+                        </span>
+                        <h2>📥 Bulk Upload Questions</h2>
+
+                        <div className="bulk-upload-format-section">
+                            <h4>CSV Format Required:</h4>
+                            <p className="bulk-upload-format-description">
+                                Your CSV file should include a header row with the following columns:
+                            </p>
+                            <code className="bulk-upload-format-code">
+                                question,markscheme<br/>
+                                What is a CPU?,The CPU executes instructions using the fetch-decode-execute cycle.<br/>
+                                Define RAM.,RAM stores data and instructions currently needed by the CPU.
+                            </code>
+                            <p className="bulk-upload-format-notes">
+                                • <strong>question</strong>: Required. The text of the question.<br/>
+                                • <strong>markscheme</strong>: Optional. Leave blank if not needed.<br/>
+                                Questions will be added to the currently selected topic.
+                            </p>
+                        </div>
+
+                        <table border="1" className="edit-modal-table">
+                            <tbody>
+                                <tr>
+                                    <td>Target Topic</td>
+                                    <td>{selectedTopicDetails?.topic || 'Selected topic'}</td>
+                                </tr>
+                                <tr>
+                                    <td>CSV File</td>
+                                    <td>
+                                        <div className="file-input-wrapper">
+                                            <input 
+                                                type="file" 
+                                                id="question-csv-upload"
+                                                className="file-input-hidden"
+                                                accept=".csv"
+                                                onChange={handleQuestionCsvSelect}
+                                            />
+                                            <label htmlFor="question-csv-upload" className="file-input-button">
+                                                {questionCsvFile ? questionCsvFile.name : 'Choose CSV File'}
+                                            </label>
+                                        </div>
+                                        {questionCsvFile && (
+                                            <div className="bulk-upload-file-selected">
+                                                ✓ File selected: {questionCsvFile.name} ({Math.round(questionCsvFile.size / 1024)} KB)
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        {bulkQuestionProgress && (
+                            <div className={`bulk-upload-progress-container ${bulkQuestionProgress.toLowerCase().includes('failed') ? 'bulk-upload-progress-error' : 'bulk-upload-progress-success'}`}>
+                                {bulkQuestionProgress}
+                            </div>
+                        )}
+
+                        <div className="form-group-button">
+                            <button 
+                                onClick={handleBulkQuestionUpload}
+                                disabled={!questionCsvFile || isLoading}
+                                className="bulk-upload-submit-button"
+                            >
+                                {isLoading ? 'Processing...' : 'Upload Questions'}
+                            </button>
+                            <button 
+                                onClick={closeBulkQuestionModal}
+                                className="topgap"
+                                disabled={isLoading}
                             >
                                 Cancel
                             </button>
@@ -1633,6 +1815,76 @@ const handleImportFile = async (event) => {
                     </div>
                 </div>
             )}
+
+            {/* Backup Data Section - placed at bottom */}
+            <div className="backup-data-section">
+                <button
+                    type="button"
+                    className={`backup-data-header ${showBackupData ? 'expanded' : ''}`}
+                    onClick={() => setShowBackupData(!showBackupData)}
+                    aria-expanded={showBackupData}
+                >
+                    <span className="backup-data-title">Backup Data</span>
+                    <span
+                        className={`backup-data-toggle ${showBackupData ? 'expanded' : ''}`}
+                        aria-hidden="true"
+                    >
+                        ▼
+                    </span>
+                </button>
+                <div className={`backup-data-content ${showBackupData ? 'expanded' : ''}`}>
+                    <div className="backup-description">
+                        <p>Export and import the complete quiz database for backup and restoration purposes.</p>
+                    </div>
+                    <div className="backup-data-controls">
+                    <div className="export-controls">
+                        <h4>Export</h4>
+                        <div className="export-buttons">
+                            <button 
+                                onClick={() => handleExport('all')}
+                                className="export-btn"
+                            >
+                                Export All Data
+                            </button>
+                            {selectedSubject && (
+                                <button 
+                                    onClick={() => handleExport('subject', selectedSubject)}
+                                    className="export-btn"
+                                >
+                                    Export Current Subject
+                                </button>
+                            )}
+                            {selectedTopic && (
+                                <button 
+                                    onClick={() => handleExport('topic', null, selectedTopic)}
+                                    className="export-btn"
+                                >
+                                    Export Current Topic
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <div className="import-controls">
+                        <h4>Import</h4>
+                        <div className="file-input-wrapper">
+                            <input
+                                id="import-file"
+                                type="file"
+                                accept=".json"
+                                onChange={handleImportFile}
+                                className="file-input-hidden"
+                            />
+                            <label htmlFor="import-file" className="file-input-button">
+                                Choose JSON File
+                            </label>
+                        </div>
+                        <small className="import-info">
+                            Import quiz data from previously exported JSON file. <strong>Warning:</strong> This will merge with existing data.
+                        </small>
+                    </div>
+                    </div>
+                </div>
+            </div>
         </>
     );
 }

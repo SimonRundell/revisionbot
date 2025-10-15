@@ -1,5 +1,12 @@
 <?php
-require_once 'setup.php';
+include 'setup.php';
+
+if (empty($receivedData) && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
+    $receivedData = [];
+    foreach ($_POST as $key => $value) {
+        $receivedData[$key] = is_string($value) ? trim($value) : $value;
+    }
+}
 
 // TODO: Add proper admin authentication check
 // For now, matching the existing API pattern (no authentication)
@@ -43,17 +50,16 @@ if ($_FILES['csvFile']['error'] !== UPLOAD_ERR_OK) {
     exit;
 }
 
-// Get the default password from POST data
-// For multipart/form-data uploads, use $_POST directly
-$defaultPassword = isset($_POST['defaultPassword']) ? trim($_POST['defaultPassword']) : 'student123';
+// Get the default password using the standard receivedData handle
+$defaultPassword = isset($receivedData['defaultPassword']) ? $receivedData['defaultPassword'] : 'student123';
 
 if (empty($defaultPassword)) {
     send_response('Default password is required.', 400);
     exit;
 }
 
-// Hash the default password
-$hashedPassword = password_hash($defaultPassword, PASSWORD_DEFAULT);
+// Hash the default password using MD5 to match existing login expectations
+$hashedPassword = md5($defaultPassword);
 
 // Read and parse CSV file
 $csvFile = $_FILES['csvFile']['tmp_name'];

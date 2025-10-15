@@ -25,7 +25,7 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
         const passwordHash = CryptoJS.MD5(password).toString();
 
         const jsonData = {  
-            email: email, 
+            email: email.toLowerCase(), 
             passwordHash: passwordHash, 
             userName: userName, 
             userLocation: userLocation,
@@ -53,7 +53,7 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
 
             if (parsedData !== null) {
                 setSendSuccessMessage('Registration successful');
-                sendRegisterEmail(email, password);
+                sendRegisterEmail(email.toLowerCase(), password);
                 setShowRegister(false);
             }
         } catch (error) {

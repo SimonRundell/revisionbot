@@ -20,7 +20,16 @@ export const parseApiResponse = (
 ) => {
     try {
         if (responseData.status_code === 200) {
-            const parsedData = JSON.parse(responseData.message);
+            let parsedData;
+            
+            // Try to parse as JSON first, if it fails treat as plain string
+            try {
+                parsedData = JSON.parse(responseData.message);
+            } catch (jsonError) {
+                // If JSON parsing fails, treat as plain string response
+                parsedData = responseData.message;
+            }
+            
             if (setSendSuccessMessage) {
                 setSendSuccessMessage(successMessage);
             }
