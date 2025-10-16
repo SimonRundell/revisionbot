@@ -372,7 +372,7 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
                 closable={{ 'aria-label': 'Close Button' }}
                 onClose={onClose}
                 open={showAdminManager}
-                width={'70%'}>
+                width={'99%'}>
                 
                 <div className="admin-actions-bar">
                     <button 

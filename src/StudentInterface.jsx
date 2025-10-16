@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
-import {
-    ensureDataUrl,
-    formatAttachmentSize,
-    getFileIconMeta
-} from './utils/fileAttachments';
+import PastAnswersViewer from './PastAnswersViewer';
+import renderAttachments from './utils/renderAttachments';
 import './App.css';
 
 const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
@@ -26,8 +23,6 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
     
     // Past answers review state
     const [showPastAnswers, setShowPastAnswers] = useState(false);
-    const [pastResponses, setPastResponses] = useState([]);
-    const [selectedPastResponse, setSelectedPastResponse] = useState(null);
 
     // Load subjects on component mount
     useEffect(() => {
@@ -49,36 +44,12 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
 
     }, [userId, config.api, currentUser.token, setSendErrorMessage, setSendSuccessMessage]);
 
-    const loadPastResponses = () => {
-        const apiCall = () => axios.post(config.api + '/getUserResponses.php',
-            { userId: userId },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentUser.token}`
-                }
-            }
-        );
-
-        handleApiCall(
-            apiCall,
-            setPastResponses,
-            setIsLoading,
-            setSendSuccessMessage,
-            setSendErrorMessage,
-            'Past responses loaded successfully.',
-            'Failed to load past responses.'
-        );
-    };
-
     const handleShowPastAnswers = () => {
         setShowPastAnswers(true);
-        loadPastResponses();
     };
 
     const handleBackToPractice = () => {
         setShowPastAnswers(false);
-        setSelectedPastResponse(null);
     };
 
     const handleSubjectChange = (event) => {
@@ -264,110 +235,6 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
         `;
         document.body.appendChild(feedbackModal);
     };
-
-    const renderAttachments = (attachments) => {
-        if (!attachments) {
-            return null;
-        }
-
-        let attachmentList = [];
-
-        if (typeof attachments === 'string') {
-            const trimmed = attachments.trim();
-            if (!trimmed) {
-                return null;
-            }
-
-            try {
-                const parsed = JSON.parse(trimmed);
-                attachmentList = Array.isArray(parsed) ? parsed : [];
-            } catch (error) {
-                console.error('Error parsing attachments:', error);
-                return <p>Error loading attachments</p>;
-            }
-        } else if (Array.isArray(attachments)) {
-            attachmentList = attachments;
-        }
-
-        if (!attachmentList.length) {
-            return null;
-        }
-
-        return attachmentList.map((attachment, index) => {
-            if (!attachment) {
-                return null;
-            }
-
-            const filename = attachment.name || attachment.filename || `Attachment ${index + 1}`;
-            const rawData = attachment.data || attachment.fileData || attachment.base64 || '';
-
-            let mimeType = attachment.type || attachment.mimeType || '';
-
-            if (!mimeType && rawData) {
-                const match = String(rawData).match(/^data:([^;]+);/);
-                if (match && match[1]) {
-                    mimeType = match[1];
-                }
-            }
-
-            if (!mimeType) {
-                mimeType = 'application/octet-stream';
-            }
-
-            const sizeLabel = formatAttachmentSize(attachment.size);
-
-            const downloadUrl = ensureDataUrl(rawData, mimeType);
-            const effectiveMimeType = downloadUrl.startsWith('data:') && downloadUrl.includes(';')
-                ? downloadUrl.substring(5, downloadUrl.indexOf(';'))
-                : mimeType;
-
-            if (effectiveMimeType && effectiveMimeType.startsWith('image/')) {
-                return (
-                    <div key={`${filename}-${index}`} className="attachment-item">
-                        <h4>{filename}</h4>
-                        {downloadUrl ? (
-                            <img
-                                src={downloadUrl}
-                                alt={filename}
-                                className="question-image"
-                                style={{ maxWidth: '25%', height: 'auto', marginBottom: '10px' }}
-                            />
-                        ) : (
-                            <span className="attachment-file-meta">Preview unavailable</span>
-                        )}
-                    </div>
-                );
-            }
-
-            const { label, classSuffix } = getFileIconMeta(effectiveMimeType || mimeType, filename);
-
-            return (
-                <div key={`${filename}-${index}`} className="attachment-item attachment-file">
-                    <div className="attachment-file-info">
-                        <div className={`attachment-file-icon attachment-file-icon--${classSuffix}`}>
-                            {label}
-                        </div>
-                        <div className="attachment-file-details">
-                            <h4>{filename}</h4>
-                            {sizeLabel && <span className="attachment-file-meta">{sizeLabel}</span>}
-                        </div>
-                    </div>
-                    {downloadUrl ? (
-                        <a
-                            href={downloadUrl}
-                            download={filename}
-                            className="btn-secondary attachment-download-link"
-                        >
-                            Download
-                        </a>
-                    ) : (
-                        <span className="attachment-file-meta">Download unavailable</span>
-                    )}
-                </div>
-            );
-        });
-    };
-
 
 
     return (
@@ -568,146 +435,15 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
             )}
                 </>
             ) : (
-                // Past Answers Review Section
-                <div className="past-answers-section">
-                    {pastResponses.length === 0 ? (
-                        <div className="no-responses-message">
-                            <p>You haven&apos;t completed any questions with AI feedback yet.</p>
-                            <p>Complete some practice questions to see your past answers and feedback here.</p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="past-responses-list">
-                                {pastResponses.map((response, index) => (
-                                    <div 
-                                        key={response.responseId} 
-                                        className="past-response-item"
-                                        onClick={() => setSelectedPastResponse(response)}
-                                    >
-                                        <div className="response-number">#{index + 1}</div>
-                                        <div className="response-preview">
-                                            <div className="response-subject-topic">
-                                                {response.subjectName} › {response.topicName}
-                                            </div>
-                                            <div className="response-question-preview">
-                                                {response.question.question.length > 100 
-                                                    ? response.question.question.substring(0, 100) + '...'
-                                                    : response.question.question
-                                                }
-                                            </div>
-                                            <div className="response-date">
-                                                Completed: {new Date(response.createdAt).toLocaleDateString()}
-                                                {response.attemptNumber > 1 && (
-                                                    <span className="attempt-badge"> (Attempt #{response.attemptNumber})</span>
-                                                )}
-                                                {(response.teacherComment || response.teacherRating) && (
-                                                    <span className="teacher-feedback-notification"> 🎓 New Teacher Feedback!</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="response-arrow">→</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
-                </div>
+                <PastAnswersViewer
+                    userId={userId}
+                    currentUser={currentUser}
+                    config={config}
+                    setSendErrorMessage={setSendErrorMessage}
+                    setSendSuccessMessage={setSendSuccessMessage}
+                />
             )}
 
-            {/* Past Response Review Modal */}
-            {selectedPastResponse && (
-                <div className="answer-modal">
-                    <div className="answer-modal-content">
-                        <div className="answer-modal-header">
-                            <h2>Review Past Answer</h2>
-                            <button 
-                                className="close-modal"
-                                onClick={() => setSelectedPastResponse(null)}
-                            >
-                                ×
-                            </button>
-                        </div>
-                        
-                        <div className="answer-modal-body">
-                            <div className="question-section">
-                                <h3>Question:</h3>
-                                <div className="question-content">
-                                    {selectedPastResponse.question.question}
-                                </div>
-                                
-                                {selectedPastResponse.question.attachments ? (
-                                    <div className="attachments-section">
-                                        <h4>Attachments:</h4>
-                                        {renderAttachments(selectedPastResponse.question.attachments)}
-                                    </div>
-                                ) : (<p>No attachments available</p>)}
-                            </div>
-                            
-                            <div className="answer-section">
-                                <h3>Your Answer:</h3>
-                                <div className="past-answer-display">
-                                    {selectedPastResponse.studentAnswer}
-                                </div>
-                            </div>
-
-                            <div className="feedback-section">
-                                <h3>AI Assessment & Feedback:</h3>
-                                <div className="ai-feedback-display" dangerouslySetInnerHTML={{__html: selectedPastResponse.aiFeedback}}>
-                                </div>
-                            </div>
-
-                            {(selectedPastResponse.teacherComment || selectedPastResponse.teacherRating) && (
-                                <div className="teacher-feedback-section-student">
-                                    <h3>
-                                        🎓 Teacher Feedback 
-                                        {selectedPastResponse.teacherRating && (
-                                            <span 
-                                                className="teacher-rating-display"
-                                                style={{
-                                                    color: selectedPastResponse.teacherRating === 'R' ? '#dc3545' : 
-                                                           selectedPastResponse.teacherRating === 'A' ? '#ffc107' : '#28a745'
-                                                }}
-                                            >
-                                                ({selectedPastResponse.teacherRating === 'R' ? '🔴 Needs Improvement' : 
-                                                  selectedPastResponse.teacherRating === 'A' ? '🟡 Good Progress' : '🟢 Excellent'})
-                                            </span>
-                                        )}
-                                    </h3>
-                                    {selectedPastResponse.teacherComment && (
-                                        <div className="teacher-comment-display">
-                                            {selectedPastResponse.teacherComment}
-                                        </div>
-                                    )}
-                                    <div className="teacher-feedback-meta">
-                                        <p><em>Feedback from {selectedPastResponse.teacherName || 'your teacher'} on {new Date(selectedPastResponse.teacherFeedbackTimestamp).toLocaleString()}</em></p>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="response-metadata">
-                                <p><strong>Subject:</strong> {selectedPastResponse.subjectName}</p>
-                                <p><strong>Topic:</strong> {selectedPastResponse.topicName}</p>
-                                <p><strong>Completed:</strong> {new Date(selectedPastResponse.createdAt).toLocaleString()}</p>
-                                {selectedPastResponse.timeTaken && (
-                                    <p><strong>Time Taken:</strong> {Math.floor(selectedPastResponse.timeTaken / 60)}m {selectedPastResponse.timeTaken % 60}s</p>
-                                )}
-                                {selectedPastResponse.attemptNumber > 1 && (
-                                    <p><strong>Attempt:</strong> #{selectedPastResponse.attemptNumber}</p>
-                                )}
-                            </div>
-                        </div>
-                        
-                        <div className="answer-modal-footer">
-                            <button 
-                                className="btn-primary"
-                                onClick={() => setSelectedPastResponse(null)}
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
         </>
     );

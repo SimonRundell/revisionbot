@@ -129,7 +129,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                 closable={{ 'aria-label': 'Close Button' }}
                 onClose={onClose}
                 open={showAccountManager}
-                width={'35%'}>
+                width={'99%'}>
             <table border="1">
                 <tbody>
                     <tr>
