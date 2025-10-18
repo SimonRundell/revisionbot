@@ -5,13 +5,8 @@ import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import renderAttachments from './utils/renderAttachments';
 
-const PastAnswersViewer = ({
-    userId,
-    currentUser,
-    config,
-    setSendErrorMessage,
-    setSendSuccessMessage
-}) => {
+function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, setSendSuccessMessage}) {
+
     const [pastResponses, setPastResponses] = useState([]);
     const [selectedResponse, setSelectedResponse] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -54,56 +49,62 @@ const PastAnswersViewer = ({
     }, [loadPastResponses]);
 
     return (
-        <div className="past-answers-section">
-            {isLoading ? (
-                <div className="past-answers-loading">
-                    <Spin size="large" />
-                </div>
-            ) : (
-                <>
-                    {pastResponses.length === 0 ? (
-                        <div className="no-responses-message">
-                            <p>You haven&apos;t completed any questions with AI feedback yet.</p>
-                            <p>Complete some practice questions to see your past answers and feedback here.</p>
-                        </div>
-                    ) : (
-                        <div className="past-responses-list">
-                            {pastResponses.map((response, index) => (
-                                <div
-                                    key={response.responseId}
-                                    className="past-response-item"
-                                    onClick={() => setSelectedResponse(response)}
-                                >
-                                    <div className="response-number">#{index + 1}</div>
-                                    <div className="response-preview">
-                                        <div className="response-subject-topic">
-                                            {response.subjectName} &gt; {response.topicName}
+        <div className="student-interface">
+            <div className="interface-header">
+                <h1>Review Past Answers</h1>
+            </div>
+
+            <div className="past-answers-section">
+                {isLoading ? (
+                    <div className="past-answers-loading">
+                        <Spin size="large" />
+                    </div>
+                ) : (
+                    <>
+                        {pastResponses.length === 0 ? (
+                            <div className="no-responses-message">
+                                <p>You haven&apos;t completed any questions with AI feedback yet.</p>
+                                <p>Complete some practice questions to see your past answers and feedback here.</p>
+                            </div>
+                        ) : (
+                            <div className="past-responses-list">
+                                {pastResponses.map((response, index) => (
+                                    <div
+                                        key={response.responseId}
+                                        className="past-response-item"
+                                        onClick={() => setSelectedResponse(response)}
+                                    >
+                                        <div className="response-number">#{index + 1}</div>
+                                        <div className="response-preview">
+                                            <div className="response-subject-topic">
+                                                {response.subjectName} &gt; {response.topicName}
+                                            </div>
+                                            <div className="response-question-preview">
+                                                {response.question.question.length > 100
+                                                    ? `${response.question.question.substring(0, 100)}...`
+                                                    : response.question.question
+                                                }
+                                            </div>
+                                            <div className="response-date">
+                                                Completed: {new Date(response.createdAt).toLocaleDateString()}
+                                                {response.attemptNumber > 1 && (
+                                                    <span className="attempt-badge"> (Attempt #{response.attemptNumber})</span>
+                                                )}
+                                                {(response.teacherComment || response.teacherRating) && (
+                                                    <span className="teacher-feedback-notification">
+                                                        New Teacher Feedback!
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="response-question-preview">
-                                            {response.question.question.length > 100
-                                                ? `${response.question.question.substring(0, 100)}...`
-                                                : response.question.question
-                                            }
-                                        </div>
-                                        <div className="response-date">
-                                            Completed: {new Date(response.createdAt).toLocaleDateString()}
-                                            {response.attemptNumber > 1 && (
-                                                <span className="attempt-badge"> (Attempt #{response.attemptNumber})</span>
-                                            )}
-                                            {(response.teacherComment || response.teacherRating) && (
-                                                <span className="teacher-feedback-notification">
-                                                    New Teacher Feedback!
-                                                </span>
-                                            )}
-                                        </div>
+                                        <div className="response-arrow">&rarr;</div>
                                     </div>
-                                    <div className="response-arrow">&rarr;</div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </>
-            )}
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
 
             {selectedResponse && (
                 <div className="answer-modal">
@@ -132,13 +133,6 @@ const PastAnswersViewer = ({
                                         {renderAttachments(selectedResponse.question.attachments)}
                                     </div>
                                 ) : (<p>No attachments available</p>)}
-                            </div>
-
-                            <div className="answer-section">
-                                <h3>Your Answer:</h3>
-                                <div className="past-answer-display">
-                                    {selectedResponse.studentAnswer}
-                                </div>
                             </div>
 
                             <div className="feedback-section">

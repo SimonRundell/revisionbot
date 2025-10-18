@@ -8,7 +8,8 @@ $query = "UPDATE tbluser SET email=?,
                              userLocation=?, 
                              userLocale=?,
                              admin=?,
-                             avatar=? WHERE id=?
+                             avatar=?,
+                             userAccess=? WHERE id=?
           ";
 
 $stmt = $mysqli->prepare($query);
@@ -18,13 +19,14 @@ if (!$stmt) {
     send_response("User update prepare failed: " . $mysqli->error, 500);
 } else {
     $emailLower = strtolower($receivedData['email']);
-    $stmt->bind_param("sssssisi", $emailLower,
+    $stmt->bind_param("ssssssssi", $emailLower,
                              $receivedData['userName'],
                              $receivedData['passwordHash'],
                              $receivedData['userLocation'],
                              $receivedData['userLocale'],
                              $receivedData['admin'],
                              $receivedData['avatar'],
+                             $receivedData['userAccess'],
                              $receivedData['id']);    
 if (!$stmt->execute()) {
         log_info("Execute failed: " . $stmt->error);

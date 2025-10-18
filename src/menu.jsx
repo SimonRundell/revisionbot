@@ -1,16 +1,10 @@
-function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, currentUser}) {
-    
+function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, currentUser, dashboard, setDashboard, analytics, setAnalytics}) {
+
     const handleModeSwitch = (mode) => {
-        if (mode === 'admin') {
-            setQuizBuilder(true);
-            setStudentMode(false);
-        } else if (mode === 'student') {
-            setQuizBuilder(false);
-            setStudentMode(true);
-        } else {
-            setQuizBuilder(false);
-            setStudentMode(false);
-        }
+        setQuizBuilder(mode === 'admin');
+        setStudentMode(mode === 'student');
+        setDashboard(mode === 'dashboard');
+        setAnalytics(mode === 'analytics');
     };
 
     return (
@@ -18,7 +12,7 @@ function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, curren
             {currentUser?.admin === 1 && (
                 <button 
                     onClick={() => handleModeSwitch('admin')}
-                    className={quizBuilder && !studentMode ? 'active' : ''}
+                    className={quizBuilder && !studentMode && !dashboard && !analytics ? 'active' : ''}
                 >
                     Quiz Builder
                 </button>
@@ -30,11 +24,19 @@ function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, curren
                 Practice Questions
             </button>
             <button 
-                onClick={() => handleModeSwitch('none')}
-                className={!quizBuilder && !studentMode ? 'active' : ''}
+                onClick={() => handleModeSwitch('dashboard')}
+                className={dashboard ? 'active' : ''}
             >
                 Dashboard
             </button>
+            {currentUser?.admin === 1 && (
+                <button 
+                    onClick={() => handleModeSwitch('analytics')}
+                    className={analytics ? 'active' : ''}
+                >
+                    Analytics
+                </button>
+            )}
         </div>
     )
 }

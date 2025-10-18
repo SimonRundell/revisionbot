@@ -3,9 +3,11 @@ import axios from 'axios'
 import {Drawer, Spin} from 'antd'
 import CryptoJS from 'crypto-js'
 import SelectLocale from './SelectLocale'
+import AvatarManager from './AvatarManager'
+import AccessControlTree from './AccessControlTree'
 import { handleApiCall } from './utils/apiHelpers'
 
-function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
+function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorMessage,
                         setShowAdminManager, showAdminManager}) {
 
     const [isLoading, setIsLoading] = useState(false);
@@ -22,12 +24,30 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
         locale: '',
         avatar: '',
         avatarPreview: '',
-        admin: false
+        admin: false,
+        userAccess: {} // For storing access control permissions
     });
     const [bulkUploadModalVisible, setBulkUploadModalVisible] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [bulkUploadProgress, setBulkUploadProgress] = useState('');
     const [defaultPassword, setDefaultPassword] = useState('student123');
+    
+    // Filter states
+    const [userFilter, setUserFilter] = useState('');
+    const [departmentFilter, setDepartmentFilter] = useState('');
+    const [selectedFilterType, setSelectedFilterType] = useState('all'); // all, students, admins
+    
+    // Filter users function
+    const filteredUsers = users.filter(user => {
+        const matchesName = user.userName?.toLowerCase().includes(userFilter.toLowerCase()) || 
+                           user.email?.toLowerCase().includes(userFilter.toLowerCase());
+        const matchesDepartment = user.userLocation?.toLowerCase().includes(departmentFilter.toLowerCase());
+        const matchesType = selectedFilterType === 'all' || 
+                           (selectedFilterType === 'admins' && user.admin) ||
+                           (selectedFilterType === 'students' && !user.admin);
+        
+        return matchesName && matchesDepartment && matchesType;
+    });
 
   useEffect(() => {
     const apiCall = () => axios.post(
@@ -105,6 +125,18 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
 
     const showEditModal = (user) => {
         setUserToEdit(user);
+        
+        // Parse userAccess from JSON string if it exists
+        let userAccess = {};
+        if (user.userAccess) {
+            try {
+                userAccess = JSON.parse(user.userAccess);
+            } catch (error) {
+                console.error('Error parsing userAccess JSON:', error);
+                userAccess = {};
+            }
+        }
+        
         setEditForm({
             name: user.userName,
             email: user.email,
@@ -113,7 +145,8 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
             locale: user.userLocale,
             avatar: user.avatar,
             avatarPreview: user.avatar || '/default_avatar.png',
-            admin: Boolean(user.admin) // Convert to proper boolean (handles 0, 1, null, undefined)
+            admin: Boolean(user.admin), // Convert to proper boolean (handles 0, 1, null, undefined)
+            userAccess: userAccess
         });
         setEditModalVisible(true);
     };
@@ -129,48 +162,25 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
             locale: '',
             avatar: '',
             avatarPreview: '',
-            admin: false
+            admin: false,
+            userAccess: {}
         });
     };
 
-    // Handle file selection and convert to base64
-    const handleAvatarChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            // Check file size (limit to 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                setSendErrorMessage('Image file size must be less than 5MB');
-                return;
-            }
-            
-            // Check file type
-            if (!file.type.startsWith('image/')) {
-                setSendErrorMessage('Please select an image file');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64String = e.target.result;
-                setEditForm(prev => ({
-                    ...prev,
-                    avatar: base64String,
-                    avatarPreview: base64String
-                }));
-            };
-            reader.onerror = () => {
-                setSendErrorMessage('Error reading image file');
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    // Reset avatar to default
-    const resetAvatar = () => {
+    // Handle avatar change from AvatarManager component
+    const handleAvatarChange = (newAvatar) => {
         setEditForm(prev => ({
             ...prev,
-            avatar: null,
-            avatarPreview: '/default_avatar.png'
+            avatar: newAvatar,
+            avatarPreview: newAvatar || '/default_avatar.png'
+        }));
+    };
+
+    // Handle access control change from AccessControlTree component
+    const handleAccessControlChange = (newUserAccess) => {
+        setEditForm(prev => ({
+            ...prev,
+            userAccess: newUserAccess
         }));
     };
 
@@ -195,7 +205,8 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
             userLocation: editForm.department,
             userLocale: editForm.locale,
             avatar: editForm.avatar,
-            admin: editForm.admin ? 1 : 0
+            admin: editForm.admin ? 1 : 0,
+            userAccess: JSON.stringify(editForm.userAccess)
         };
         console.log("updating user with ", jsonData);
         console.log("editForm.admin type:", typeof editForm.admin, "value:", editForm.admin);
@@ -219,7 +230,8 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
                                 userLocation: editForm.department,
                                 userLocale: editForm.locale,
                                 avatar: editForm.avatar,
-                                admin: editForm.admin
+                                admin: editForm.admin,
+                                userAccess: JSON.stringify(editForm.userAccess)
                             }
                             : user
                     )
@@ -386,6 +398,62 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
                     </span>
                 </div>
 
+                {/* Search Filters */}
+                <div className="search-filters">
+                    <div className="filter-row">
+                        <div className="filter-group">
+                            <label>Search Students/Admins:</label>
+                            <input
+                                type="text"
+                                className="filter-input"
+                                placeholder="Search by name or email..."
+                                value={userFilter}
+                                onChange={(e) => setUserFilter(e.target.value)}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <label>Filter by Department/Class:</label>
+                            <input
+                                type="text"
+                                className="filter-input"
+                                placeholder="Search by class/department..."
+                                value={departmentFilter}
+                                onChange={(e) => setDepartmentFilter(e.target.value)}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <label>User Type:</label>
+                            <select
+                                className="filter-select"
+                                value={selectedFilterType}
+                                onChange={(e) => setSelectedFilterType(e.target.value)}
+                            >
+                                <option value="all">All Users</option>
+                                <option value="students">Students Only</option>
+                                <option value="admins">Admins Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    {(userFilter || departmentFilter || selectedFilterType !== 'all') && (
+                        <div className="filter-summary">
+                            Showing {filteredUsers.length} of {users.length} users
+                            {userFilter && <span className="filter-tag"> Name/Email: &quot;{userFilter}&quot;</span>}
+                            {departmentFilter && <span className="filter-tag"> Department: &quot;{departmentFilter}&quot;</span>}
+                            {selectedFilterType !== 'all' && <span className="filter-tag"> of type: {selectedFilterType}</span>}
+                            <button 
+                                className="clear-filters leftgap"
+                                onClick={() => {
+                                    setUserFilter('');
+                                    setDepartmentFilter('');
+                                    setSelectedFilterType('all');
+                                }}
+                            >
+                                Clear All Filters
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 <table border="1">
                     <thead>
                         <tr>
@@ -400,7 +468,7 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map(user => (
+                        {filteredUsers.map(user => (
                             <tr key={user.id}>
                                 <td>{user.id}</td>
                                 <td>{user.userName}</td>
@@ -539,35 +607,24 @@ function AdminManager({config, setSendSuccessMessage, setSendErrorMessage,
                                 <tr>
                                     <td>Avatar</td>
                                     <td>
-                                        <div className="avatar-container">
-                                            <img 
-                                                className="avatar-preview" 
-                                                src={editForm.avatarPreview || '/default_avatar.png'} 
-                                                alt="Avatar" 
-                                            />
-                                            <div className="avatar-controls">
-                                                <div className="file-input-wrapper topgap">
-                                                    <input 
-                                                        type="file" 
-                                                        id="edit-avatar-upload"
-                                                        className="file-input-hidden"
-                                                        accept="image/*" 
-                                                        onChange={handleAvatarChange}
-                                                    />
-                                                    <label htmlFor="edit-avatar-upload" className="file-input-button">
-                                                        Choose Image
-                                                    </label>
-                                                </div>
-                                                <br />
-                                                <button 
-                                                    type="button" 
-                                                    onClick={resetAvatar}
-                                                    className="avatar-reset-button"
-                                                >
-                                                    Reset to Default
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <AvatarManager 
+                                            currentAvatar={editForm.avatar}
+                                            onAvatarChange={handleAvatarChange}
+                                            setSendErrorMessage={setSendErrorMessage}
+                                            size={60}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Access Control</td>
+                                    <td>
+                                        <AccessControlTree 
+                                            config={config}
+                                            currentUser={currentUser}
+                                            userAccess={editForm.userAccess}
+                                            onAccessChange={handleAccessControlChange}
+                                            setSendErrorMessage={setSendErrorMessage}
+                                        />
                                     </td>
                                 </tr>
                             </tbody>

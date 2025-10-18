@@ -11,6 +11,8 @@ import Menu from './menu.jsx';
 import AdminSubjects from './adminSubjects.jsx';
 import StudentInterface from './StudentInterface.jsx';
 import AdminDashboard from './AdminDashboard.jsx';
+import PastAnswersViewer from './PastAnswersViewer.jsx';
+import AnalyticsModule from './AnalyticsModule.jsx';
 
 
 
@@ -24,6 +26,8 @@ function App() {
   const [showAdminManager, setShowAdminManager] = useState(false);
   const [quizBuilder, setQuizBuilder] = useState(false);
   const [studentMode, setStudentMode] = useState(false);
+  const [dashboard, setDashboard] = useState(false);
+  const [analytics, setAnalytics] = useState(false);
 
 
   useEffect(() => {
@@ -55,6 +59,23 @@ useEffect(() => {
     }
   }, [sendErrorMessage, messageApi]);
 
+  useEffect(() => {
+    if (!currentUser) {
+      setQuizBuilder(false);
+      setStudentMode(false);
+      setDashboard(false);
+      return;
+    }
+
+    if (currentUser.admin === 1) {
+      setDashboard(false);
+    } else {
+      setQuizBuilder(false);
+      setStudentMode(false);
+      setDashboard(true);
+    }
+  }, [currentUser]);
+
 
   return (
     <>
@@ -75,22 +96,26 @@ useEffect(() => {
             <div className="app-title-image">
               <img src="/title_bw.png" alt="AI Exam Revision Robot" />
             </div>
-            <div className="app-menu-container">
-              <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
-                    studentMode={studentMode} setStudentMode={setStudentMode}
-                    currentUser={currentUser} />
+            <div className="mobile-menu-row">
+              <div className="app-menu-container">
+                <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
+                      studentMode={studentMode} setStudentMode={setStudentMode}
+                      dashboard={dashboard} setDashboard={setDashboard}
+                      analytics={analytics} setAnalytics={setAnalytics}
+                      currentUser={currentUser} />
+              </div>
+              <AccountBlock config={config}
+                            currentUser={currentUser} 
+                            setCurrentUser={setCurrentUser}
+                            setShowAccountManager={setShowAccountManager} 
+                            showAccountManager={showAccountManager}
+                            showAdminManager={showAdminManager}
+                            setShowAdminManager={setShowAdminManager} />
             </div>
           </div>
           <div className="app-robot">
             <img src="/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
           </div>
-        <AccountBlock config={config}
-                      currentUser={currentUser} 
-                      setCurrentUser={setCurrentUser}
-                      setShowAccountManager={setShowAccountManager} 
-                      showAccountManager={showAccountManager}
-                      showAdminManager={showAdminManager}
-                      setShowAdminManager={setShowAdminManager} />
         
         </div>
 
@@ -113,16 +138,33 @@ useEffect(() => {
                             showAdminManager={showAdminManager} />
         )}
 
-      {quizBuilder && currentUser.admin === 1 && (
+      {quizBuilder && currentUser.admin === 1 && !dashboard && (
         <AdminSubjects config={config} currentUser={currentUser} 
                        setSendErrorMessage={setSendErrorMessage}
                        setSendSuccessMessage={setSendSuccessMessage} /> 
       )}
 
-      {studentMode && (
-        <StudentInterface 
-          userId={currentUser.id}
-          onBack={() => setStudentMode(false)}
+      {dashboard && (
+        currentUser.admin === 1 ? (
+          <AdminDashboard 
+            config={config}
+            currentUser={currentUser}
+            setSendErrorMessage={setSendErrorMessage}
+            setSendSuccessMessage={setSendSuccessMessage}
+          />
+        ) : (
+          <PastAnswersViewer 
+            userId={currentUser.id}
+            currentUser={currentUser}
+            config={config}
+            setSendErrorMessage={setSendErrorMessage}
+            setSendSuccessMessage={setSendSuccessMessage}
+          />
+        )
+      )}
+
+      {analytics && currentUser.admin === 1 && (
+        <AnalyticsModule 
           config={config}
           currentUser={currentUser}
           setSendErrorMessage={setSendErrorMessage}
@@ -130,7 +172,21 @@ useEffect(() => {
         />
       )}
 
-      {!quizBuilder && !studentMode && currentUser.admin === 1 && (
+      {studentMode && !dashboard && !analytics && (
+
+      <>     
+        <StudentInterface 
+          userId={currentUser.id}
+          // onBack={() => setStudentMode(false)}
+          config={config}
+          currentUser={currentUser}
+          setSendErrorMessage={setSendErrorMessage}
+          setSendSuccessMessage={setSendSuccessMessage}
+        />
+        </>
+      )}
+
+      {!quizBuilder && !studentMode && !dashboard && currentUser.admin === 1 && (
         <AdminDashboard 
           config={config}
           currentUser={currentUser}
@@ -138,8 +194,9 @@ useEffect(() => {
           setSendSuccessMessage={setSendSuccessMessage}
         />
       )}
-      </div>
 
+
+      </div>
       )}
 	<CMFloatAd color='#ffffff' />
     </>

@@ -3,6 +3,7 @@ import axios from 'axios'
 import {Drawer, Spin} from 'antd'
 import CryptoJS from 'crypto-js'
 import SelectLocale from './SelectLocale'
+import AvatarManager from './AvatarManager'
 import { parseApiResponse } from './utils/apiHelpers'
 
 function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMessage, setSendErrorMessage,
@@ -14,43 +15,12 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
     const [department, setDepartment] = useState(currentUser.userLocation)
     const [locale, setLocale] = useState(currentUser.userLocale)
     const [avatar, setAvatar] = useState(currentUser.avatar)
-    const [admin, setAdmin] = useState(currentUser.admin)
+    const [admin] = useState(currentUser.admin)
     const [isLoading, setIsLoading] = useState(false)
-    const [avatarPreview, setAvatarPreview] = useState(currentUser.avatar || '/default_avatar.png')
     
-    // Handle file selection and convert to base64
-    const handleAvatarChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            // Check file size (limit to 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                setSendErrorMessage('Image file size must be less than 5MB');
-                return;
-            }
-            
-            // Check file type
-            if (!file.type.startsWith('image/')) {
-                setSendErrorMessage('Please select an image file');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64String = e.target.result;
-                setAvatar(base64String);
-                setAvatarPreview(base64String);
-            };
-            reader.onerror = () => {
-                setSendErrorMessage('Error reading image file');
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    // Reset avatar to default
-    const resetAvatar = () => {
-        setAvatar(null);
-        setAvatarPreview('/default_avatar.png'); // Default avatar
+    // Handle avatar change from AvatarManager component
+    const handleAvatarChange = (newAvatar) => {
+        setAvatar(newAvatar);
     };
 
     const onClose = () => {
@@ -157,36 +127,12 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                     <tr>
                         <td>Avatar</td>
                         <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <img 
-                                    className="avatar" 
-                                    src={avatarPreview || '/default_avatar.png'} 
-                                    alt="Avatar" 
-                                    style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }}
-                                />
-                                <div>
-                                    <div className="file-input-wrapper" style={{ marginBottom: '5px' }}>
-                                        <input 
-                                            type="file" 
-                                            id="avatar-upload"
-                                            className="file-input-hidden"
-                                            accept="image/*" 
-                                            onChange={handleAvatarChange}
-                                        />
-                                        <label htmlFor="avatar-upload" className="file-input-button">
-                                            Choose Image
-                                        </label>
-                                    </div>
-                                    <br />
-                                    <button 
-                                        type="button" 
-                                        onClick={resetAvatar}
-                                        style={{ fontSize: '12px', padding: '2px 8px' }}
-                                    >
-                                        Reset to Default
-                                    </button>
-                                </div>
-                            </div>
+                            <AvatarManager 
+                                currentAvatar={avatar}
+                                onAvatarChange={handleAvatarChange}
+                                setSendErrorMessage={setSendErrorMessage}
+                                size={60}
+                            />
                         </td>
                     </tr>
                     <tr>

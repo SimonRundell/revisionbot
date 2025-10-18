@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
@@ -6,7 +6,7 @@ import PastAnswersViewer from './PastAnswersViewer';
 import renderAttachments from './utils/renderAttachments';
 import './App.css';
 
-const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
+const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
     const [subjects, setSubjects] = useState([]);
     const [topics, setTopics] = useState([]);
     const [questions, setQuestions] = useState([]);
@@ -24,6 +24,67 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
     // Past answers review state
     const [showPastAnswers, setShowPastAnswers] = useState(false);
 
+    // Helper function to parse user access permissions
+    const getUserAccess = useCallback(() => {
+        if (!currentUser || !currentUser.userAccess) {
+            return {};
+        }
+        try {
+            return typeof currentUser.userAccess === 'string' 
+                ? JSON.parse(currentUser.userAccess) 
+                : currentUser.userAccess;
+        } catch (error) {
+            console.error('Error parsing user access:', error);
+            return {};
+        }
+    }, [currentUser]);
+
+    // Helper function to filter subjects based on user access
+    const filterSubjectsByAccess = useCallback((allSubjects) => {
+        // Admin users can access everything
+        if (currentUser?.admin === 1) {
+            return allSubjects;
+        }
+
+        const userAccess = getUserAccess();
+        if (Object.keys(userAccess).length === 0) {
+            // If no access control is set, allow access to all subjects
+            return allSubjects;
+        }
+
+        return allSubjects.filter(subject => 
+            Object.prototype.hasOwnProperty.call(userAccess, subject.id.toString())
+        );
+    }, [currentUser, getUserAccess]);
+
+    // Helper function to filter topics based on user access
+    const filterTopicsByAccess = useCallback((allTopics, subjectId) => {
+        // Admin users can access everything
+        if (currentUser?.admin === 1) {
+            return allTopics;
+        }
+
+        const userAccess = getUserAccess();
+        const subjectAccess = userAccess[subjectId.toString()];
+
+        if (!subjectAccess) {
+            return []; // No access to this subject
+        }
+
+        if (subjectAccess === 'all') {
+            return allTopics; // Access to all topics in this subject
+        }
+
+        if (Array.isArray(subjectAccess)) {
+            // Access to specific topics only
+            return allTopics.filter(topic => 
+                subjectAccess.includes(topic.id.toString()) || subjectAccess.includes(topic.id)
+            );
+        }
+
+        return [];
+    }, [currentUser, getUserAccess]);
+
     // Load subjects on component mount
     useEffect(() => {
         // Fetch subjects from the server when the component mounts
@@ -33,7 +94,11 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
 
         handleApiCall(
             apiCall,
-            setSubjects,
+            (allSubjects) => {
+                // Filter subjects based on user access permissions
+                const filteredSubjects = filterSubjectsByAccess(allSubjects);
+                setSubjects(filteredSubjects);
+            },
             setIsLoading,
             setSendSuccessMessage,
             setSendErrorMessage,
@@ -41,16 +106,7 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
             'Failed to load subjects.'
         );
 
-
-    }, [userId, config.api, currentUser.token, setSendErrorMessage, setSendSuccessMessage]);
-
-    const handleShowPastAnswers = () => {
-        setShowPastAnswers(true);
-    };
-
-    const handleBackToPractice = () => {
-        setShowPastAnswers(false);
-    };
+    }, [userId, config.api, currentUser.token, setSendErrorMessage, setSendSuccessMessage, filterSubjectsByAccess]);
 
     const handleSubjectChange = (event) => {
         const subjectId = event.target.value;
@@ -73,7 +129,11 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
 
             handleApiCall(
                 apiCall,
-                setTopics,
+                (allTopics) => {
+                    // Filter topics based on user access permissions
+                    const filteredTopics = filterTopicsByAccess(allTopics, subjectId);
+                    setTopics(filteredTopics);
+                },
                 setIsLoading,
                 setSendSuccessMessage,
                 setSendErrorMessage,
@@ -223,17 +283,31 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
             <div class="ai-feedback-content">
                 <div class="ai-feedback-header">
                     <h2>AI Assessment & Feedback</h2>
-                    <button class="close-feedback" onclick="this.closest('.ai-feedback-modal').remove(); document.querySelector('.answer-modal').style.display = 'none';">×</button>
+                    <button class="close-feedback" id="close-feedback-btn">×</button>
                 </div>
                 <div class="ai-feedback-body">
                     ${feedback}
                 </div>
                 <div class="ai-feedback-footer">
-                    <button class="btn-primary" onclick="this.closest('.ai-feedback-modal').remove(); document.querySelector('.answer-modal').style.display = 'none';">Continue Studying</button>
+                    <button class="btn-primary" id="continue-studying-btn">Continue Studying</button>
                 </div>
             </div>
         `;
         document.body.appendChild(feedbackModal);
+
+        // Add event listeners to properly handle modal closing
+        const closeBtn = feedbackModal.querySelector('#close-feedback-btn');
+        const continueBtn = feedbackModal.querySelector('#continue-studying-btn');
+        
+        const handleClose = () => {
+            feedbackModal.remove();
+            setShowAnswerModal(false); // Properly reset the state
+            setSelectedQuestion(null); // Reset selected question
+            setStudentAnswer(''); // Reset answer
+        };
+
+        closeBtn.addEventListener('click', handleClose);
+        continueBtn.addEventListener('click', handleClose);
     };
 
 
@@ -247,26 +321,13 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
           </div>}
         <div className="student-interface">
             <div className="interface-header">
-                <h1>{showPastAnswers ? 'Review Past Answers' : 'Practice Questions'}</h1>
-                <div className="interface-buttons">
-                    {!showPastAnswers ? (
-                        <>
-                            <button className="btn-secondary" onClick={handleShowPastAnswers}>Review Past Answers</button>
-                            <button className="btn-secondary" onClick={onBack}>Back to Main Menu</button>
-                        </>
-                    ) : (
-                        <>
-                            <button className="btn-secondary" onClick={handleBackToPractice}>Back to Practice</button>
-                            <button className="btn-secondary" onClick={onBack}>Back to Main Menu</button>
-                        </>
-                    )}
-                </div>
+                <h2>Practice Questions</h2>
             </div>
 
             {!showPastAnswers ? (
                 // Practice Questions Section
                 <>
-            <div className="navigation-breadcrumb">
+            {/* <div className="navigation-breadcrumb">
                 <span 
                     className={selectedSubject ? 'breadcrumb-active' : 'breadcrumb-current'}
                     onClick={() => {
@@ -301,7 +362,7 @@ const StudentInterface = ({ userId, onBack, config, currentUser, setSendErrorMes
                         <span className="breadcrumb-current">{selectedTopic.topic || selectedTopic.name}</span>
                     </>
                 )}
-            </div>
+            </div> */}
 
             {isLoading && <Spin size="large" />}
             
