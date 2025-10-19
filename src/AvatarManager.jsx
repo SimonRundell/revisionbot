@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Modal } from 'antd';
 
+/****************************************************************
+ * AvatarManager Component
+ * Renders the avatar selection and management options for the user.
+ * Includes image upload, preview, and reset to default.
+*****************************************************************/
+
 function AvatarManager  ({ currentAvatar, onAvatarChange, setSendErrorMessage, size = 60, className = "avatar"}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 

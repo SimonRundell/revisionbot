@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { handleApiCall, parseApiResponse } from './utils/apiHelpers';
 
-const AccessControlTree = ({ 
+/****************************************************************
+ * AccessControlTree Component
+ * Renders the access control tree for subjects and topics.
+*****************************************************************/
+
+function AccessControlTree ({ 
     currentUser, 
     config, 
     userAccess = {}, 
     onAccessChange, 
     setSendErrorMessage 
-}) => {
+}) {
     const [subjects, setSubjects] = useState([]);
     const [topics, setTopics] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -170,7 +175,7 @@ const AccessControlTree = ({
             <div className="access-control-header">
                 <h4>Subject & Topic Access Control</h4>
                 <p style={{ fontSize: '12px', color: '#666', margin: '5px 0' }}>
-                    Select which subjects and topics this user can access. Admin users can access everything by default.
+                    Select which subjects and topics Student user can access. Admin users can access everything by default.
                 </p>
             </div>
             

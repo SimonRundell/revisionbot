@@ -4,10 +4,12 @@ import {
     getFileIconMeta
 } from './fileAttachments';
 
-/**
+/**************************************************************************************
+ * 
  * Render attachment previews/download links for question and response content.
  * Accepts `attachments` in either serialized JSON string form or as an array.
- */
+ * 
+ **************************************************************************************/
 const renderAttachments = (attachments) => {
     if (!attachments) {
         return null;

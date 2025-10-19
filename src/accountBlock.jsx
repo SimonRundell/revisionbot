@@ -1,4 +1,7 @@
-//import {useState} from 'react'
+/****************************************************************
+ * AccountBlock Component
+ * Renders the account information and management options for the user.
+*****************************************************************/
 
 function AccountBlock({currentUser, setCurrentUser,
                         setShowAccountManager, showAccountManager,
@@ -19,4 +22,4 @@ function AccountBlock({currentUser, setCurrentUser,
     )
 }
 
-export default AccountBlock
+export default AccountBlock;

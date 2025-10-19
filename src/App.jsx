@@ -14,7 +14,10 @@ import AdminDashboard from './AdminDashboard.jsx';
 import PastAnswersViewer from './PastAnswersViewer.jsx';
 import AnalyticsModule from './AnalyticsModule.jsx';
 
-
+/****************************************************************
+ * App Component
+ * Renders the main application layout and components.
+*****************************************************************/
 
 function App() {
   const [config, setConfig] = useState(null);
@@ -36,7 +39,7 @@ function App() {
     axios.get(`/.config.json?t=${timestamp}`)
       .then(response => {
         setConfig(response.data);
-        console.log('Config loaded:', response.data);
+        // console.log('Config loaded:', response.data);
         messageApi.success('Config loaded');
       })
       .catch(error => {

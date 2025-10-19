@@ -58,6 +58,15 @@ if (empty($defaultPassword)) {
     exit;
 }
 
+// Get the user access settings, default to subject 1 with all access
+$userAccess = isset($receivedData['userAccess']) ? $receivedData['userAccess'] : '{"1":"all"}';
+
+// Validate userAccess is valid JSON
+if (!empty($userAccess) && json_decode($userAccess) === null) {
+    send_response('Invalid userAccess format. Must be valid JSON.', 400);
+    exit;
+}
+
 // Hash the default password using MD5 to match existing login expectations
 $hashedPassword = md5($defaultPassword);
 
@@ -146,8 +155,8 @@ try {
     // Prepare statements
     $checkUserStmt = $mysqli->prepare("SELECT id FROM tbluser WHERE email = ?");
     $insertUserStmt = $mysqli->prepare("
-        INSERT INTO tbluser (email, passwordHash, userName, userLocation, userLocale, admin, userEmailValidated) 
-        VALUES (?, ?, ?, ?, ?, 0, 0)
+        INSERT INTO tbluser (email, passwordHash, userName, userLocation, userLocale, admin, userEmailValidated, userAccess) 
+        VALUES (?, ?, ?, ?, ?, 0, 0, ?)
     ");
     
     $newUsers = [];
@@ -165,12 +174,13 @@ try {
         
         // Insert new user
         $insertUserStmt->bind_param(
-            "sssss",
+            "ssssss",
             $userData['email'],
             $hashedPassword,
             $userData['name'],
             $userData['department'],
-            $userData['locale']
+            $userData['locale'],
+            $userAccess
         );
         
         if ($insertUserStmt->execute()) {

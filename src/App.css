@@ -1,3 +1,8 @@
+/****************************************************************
+ * App.css
+ * Styles for the main application layout and components.
+*****************************************************************/
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -150,14 +155,35 @@ input, select, textarea {
   padding: 2em;
 }
 
+.motd {
+  background-color: #333;
+  font-size: 0.6em;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin: 10px auto 20px auto;
+  width: 50vw;
+  min-width: 320px;
+  max-width: 500px;
+  color: #ffffff;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.motd h2 {
+  margin-top: 0;
+  color: #ffffff;
+}
+
 .login-container {
   margin: 0 auto;
   width: 50vw;
-  margin-top: 320px; /* Space for title and robot */
+  margin-top: 40px; 
   min-width: 320px;
   max-width: 500px;
   z-index: 99;
   position: relative;
+  box-sizing: border-box;
 }
 
 .app-header {
@@ -2978,6 +3004,27 @@ BULK UPLOAD MODAL AND BUTTON STYLES
   background-color: #73d13d;
 }
 
+.bulk-upload-access-section {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.bulk-upload-access-section h4 {
+  margin: 0 0 10px 0;
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.bulk-upload-access-description {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
 /************************************************
 
 MOBILE RESPONSIVENESS FOR BULK UPLOAD
@@ -3031,14 +3078,14 @@ LOGIN PAGE VISUAL ENHANCEMENTS
 
 /* Title image positioning */
 .login-title {
-  position: fixed;
-  top: 0px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
+  position: relative;
+  top: 20px;
+  text-align: center;
+  z-index: 10;
   max-width: 400px;
   width: 60vw;
   min-width: 280px;
+  margin: 0 auto 20px auto;
 }
 
 .login-title img {
@@ -3052,13 +3099,11 @@ LOGIN PAGE VISUAL ENHANCEMENTS
   position: absolute;
   top: -85px;
   right: -20px;
-  z-index: 99;
+  z-index: 2000;
   width: 120px;
   height: auto;
   pointer-events: none;
-  z-index: 2000;
   filter: drop-shadow(0 6px 8px rgba(0,0,0,0.5));
-  filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));
 }
 
 .login-robot img {
@@ -3071,14 +3116,20 @@ LOGIN PAGE VISUAL ENHANCEMENTS
 /* Responsive adjustments for login visuals */
 @media (max-width: 768px) {
   .login-title {
-    top: 20px;
     max-width: 200px;
     width: 60vw;
+    margin-bottom: 10px;
   }
   
   .login-container {
-    margin-top: 150px;
+    margin-top: 60px;
     width: 85vw;
+  }
+  
+  .motd {
+    width: 85vw;
+    max-width: 85vw;
+    min-width: auto;
   }
   
   .login-robot {
@@ -3090,9 +3141,9 @@ LOGIN PAGE VISUAL ENHANCEMENTS
 
 @media (max-width: 480px) {
   .login-title {
-    top: 0px;
     max-width: 80px !important; /* Force much smaller title */
     width: 25vw !important;
+    margin-bottom: 5px;
   }
   
   .login-title img {
@@ -3101,13 +3152,21 @@ LOGIN PAGE VISUAL ENHANCEMENTS
   }
   
   .login-container {
-    margin-top: 200px !important; /* Much lower positioning */
+    margin-top: 80px !important; /* Reduced positioning */
     width: 85vw !important; /* Smaller width to fit */
     max-width: 85vw !important;
     min-width: auto !important;
     padding: 0 !important;
     margin-left: auto !important;
     margin-right: auto !important;
+  }
+  
+  .motd {
+    width: 85vw !important;
+    max-width: 85vw !important;
+    min-width: auto !important;
+    font-size: 0.7em !important;
+    padding: 0.8em !important;
   }
   
   .login-robot {

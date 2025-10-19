@@ -4,14 +4,24 @@ import CryptoJS from 'crypto-js';
 import SelectLocale from './SelectLocale';
 import { parseApiResponse } from './utils/apiHelpers';
 
+/****************************************************************
+ * Register Component
+ * Renders the registration form for new users.
+ * Includes fields for email, password, username, and avatar selection.
+ * Currently not in use as registration is disabled and users
+ * are added via bulk upload only.
+*****************************************************************/
+
 function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccessMessage }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [userName, setUserName] = useState('');
     const [userLocation, setUserLocation] = useState('');
     const [userLocale, setUserLocale] = useState('en-GB');
-    const [avatar, setAvatar] = useState('/default_avatar.png');
-    const [admin, setAdmin] = useState(false);
+    
+    // Constants for registration defaults (not user-configurable in this form)
+    const avatar = '/default_avatar.png';
+    const admin = false;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,11 +44,11 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
             admin: admin ? 1 : 0
         };
 
-        console.log("JSONData (secure registration):", { 
-            email: jsonData.email, 
-            userName: jsonData.userName,
-            hasClientHash: !!jsonData.clientHash 
-        });
+        // console.log("JSONData (secure registration):", { 
+        //     email: jsonData.email, 
+        //     userName: jsonData.userName,
+        //     hasClientHash: !!jsonData.clientHash 
+        // });
         
         try {
             const response = await axios.post(config.api + '/InsertUser.php', jsonData);
@@ -65,7 +75,7 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
     const sendRegisterEmail = async (email, password) => {
     
     const link = `${config.api}/validateEmail.php?email=${email}&hash=${CryptoJS.MD5(password).toString()}`;
-    console.log("Validation link:", link);
+    // console.log("Validation link:", link);
     const htmlRegister = await fetch('/templates/registration.html').then(res => res.text());
 
     const emailData = {
@@ -75,10 +85,10 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
         link: link
     };
 
-    console.log("Email Data:", emailData);
+    // console.log("Email Data:", emailData);
 
     // EMAIL SENDING DISABLED - Skip email verification for now
-    console.log("Email sending disabled - would send:", emailData);
+    // console.log("Email sending disabled - would send:", emailData);
     setSendSuccessMessage("Registration completed successfully. Email verification disabled.");
     setShowRegister(false);
     

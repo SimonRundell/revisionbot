@@ -7,6 +7,12 @@ import AvatarManager from './AvatarManager'
 import AccessControlTree from './AccessControlTree'
 import { handleApiCall } from './utils/apiHelpers'
 
+/****************************************************************
+ * AdminManager Component
+ * Admin management interface for managing user accounts, including
+ * creating, editing, deleting, and bulk uploading users.
+*****************************************************************/
+
 function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorMessage,
                         setShowAdminManager, showAdminManager}) {
 
@@ -31,6 +37,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
     const [selectedFile, setSelectedFile] = useState(null);
     const [bulkUploadProgress, setBulkUploadProgress] = useState('');
     const [defaultPassword, setDefaultPassword] = useState('student123');
+    const [bulkUploadUserAccess, setBulkUploadUserAccess] = useState({"1": "all"}); // Default access to subject 1
     
     // Filter states
     const [userFilter, setUserFilter] = useState('');
@@ -87,7 +94,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         setIsLoading(true);
 
         const jsonData = { id: userToDelete.id };
-        console.log ("Deleting user with ", jsonData)
+        // console.log ("Deleting user with ", jsonData)
         
         try {
             const response = await axios.post(
@@ -101,7 +108,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             );
 
             const data = response.data;
-            console.log('Delete User Response:', data);
+            // console.log('Delete User Response:', data);
 
             if (data.status_code === 200) {
                 setUsers(users.filter(user => user.id !== userToDelete.id));
@@ -208,9 +215,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             admin: editForm.admin ? 1 : 0,
             userAccess: JSON.stringify(editForm.userAccess)
         };
-        console.log("updating user with ", jsonData);
-        console.log("editForm.admin type:", typeof editForm.admin, "value:", editForm.admin);
-        console.log("admin conversion result:", editForm.admin ? 1 : 0);
+        // console.log("updating user with ", jsonData);
+        // console.log("editForm.admin type:", typeof editForm.admin, "value:", editForm.admin);
+        // console.log("admin conversion result:", editForm.admin ? 1 : 0);
 
         try {
             const response = await axios.post(config.api + '/updateUser.php', jsonData, {
@@ -286,15 +293,16 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             const formData = new FormData();
             formData.append('csvFile', selectedFile);
             formData.append('defaultPassword', defaultPassword);
+            formData.append('userAccess', JSON.stringify(bulkUploadUserAccess));
 
             // Debug logging
-            console.log('Current config:', config);
-            console.log('Bulk upload request:', {
-                url: config.api + '/bulkUploadUsers.php',
-                file: selectedFile.name,
-                password: defaultPassword,
-                fileSize: selectedFile.size
-            });
+            //console.log('Current config:', config);
+            // console.log('Bulk upload request:', {
+            //     url: config.api + '/bulkUploadUsers.php',
+            //     file: selectedFile.name,
+            //     password: defaultPassword,
+            //     fileSize: selectedFile.size
+            // });
 
             const response = await axios.post(
                 config.api + '/bulkUploadUsers.php',
@@ -306,9 +314,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 }
             );
 
-            console.log('Upload response:', response.data);
-            console.log('Response type:', typeof response.data);
-            console.log('Response keys:', Object.keys(response.data));
+            // console.log('Upload response:', response.data);
+            // console.log('Response type:', typeof response.data);
+            // console.log('Response keys:', Object.keys(response.data));
             
             const responseData = response.data;
             
@@ -317,9 +325,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                              responseData.created_count > 0 || 
                              (responseData.message && responseData.message.includes('completed'));
             
-            console.log('Is success?', isSuccess);
-            console.log('Success field:', responseData.success);
-            console.log('Created count:', responseData.created_count);
+            // console.log('Is success?', isSuccess);
+            // console.log('Success field:', responseData.success);
+            // console.log('Created count:', responseData.created_count);
             
             if (isSuccess) {
                 const createdCount = responseData.created_count || 0;
@@ -663,14 +671,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             </p>
                             <code className="bulk-upload-format-code">
                                 email,name,department,locale<br/>
-                                john.doe@school.edu,John Doe,Mathematics,en-US<br/>
-                                jane.smith@school.edu,Jane Smith,Science,en-US
+                                john.doe@school.edu,John Doe,Mathematics,en-GB<br/>
+                                jane.smith@school.edu,Jane Smith,Science,en-GB
                             </code>
                             <p className="bulk-upload-format-notes">
                                 • <strong>email</strong>: Student&apos;s email address (required, will be used for login)<br/>
                                 • <strong>name</strong>: Full name of the student (required)<br/>
                                 • <strong>department</strong>: Department or class (optional)<br/>
-                                • <strong>locale</strong>: Language preference like en-US, fr-FR (optional, defaults to en-US)
+                                • <strong>locale</strong>: Language preference like en-GB, en-US, fr-FR (optional, defaults to en-GB)
                             </p>
                         </div>
 
@@ -715,6 +723,20 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                 </tr>
                             </tbody>
                         </table>
+
+                        <div className="bulk-upload-access-section">
+                            <h4>Subject & Topic Access</h4>
+                            <p className="bulk-upload-access-description">
+                                Configure which subjects and topics the new students will have access to. By default, students get access to all topics in Computing.
+                            </p>
+                            <AccessControlTree
+                                currentUser={currentUser}
+                                config={config}
+                                userAccess={bulkUploadUserAccess}
+                                onAccessChange={setBulkUploadUserAccess}
+                                setSendErrorMessage={setSendErrorMessage}
+                            />
+                        </div>
 
                         {bulkUploadProgress && (
                             <div className={`bulk-upload-progress-container ${bulkUploadProgress.includes('failed') ? 'bulk-upload-progress-error' : 'bulk-upload-progress-success'}`}>

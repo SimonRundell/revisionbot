@@ -1,6 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import {useState, useEffect} from 'react';
 
-// This version modified for Exeter College by Simon Rundell - Dept of ITDD
+/****************************************************************
+ * CMFloatAd Component
+ * Renders a floating advertisement banner with customizable colors.
+ * This version modified for Exeter College by Simon Rundell - Dept of ITDD
+*****************************************************************/
 
 function CMFloatAd({color = '#ffffff', bgColor = 'transparent'}) {
     const [isHovered, setIsHovered] = useState(false);

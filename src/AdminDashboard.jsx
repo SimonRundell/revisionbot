@@ -4,7 +4,13 @@ import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import './App.css';
 
-const AdminDashboard = ({ config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
+/****************************************************************************
+ * AdminDashboard Component
+ * Renders the admin dashboard for managing student responses.
+ * Includes filtering, viewing, and providing feedback on student answers.
+****************************************************************************/
+
+function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSuccessMessage }) {
     const [allResponses, setAllResponses] = useState([]);
     const [filteredResponses, setFilteredResponses] = useState([]);
     const [selectedResponse, setSelectedResponse] = useState(null);

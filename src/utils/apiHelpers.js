@@ -1,8 +1,8 @@
-/**
- * Utility functions for handling API responses
- */
+/****************************************************************************************
+ 
+Utility functions for handling API responses
 
-/**
+
  * Parses the standard backend response format: {message: "JSON_STRING", status_code: 200}
  * @param {Object} responseData - The response data from axios
  * @param {Function} setSendSuccessMessage - Success message setter function
@@ -10,7 +10,8 @@
  * @param {string} successMessage - Message to show on success (optional)
  * @param {string} errorMessage - Message to show on error (optional)
  * @returns {Object|Array|null} - Parsed data or null if error
- */
+ *
+ ***************************************************************************************/
 export const parseApiResponse = (
     responseData, 
     setSendSuccessMessage, 
@@ -27,6 +28,7 @@ export const parseApiResponse = (
                 parsedData = JSON.parse(responseData.message);
             } catch (jsonError) {
                 // If JSON parsing fails, treat as plain string response
+                // console.log(jsonError)
                 parsedData = responseData.message;
             }
             
@@ -49,7 +51,8 @@ export const parseApiResponse = (
     }
 };
 
-/**
+/******************************************************************************
+ * 
  * Handles common API call pattern with loading state and error handling
  * @param {Function} apiCall - The axios API call function
  * @param {Function} setData - Function to set the parsed data
@@ -58,7 +61,8 @@ export const parseApiResponse = (
  * @param {Function} setSendErrorMessage - Error message setter
  * @param {string} successMessage - Success message
  * @param {string} errorMessage - Error message
- */
+ * 
+ *****************************************************************************/
 export const handleApiCall = async (
     apiCall,
     setData,

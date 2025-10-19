@@ -6,7 +6,18 @@ import PastAnswersViewer from './PastAnswersViewer';
 import renderAttachments from './utils/renderAttachments';
 import './App.css';
 
-const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
+/****************************************************************
+ * StudentInterface Component
+ * Enablkes students to practice questions based on subjects and topics.
+ * Integrates with AI for answer assessment and feedback.
+*****************************************************************/
+
+function StudentInterface ({ userId, 
+                             config, 
+                             currentUser, 
+                            setSendErrorMessage, 
+                            setSendSuccessMessage }) {
+
     const [subjects, setSubjects] = useState([]);
     const [topics, setTopics] = useState([]);
     const [questions, setQuestions] = useState([]);
@@ -19,11 +30,8 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [sessionId] = useState(() => 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
+    const [sessionId] = useState(() => 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11));
     
-    // Past answers review state
-    const [showPastAnswers, setShowPastAnswers] = useState(false);
-
     // Helper function to parse user access permissions
     const getUserAccess = useCallback(() => {
         if (!currentUser || !currentUser.userAccess) {
@@ -116,7 +124,7 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
         
         if (subjectId) {
             // Fetch topics for the selected subject
-            console.log("Fetching topics for subject ID:", subjectId);
+            // console.log("Fetching topics for subject ID:", subjectId);
             const apiCall = () => axios.post(config.api + '/getTopics.php', 
                 { subjectid: subjectId },
                 {
@@ -153,7 +161,7 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
 
         if (topicId) {
             // Fetch questions for the selected topic
-            console.log("Fetching questions for topic ID:", topicId);
+            // console.log("Fetching questions for topic ID:", topicId);
             const apiCall = () => axios.post(config.api + '/getQuestions.php',
                 { topicid: topicId },
                 {
@@ -206,7 +214,7 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
             sessionId: sessionId
         };
 
-        console.log("Submitting response:", jsonData);
+        // console.log("Submitting response:", jsonData);
 
         try {
             // Submit response to database
@@ -225,7 +233,7 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
                     useranswer: studentAnswer
                 };
 
-                console.log("Requesting AI feedback with:", jsonData);
+                // console.log("Requesting AI feedback with:", jsonData);
 
                 const aiResponse = await axios.post(`${config.api}/geminiAPI.php`, jsonData, {
                     headers: { 
@@ -234,7 +242,7 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
                     }
                 });
 
-                console.log("Full AI Response received:", aiResponse.data);
+                // ("Full AI Response received:", aiResponse.data);
 
                 if (aiResponse.data.message) {
                     // Update response with AI feedback
@@ -313,189 +321,154 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
 
     return (
         <>
-        {isLoadingAI && <div className="central-overlay-spinner">            
-          <div className="spinner-text">&nbsp;&nbsp;
-              <Spin size="large" />
-              Checking answer with AI...
-            </div> 
-          </div>}
-        <div className="student-interface">
-            <div className="interface-header">
-                <h2>Practice Questions</h2>
-            </div>
+            {isLoadingAI && (
+                <div className="central-overlay-spinner">
+                    <div className="spinner-text">&nbsp;&nbsp;
+                        <Spin size="large" />
+                        Checking answer with AI...
+                    </div>
+                </div>
+            )}
 
-            {!showPastAnswers ? (
-                // Practice Questions Section
-                <>
-            {/* <div className="navigation-breadcrumb">
-                <span 
-                    className={selectedSubject ? 'breadcrumb-active' : 'breadcrumb-current'}
-                    onClick={() => {
-                        if (selectedSubject) {
-                            setSelectedSubject(null);
-                            setSelectedTopic(null);
-                            setQuestions([]);
-                        }
-                    }}
-                >
-                    Subjects
-                </span>
-                {selectedSubject && (
-                    <>
-                        <span className="breadcrumb-separator"> › </span>
-                        <span 
-                            className={selectedTopic ? 'breadcrumb-active' : 'breadcrumb-current'}
-                            onClick={() => {
-                                if (selectedTopic) {
-                                    setSelectedTopic(null);
-                                    setQuestions([]);
-                                }
-                            }}
-                        >
-                            {selectedSubject.subject || selectedSubject.name}
-                        </span>
-                    </>
-                )}
-                {selectedTopic && (
-                    <>
-                        <span className="breadcrumb-separator"> › </span>
-                        <span className="breadcrumb-current">{selectedTopic.topic || selectedTopic.name}</span>
-                    </>
-                )}
-            </div> */}
+            <div className="student-interface">
+                <div className="interface-header">
+                    <h2>Practice Questions</h2>
+                </div>
 
-            {isLoading && <Spin size="large" />}
-            
-            <div className="subject-dropdown-container">
-                <label htmlFor="subject-select">Subject:</label>
-                <select 
-                    id="subject-select"
-                    value={selectedSubject} 
-                    onChange={handleSubjectChange}
-                    className="subject-dropdown"
-                >
-                    <option readOnly value="">-- Select a Subject --</option>
-                    {subjects.map(subject => (
-                        <option key={subject.id} value={subject.id}>
-                            {subject.subject}
-                        </option>
-                    ))}
-                </select>
-            </div>
+                {isLoading && <Spin size="large" />}
 
-            {selectedSubject && topics.length > 0 && (
                 <div className="subject-dropdown-container">
-                    <label htmlFor="topic-select">Topic:</label>
-                    <select 
-                        id="topic-select"
-                        value={selectedTopic} 
-                        onChange={handleTopicChange}
+                    <label htmlFor="subject-select">Subject:</label>
+                    <select
+                        id="subject-select"
+                        value={selectedSubject}
+                        onChange={handleSubjectChange}
                         className="subject-dropdown"
                     >
-                        <option readOnly value="">-- Select a Topic --</option>
-                        {topics.map(topic => (
-                            <option key={topic.id} value={topic.id}>
-                                {topic.topic}
+                        <option readOnly value="">-- Select a Subject --</option>
+                        {subjects.map(subject => (
+                            <option key={subject.id} value={subject.id}>
+                                {subject.subject}
                             </option>
                         ))}
                     </select>
                 </div>
-            )}
 
-            {selectedTopic && questions.length > 0 && (
-                <div className="questions-grid">
-                    <h2>Practice Questions</h2>
-                    <div className="questions-list">
-                        {questions.map((question, index) => (
-                            <div 
-                                key={question.id} 
-                                className="question-item"
-                                onClick={() => handleQuestionSelect(question)}
-                            >
-                                <div className="question-number">Q{index + 1}</div>
-                                <div className="question-preview">
-                                    <div className="question-text">
-                                        {question.question.length > 150 
-                                            ? question.question.substring(0, 150) + '...'
-                                            : question.question
-                                        }
-                                    </div>
-                                    {question.attachments && (
-                                        <div className="attachment-indicator">
-                                            📎 Has attachments
+                {selectedSubject && topics.length > 0 && (
+                    <div className="subject-dropdown-container">
+                        <label htmlFor="topic-select">Topic:</label>
+                        <select
+                            id="topic-select"
+                            value={selectedTopic}
+                            onChange={handleTopicChange}
+                            className="subject-dropdown"
+                        >
+                            <option readOnly value="">-- Select a Topic --</option>
+                            {topics.map(topic => (
+                                <option key={topic.id} value={topic.id}>
+                                    {topic.topic}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {selectedTopic && questions.length > 0 && (
+                    <div className="questions-grid">
+                        <h2>Practice Questions</h2>
+                        <div className="questions-list">
+                            {questions.map((question, index) => (
+                                <div
+                                    key={question.id}
+                                    className="question-item"
+                                    onClick={() => handleQuestionSelect(question)}
+                                >
+                                    <div className="question-number">Q{index + 1}</div>
+                                    <div className="question-preview">
+                                        <div className="question-text">
+                                            {question.question.length > 150
+                                                ? question.question.substring(0, 150) + '...'
+                                                : question.question
+                                            }
                                         </div>
-                                    )}
-                                </div>
-                                <div className="question-status">
-                                    <span className="start-arrow">→</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {showAnswerModal && selectedQuestion && (
-                <div className="answer-modal">
-                    <div className="answer-modal-content">
-                        <div className="answer-modal-header">
-                            <h2>Answer Question</h2>
-                            <button 
-                                className="close-modal"
-                                onClick={() => setShowAnswerModal(false)}
-                            >
-                                ×
-                            </button>
-                        </div>
-                        
-                        <div className="answer-modal-body">
-                            <div className="question-section">
-                                <h3>Question:</h3>
-                                <div className="question-content">
-                                    {selectedQuestion.question}
-                                </div>
-                                
-                                {selectedQuestion.attachments  ? (
-                                    <div className="attachments-section">
-                                        <h4>Attachments:</h4>
-                                        {renderAttachments(selectedQuestion.attachments)}
+                                        {question.attachments && (
+                                            <div className="attachment-indicator">
+                                                📎 Has attachments
+                                            </div>
+                                        )}
                                     </div>
-                                ) : (<p>No attachments available</p>)}
-                            </div>
-                            
-                            <div className="answer-section">
-                                <h3>Your Answer:</h3>
-                                <textarea
-                                    value={studentAnswer}
-                                    onChange={(e) => setStudentAnswer(e.target.value)}
-                                    placeholder="Type your answer here..."
-                                    className="answer-textarea"
-                                    rows="10"
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="answer-modal-footer">
-                            <button 
-                                className="btn-secondary"
-                                onClick={() => setShowAnswerModal(false)}
-                                disabled={isSubmitting}
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                className="btn-primary"
-                                onClick={handleSubmitAnswer}
-                                disabled={isSubmitting || !studentAnswer.trim()}
-                            >
-                                {isSubmitting ? 'Processing...' : 'Submit Answer'}
-                            </button>
+                                    <div className="question-status">
+                                        <span className="start-arrow">→</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            )}
-                </>
-            ) : (
+                )}
+
+                {showAnswerModal && selectedQuestion && (
+                    <div className="answer-modal">
+                        <div className="answer-modal-content">
+                            <div className="answer-modal-header">
+                                <h2>Answer Question</h2>
+                                <button
+                                    className="close-modal"
+                                    onClick={() => setShowAnswerModal(false)}
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div className="answer-modal-body">
+                                <div className="question-section">
+                                    <h3>Question:</h3>
+                                    <div className="question-content">
+                                        {selectedQuestion.question}
+                                    </div>
+
+                                    {selectedQuestion.attachments ? (
+                                        <div className="attachments-section">
+                                            <h4>Attachments:</h4>
+                                            {renderAttachments(selectedQuestion.attachments)}
+                                        </div>
+                                    ) : (<p>No attachments available</p>)}
+                                </div>
+
+                                <div className="answer-section">
+                                    <h3>Your Answer:</h3>
+                                    <textarea
+                                        value={studentAnswer}
+                                        onChange={(e) => setStudentAnswer(e.target.value)}
+                                        placeholder="Type your answer here..."
+                                        className="answer-textarea"
+                                        rows="10"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="answer-modal-footer">
+                                <button
+                                    className="btn-secondary"
+                                    onClick={() => setShowAnswerModal(false)}
+                                    disabled={isSubmitting}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="btn-primary"
+                                    onClick={handleSubmitAnswer}
+                                    disabled={isSubmitting || !studentAnswer.trim()}
+                                >
+                                    {isSubmitting ? 'Processing...' : 'Submit Answer'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Show PastAnswersViewer when no subject is selected (adjust condition as needed) */}
+            {!selectedSubject && (
                 <PastAnswersViewer
                     userId={userId}
                     currentUser={currentUser}
@@ -504,8 +477,6 @@ const StudentInterface = ({ userId, config, currentUser, setSendErrorMessage, se
                     setSendSuccessMessage={setSendSuccessMessage}
                 />
             )}
-
-        </div>
         </>
     );
 };

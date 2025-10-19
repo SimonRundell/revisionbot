@@ -4,6 +4,12 @@ import {Spin} from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import { formatAttachmentSize, getFileIconMeta } from './utils/fileAttachments';
 
+/****************************************************************
+ * AdminSubjects Component
+ * Renders the subject management interface for the admin.
+ * Includes subject, topic, and question management.
+*****************************************************************/
+
 function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccessMessage}) {
 
     const [subjects, setSubjects] = useState([]);
@@ -74,7 +80,7 @@ const handleSubjectChange = (event) => {
     
     if (subjectId) {
         // Fetch topics for the selected subject
-        console.log("Fetching Subjects for subject ID:", subjectId);
+        // console.log("Fetching Subjects for subject ID:", subjectId);
         const apiCall = () => axios.post(config.api + '/getTopics.php', 
             { subjectid: subjectId },
             {
@@ -114,7 +120,7 @@ const handleTopicChange = (event) => {
 
     if (topicId) {
         // Fetch questions for the selected topic
-        console.log("Fetching questions for topic ID:", topicId);
+        // console.log("Fetching questions for topic ID:", topicId);
         const apiCall = () => axios.post(config.api + '/getQuestions.php',
             { topicid: topicId },
             {
@@ -204,7 +210,7 @@ const handleCreateSubject = async () => {
     }
 
     const jsonData = { subject: newSubject.trim() };
-    console.log("Creating subject with data:", jsonData);
+    // console.log("Creating subject with data:", jsonData);
 
     const apiCall = () => axios.post(config.api + '/createSubject.php',
         jsonData,
@@ -246,7 +252,7 @@ const handleCreateTopic = async () => {
     }
 
     const jsonData = { topic: newTopic.trim(), subjectid: parseInt(newTopicSubject) };
-    console.log("Creating topic with data:", jsonData);
+    // console.log("Creating topic with data:", jsonData);
 
     const apiCall = () => axios.post(config.api + '/createTopic.php',
         jsonData,
@@ -303,7 +309,7 @@ const handleCreateQuestion = async () => {
         attachments: newQuestionFiles
     };
 
-    console.log("Creating question with data:", jsonData);
+    // console.log("Creating question with data:", jsonData);
 
     const apiCall = () => axios.post(config.api + '/createQuestion.php',
         jsonData,
@@ -352,7 +358,7 @@ const handleCreateQuestion = async () => {
 };
 
 const handleEditQuestion = (question) => {
-    console.log('Editing question:', question);
+    // console.log('Editing question:', question);
     setEditingQuestion(question);
     setEditQuestion(question.question || '');
     setEditQuestionTopic(question.topicid || '');
@@ -393,7 +399,7 @@ const handleUpdateQuestion = async () => {
         attachments: editQuestionFiles
     };
 
-    console.log("Updating question with data:", jsonData);
+    // console.log("Updating question with data:", jsonData);
 
     const apiCall = () => axios.post(config.api + '/updateQuestion.php',
         jsonData,
@@ -834,7 +840,7 @@ const updateQuestionOrder = async (newQuestions) => {
         }));
 
         const jsonData = { questions: reorderData };
-        console.log("Reordering questions with data:", jsonData);
+        // console.log("Reordering questions with data:", jsonData);
 
         const apiCall = () => axios.post(config.api + '/reorderQuestions.php',
             jsonData,
@@ -883,7 +889,7 @@ const updateQuestionOrder = async (newQuestions) => {
 
 // Statistics handler
 const loadStatistics = async () => {
-    console.log('Loading statistics...');
+    // console.log('Loading statistics...');
     const apiCall = () => axios.get(config.api + '/getStatistics.php', {
         headers: { 'Authorization': `Bearer ${currentUser.token}` }
     });
@@ -891,7 +897,7 @@ const loadStatistics = async () => {
     handleApiCall(
         apiCall,
         (data) => {
-            console.log('Statistics data received:', data);
+            //console.log('Statistics data received:', data);
             setStatistics(data);
         },
         setIsLoading,
@@ -903,7 +909,7 @@ const loadStatistics = async () => {
 };
 
 const toggleStatistics = () => {
-    console.log('Toggle statistics - current showStatistics:', showStatistics, 'statistics:', statistics);
+    // console.log('Toggle statistics - current showStatistics:', showStatistics, 'statistics:', statistics);
     if (!showStatistics && !statistics) {
         loadStatistics();
     }
@@ -1209,7 +1215,7 @@ const handleImportFile = async (event) => {
                     </div>
                     <ul>
                         {questions.map((question, index) => {
-                            console.log('Rendering question:', question);
+                            // console.log('Rendering question:', question);
                             return (
                             <li 
                                 key={question.id} 

@@ -1,14 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js';
 import { Spin } from 'antd';
 import axios from 'axios';
 import Register from './register';
+
+/****************************************************************
+ * Login Component
+ * Renders the login form for user authentication.
+ * Includes email/password fields and a login button.
+ * Displays a message of the day (MOTD) loaded from an external file.
+ * Registration function currently disabled, but structure in place
+ * because student upload is bulk only at the moment.
+*****************************************************************/
 
 const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMessage}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [motdContent, setMotdContent] = useState('Beta Test'); // Default fallback
+
+  // Fetch MOTD content on component mount
+  useEffect(() => {
+    const fetchMotd = async () => {
+      try {
+        const response = await fetch('/MOTD.txt');
+        if (response.ok) {
+          const text = await response.text();
+          setMotdContent(text.trim());
+        }
+      } catch (error) {
+        // console.log('Could not load MOTD.txt, using default message');
+        // console.log(error);
+        setMotdContent("Beta Test");
+      }
+    };
+
+    fetchMotd();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +57,7 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
       });
 
       const data = response.data;
-      console.log('Response:', data);
+      // console.log('Response:', data);
 
       // Handle the response data here
       if (data.status_code === 200) {
@@ -107,11 +136,11 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
                 <button type="submit">Login</button>
               </div>
             </form>
-              <div className="topgap">
+              {/* <div className="topgap">
                 <button onClick={() => setShowRegister(true)}>Register</button>
-              </div>
+              </div> */}
             </div>
-            <p className="small">Beta Test</p>
+            <div className="motd" dangerouslySetInnerHTML={{ __html: motdContent }} />
           </div>
         </>
       )}

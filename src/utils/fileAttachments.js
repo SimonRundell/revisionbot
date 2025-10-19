@@ -1,3 +1,11 @@
+/**************************************************************
+ * 
+ * Utility functions for handling file attachments
+ * 
+ * 
+ ***************************************************************/
+
+
 export const MIME_TYPE_ICON_MAP = {
     'application/pdf': 'pdf',
     'application/msword': 'word',

@@ -5,6 +5,12 @@ import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import renderAttachments from './utils/renderAttachments';
 
+/****************************************************************
+ * PastAnswersViewer Component
+ * Renders the past answers and feedback for the user.
+ * Includes options to view, edit, and delete past responses.
+*****************************************************************/
+
 function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, setSendSuccessMessage}) {
 
     const [pastResponses, setPastResponses] = useState([]);

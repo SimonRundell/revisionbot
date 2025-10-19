@@ -4,6 +4,13 @@ import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import './App.css';
 
+/****************************************************************
+ * AnalyticsModule Component
+ * Renders the analytics dashboard for monitoring user activity.
+ * Includes filtering and viewing feedback on student answers
+ * with staticstical analysis.
+*****************************************************************/
+
 const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedView, setSelectedView] = useState('department');
@@ -91,7 +98,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 return;
         }
 
-        console.log('Loading analytics with:', { type: endpoint, ...params });
+        // console.log('Loading analytics with:', { type: endpoint, ...params });
         
         const apiCall = () => axios.post(`${config.api}/getAdvancedStatistics.php`, 
             { type: endpoint, ...params },
@@ -106,7 +113,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
         await handleApiCall(
             apiCall,
             (data) => {
-                console.log('Analytics data received:', data);
+                // console.log('Analytics data received:', data);
                 setAnalyticsData(data);
             },
             setIsLoading,

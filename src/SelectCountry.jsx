@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Spin } from 'antd';
 
-function SelectCountry({ config, userLocation, setUserLocation, setSendErrorMessage, setSendSuccessMessage }) {
+/****************************************************************
+ * SelectCountry Component
+ * Renders a dropdown for selecting a user's country.
+ * Fetches country data from a JSON file and displays it in the dropdown.
+*****************************************************************/
+
+function SelectCountry({ config, userLocation, setUserLocation, setSendErrorMessage }) {
     const [countries, setCountries] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -26,7 +32,7 @@ function SelectCountry({ config, userLocation, setUserLocation, setSendErrorMess
 
     const handleCountrySelect = (abbreviation) => {
         setUserLocation(abbreviation);
-        console.log("Selected country:", abbreviation);
+        // console.log("Selected country:", abbreviation);
         // setSendSuccessMessage(`Selected country: ${abbreviation}`);
     };
 

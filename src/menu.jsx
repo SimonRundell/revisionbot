@@ -1,3 +1,9 @@
+/****************************************************************
+ * Menu Component
+ * Renders the navigation menu for the application.
+ * Includes buttons for different modes (quiz builder, student, dashboard, analytics).
+*****************************************************************/
+
 function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, currentUser, dashboard, setDashboard, analytics, setAnalytics}) {
 
     const handleModeSwitch = (mode) => {

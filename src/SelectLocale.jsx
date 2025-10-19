@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Spin } from 'antd';
 
-function SelectLocale({ config, userLocale, setUserLocale, setSendErrorMessage, setSendSuccessMessage }) {
+/****************************************************************
+ * SelectLocale Component
+ * Renders a dropdown for selecting a user's locale.
+ * Fetches locale data from a JSON file and displays it in the dropdown.
+*****************************************************************/
+
+function SelectLocale({ config, userLocale, setUserLocale, setSendErrorMessage }) {
     const [locales, setLocales] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -26,7 +32,7 @@ function SelectLocale({ config, userLocale, setUserLocale, setSendErrorMessage, 
 
     const handleLocaleSelect = (code) => {
         setUserLocale(code);
-        console.log("Selected Locale:", code);
+        // console.log("Selected Locale:", code);
     };
 
     return (

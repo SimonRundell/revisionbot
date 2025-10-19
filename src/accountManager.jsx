@@ -6,6 +6,12 @@ import SelectLocale from './SelectLocale'
 import AvatarManager from './AvatarManager'
 import { parseApiResponse } from './utils/apiHelpers'
 
+/****************************************************************
+ * AccountManager Component
+ * Renders the account information and management options for the user.
+ * ie Password reset etc.
+*****************************************************************/
+
 function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMessage, setSendErrorMessage,
                         setShowAccountManager, showAccountManager}) {
 
@@ -48,7 +54,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
             avatar: avatar,
             admin: admin
         };
-        console.log("updating user with ", jsonData)
+        // console.log("updating user with ", jsonData)
 
         try {
             const response = await axios.post(config.api + '/updateUser.php', jsonData, {
