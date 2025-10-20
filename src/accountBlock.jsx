@@ -12,11 +12,11 @@ function AccountBlock({currentUser, setCurrentUser,
 
     return (
         <div className="account-block">
-            {currentUser.userName}
-            <button className="topgap" onClick={() => setCurrentUser(null)}>Logout</button>
-            <button className="topgap" onClick={() => setShowAccountManager(!showAccountManager)}>Manage</button>
+            {currentUser.userName} <img src={currentUser.avatar} alt="avatar" className="avatar-menubar" />
+            <button onClick={() => setCurrentUser(null)}>Logout</button>
+            <button onClick={() => setShowAccountManager(!showAccountManager)}>Manage</button>
             {currentUser.admin === 1 && (
-                <button className="topgap" onClick={() => setShowAdminManager(!showAdminManager)}>Admin</button>
+                <button onClick={() => setShowAdminManager(!showAdminManager)}>Admin</button>
             )}
         </div>
     )

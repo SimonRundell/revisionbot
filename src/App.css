@@ -72,36 +72,64 @@ input, select, textarea {
   width: 100%;
 }
 
-/* Menu Styles */
+/* Steampunk Menu Styles */
 .menu {
   display: flex;
-  flex-direction: column; /* Stack buttons vertically */
-  gap: 10px;
-  align-items: stretch; /* Make buttons full width */
-  width: 150px; /* Fixed width for consistent layout */
+  flex-direction: row; /* Horizontal layout */
+  gap: 3px;
+  align-items: center;
 }
 
 .menu button {
   position: relative;
-  background-color: #2a2a2a;
-  border: 1px solid #444;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 4px;
+  cursor: pointer;
   transition: all 0.3s ease;
-  width: 100%; /* Full width buttons */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  backdrop-filter: blur(5px);
+  position: relative;
+  overflow: hidden;
+  min-width: 120px;
   text-align: center;
 }
 
+.menu button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
 .menu button:hover {
-  background-color: #3a3a3a;
-  border-color: #646cff;
-  transform: translateX(2px); /* Subtle hover effect for vertical layout */
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.menu button:hover::before {
+  left: 100%;
 }
 
 .menu button.active {
-  background-color: #646cff;
-  border-color: #646cff;
-  color: white;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(100, 108, 255, 0.3); /* Subtle glow for active button */
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 10px rgba(255, 255, 255, 0.2);
 }
 
 .menu button.active::after {
@@ -111,7 +139,7 @@ input, select, textarea {
   left: 0;
   right: 0;
   height: 2px;
-  background-color: #646cff;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /******************************************* 
@@ -126,16 +154,69 @@ input, select, textarea {
 }
 
 .account-block {
-  position: absolute;
-  right: 20px; /* Back to right side above robot */
-  top: 20px;
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: wrap; /* Allow wrapping for mobile */
+    justify-content: flex-start;
+    margin-left: 0;
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 18px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    position: relative;
+}
+
+.avatar-menubar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-left: 10px;
+    margin-right: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.account-block button {
+  position: relative;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  backdrop-filter: blur(5px);
+  position: relative;
+  overflow: hidden;
+  min-width: 120px;
   text-align: center;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 8px;
-  z-index: 5; /* Ensure it's below robot but above other content */
+}
+
+.account-block button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.account-block button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.account-block button:hover::before {
+  left: 100%;
 }
 
 .avatar {
@@ -188,39 +269,40 @@ input, select, textarea {
 
 .app-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1rem;
-  padding-top: 0;
-  padding-right: 1rem; /* Reduced padding for more content space */
-  background-color: #282c34;
-  color: white;
-  border-bottom: 1px solid #ccc;
+  flex-direction: column;
+  background: linear-gradient(135deg, #2d3436 0%, #636e72 50%, #2d3436 100%);
+  color: #ddd;
+  border-bottom: 3px solid #74b9ff;
   position: relative;
-  min-height: 320px; /* Increased to accommodate larger title */
+  min-height: 400px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
 }
 
-.app-header-menu {
+/* Logo Section at Top */
+.app-logo-section {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  flex-grow: 1;
-  height: 300px; /* Increased height for bigger title */
-  max-width: calc(100% - 180px); /* Less constraint for more content space */
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding: 20px;
+  background: radial-gradient(ellipse at center, rgba(116, 185, 255, 0.1) 0%, transparent 70%);
+  border-bottom: 2px solid rgba(116, 185, 255, 0.3);
 }
 
 .app-title-image {
-  height: 100%;
-  width: auto;
   flex-shrink: 0;
+  text-align: center;
+  max-width: 100%;
 }
 
 .app-title-image img {
-  top: -100px;
-  height: 100%;
-  width: auto;
+  height: auto;
+  width: 100%;
+  max-width: 900px;
+  min-width: 300px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
   display: block;
+  margin: 0 auto;
 }
 
 .app-menu-container {
@@ -243,15 +325,78 @@ input, select, textarea {
 
 .app-robot {
   position: absolute;
-  bottom: -50px;
-  right: 20px;
-  width: 160px;
+  bottom: -20px;
+  right: 50px;
+  width: 140px;
   height: auto;
-  z-index: 10;
+  z-index: 25;
   pointer-events: none;
-  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.5));
-  filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  transform: scaleX(-1); /* Flip robot horizontally to face the menu */
+}
 
+/* Steampunk Horizontal Menu Bar */
+.steampunk-menu-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  align-items: stretch;
+  padding: 50px;
+  padding-right: 200px; /* Extra space for robot */
+  position: relative;
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 3px solid #2d3436;
+  box-shadow: 
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* Account bar positioned below menu */
+.steampunk-account-bar {
+  padding: 0px 50px 20px 50px;
+  position: relative;
+  background: transparent;
+}
+
+.steampunk-menu-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 100%);
+}
+
+.steampunk-menu-bar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, 
+    transparent 0px, 
+    transparent 8px, 
+    rgba(45, 52, 54, 0.3) 8px, 
+    rgba(45, 52, 54, 0.3) 12px);
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.steampunk-nav-section {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+  padding-bottom: 5px;
 }
 
 .app-robot img {
@@ -266,6 +411,11 @@ input, select, textarea {
   align-items: center;
   justify-content: center;
   margin: 0 auto;
+}
+
+.filter-column-right, .filter-column-left label{
+  margin-left: 8px;
+  font-size: 12px;
 }
 
 /******************************************* 
@@ -563,6 +713,14 @@ ADMIN MANAGER STYLING
   align-items: center;
   gap: 10px;
 }
+
+.avatar-menubar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 
 .avatar-preview {
   width: 60px;
@@ -1333,22 +1491,23 @@ BACKUP DATA SECTION STYLING
 
 /************************************************
 
-MEDIUM DESKTOP STYLES
+RESPONSIVE STYLES FOR STEAMPUNK LAYOUT
 
 *************************************************/
 
+/* Medium Desktop Adjustments */
 @media (max-width: 1280px) {
-  .app-header {
-    padding-right: 1rem;
+  .steampunk-menu-bar {
+    padding: 30px;
+    padding-right: 160px; /* Adjust for smaller robot */
   }
   
-  .app-header-menu {
-    max-width: calc(100% - 160px); /* Adjust for smaller screens */
-    gap: 50px; 
+  .steampunk-account-bar {
+    padding: 15px 30px;
   }
   
-  .app-menu-container {
-    margin-top: 20px; 
+  .app-title-image img {
+    max-width: 700px;
   }
   
   .app-robot {
@@ -1357,6 +1516,9 @@ MEDIUM DESKTOP STYLES
   }
 }
 
+
+
+/* Tablet Styles */
 @media (max-width: 768px) {
   .export-import-controls {
     grid-template-columns: 1fr;
@@ -1373,147 +1535,116 @@ MEDIUM DESKTOP STYLES
     align-items: flex-start;
   }
   
-  /************************************************
-  
-    TABLET STYLES
-
-  *************************************************/
-
-  .app-header {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-    min-height: 180px; /* Reduced for tablet */
-    padding-bottom: 80px; /* More space for robot */
-    padding-right: 1rem;
+  /* Steampunk layout adjustments for tablet */
+  .steampunk-menu-bar {
+    padding: 20px;
+    padding-right: 140px; /* Space for smaller robot */
   }
   
-  .app-header-menu {
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-    height: auto; /* Auto height for tablet */
-    max-width: 100%;
-    align-items: center; /* Center align for tablet */
-  }
-
-  .app-menu-container {
-    margin-left: 0;
-    margin-top: 10px; /* Reduce top margin */
-    width: 100%;
-    justify-content: center; /* Center the menu */
-  }
-  
-  .app-title-image {
-    height: 70px; /* Fixed height for tablet */
-    align-self: center;
-  }
-  
-  .mobile-menu-row {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    gap: 40px; /* Increased gap for tablet */
-  }
-  
-  .app-robot {
-    bottom: -50px;
-    right: 15px;
-    width: 120px; /* Larger on tablet */
-  }
-}
-
-@media (max-width: 480px) {
-  .app-header {
-    padding: 0.3rem;
-    padding-bottom: 50px; /* Reduced space */
-    min-height: 180px; /* Increased to accommodate 150px logo + menu row */
-  }
-  
-  .app-header-menu {
-    gap: 8px;
-    height: auto; /* Auto height for mobile */
-    flex-direction: column; /* Stack vertically on mobile */
-    align-items: center;
-    justify-content: flex-start;
-  }
-  
-  .app-title-image {
-    height: 150px; /* Bigger title for mobile */
-    margin-bottom: 10px;
-  }
-  
-  /* Container for menu and account block side by side */
-  .mobile-menu-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
-    gap: 10px;
-    margin-top: 15px; /* Add space below the logo */
-  }
-  
-  .app-menu-container {
-    margin-top: 0;
-    flex: 1;
-  }
-  
-  .app-robot {
-    bottom: -30px;
-    right: 5px;
-    width: 60px; /* Smaller robot for mobile */
+  .steampunk-account-bar {
+    padding: 0px 20px 15px 20px;
   }
   
   .menu {
-    gap: 3px;
-    flex-wrap: wrap; /* Allow wrapping for mobile */
     justify-content: flex-start;
-    margin-left: 0;
-    flex-direction: row; /* Horizontal layout for mobile */
+    flex-wrap: wrap;
+    gap: 8px;
   }
+  
+  .menu button,
+  .account-block button {
+    min-width: 100px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .account-block {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 16px;
+  }
+  
+  .account-block button {
+    margin-left: 8px;
+  }
+  
+  .app-title-image img {
+    max-width: 500px;
+    min-width: 250px;
+  }
+  
+  .app-robot {
+    width: 120px;
+    right: 15px;
+  }
+}
 
+/* Mobile Styles */
+@media (max-width: 480px) {
+  /* Steampunk layout adjustments for mobile */
+  .steampunk-menu-bar {
+    padding: 15px 10px;
+    padding-right: 70px; /* Space for tiny robot */
+  }
+  
+  .steampunk-nav-section {
+    justify-content: center;
+  }
+  
+  .steampunk-account-bar {
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .menu {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
   .menu button {
-    padding: 0.25em 0.5em;
-    font-size: 0.7em;
-    min-width: 50px;
+    min-width: 70px;
+    padding: 6px 8px;
+    font-size: 11px;
     white-space: nowrap;
   }
   
   .account-block {
-    position: relative; /* Override absolute positioning */
-    margin-top: 0;
-    width: fit-content;
-    font-size: 0.75em;
-    padding: 6px 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    background-color: rgba(40, 44, 52, 0.9);
-    border-radius: 6px;
-    flex-shrink: 0;
-    right: auto; /* Reset right positioning */
-    top: auto; /* Reset top positioning */
-  }
-  
-  .account-block .avatar {
-    width: 30px;
-    height: 30px;
-    margin-bottom: 5px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    font-size: 14px;
+    margin-bottom: 10px;
   }
   
   .account-block button {
-    font-size: 0.8em;
-    padding: 0.3em 0.6em;
-    margin-top: 4px;
+    min-width: 60px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-left: 5px;
   }
   
-  /* Mobile-specific content adjustments */
   .App {
     margin: 5px;
     padding: 5px;
     width: calc(100vw - 10px);
   }
   
-  /* Mobile login adjustments - remove conflicting rules */
+  .app-title-image img {
+    max-width: 350px;
+    min-width: 200px;
+  }
+  
+  .app-robot {
+    width: 60px;
+    right: 5px;
+  }
+  
+  /* Ensure username text wraps properly on mobile */
+  .account-block {
+    word-break: break-word;
+  }
 }
 
 /************************************************
@@ -1523,29 +1654,14 @@ LARGE DESKTOP STYLES
 *************************************************/
 
 @media (min-width: 1281px) {
-  .app-header {
-    padding-right: 1rem; /* Keep content area wide */
-    min-height: 400px; /* Even taller header for large screens */
-  }
-  
-  .app-header-menu {
-    height: 380px; /* Larger container for big title */
-    max-width: calc(100% - 220px); /* Account for larger robot */
-  }
-  
-  .app-title-image {
-    height: 100%; /* Use full container height for maximum size */
+  .steampunk-menu-bar {
+    padding: 30px;
+    padding-right: 220px; /* Extra space for larger robot */
   }
   
   .app-robot {
     width: 200px; /* Larger robot on wide screens */
     right: 30px;
-    bottom: -60px;
-  }
-  
-  .account-block {
-    right: 30px; /* Position above larger robot */
-    top: 30px;
   }
 }
 
@@ -2454,6 +2570,45 @@ ANSWER MODAL STYLING
   padding: 20px;
 }
 
+.filter-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.filter-column-left,
+.filter-column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.filter-switch-container {
+  display: flex;
+  align-items: center;
+}
+
+.filter-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0;
+}
+
+.filter-switch-text {
+  user-select: none;
+}
+
 .filter-row {
   display: flex;
   gap: 15px;
@@ -2595,6 +2750,11 @@ ANSWER MODAL STYLING
     flex-direction: column;
     gap: 10px;
     width: 100%;
+  }
+  
+  .filter-columns {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
   
   .filter-row {

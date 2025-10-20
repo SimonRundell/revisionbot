@@ -95,18 +95,28 @@ useEffect(() => {
       <div className="App">
 
         <div className="app-header">
-          <div className="app-header-menu">
+          {/* Logo Section */}
+          <div className="app-logo-section">
             <div className="app-title-image">
-              <img src="/title_bw.png" alt="AI Exam Revision Robot" />
+              <img src="/logo_bw_long_2.png" alt="AI Exam Revision Robot" />
             </div>
-            <div className="mobile-menu-row">
-              <div className="app-menu-container">
-                <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
-                      studentMode={studentMode} setStudentMode={setStudentMode}
-                      dashboard={dashboard} setDashboard={setDashboard}
-                      analytics={analytics} setAnalytics={setAnalytics}
-                      currentUser={currentUser} />
-              </div>
+            <div className="app-robot">
+              <img src="/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
+            </div>
+          </div>
+          
+          {/* Horizontal Steampunk Menus */}
+          <div className="steampunk-menu-bar">
+            <div className="steampunk-nav-section">
+              <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
+                    studentMode={studentMode} setStudentMode={setStudentMode}
+                    dashboard={dashboard} setDashboard={setDashboard}
+                    analytics={analytics} setAnalytics={setAnalytics}
+                    currentUser={currentUser} />
+            </div>
+          
+          {currentUser && (
+
               <AccountBlock config={config}
                             currentUser={currentUser} 
                             setCurrentUser={setCurrentUser}
@@ -114,12 +124,9 @@ useEffect(() => {
                             showAccountManager={showAccountManager}
                             showAdminManager={showAdminManager}
                             setShowAdminManager={setShowAdminManager} />
-            </div>
-          </div>
-          <div className="app-robot">
-            <img src="/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
-          </div>
-        
+
+          )}
+        </div>
         </div>
 
         {showAccountManager && (

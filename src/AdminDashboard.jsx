@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Spin } from 'antd';
+import { Spin, Switch } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import './App.css';
 
@@ -25,7 +25,8 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         subject: '',
         topic: '',
         dateFrom: '',
-        dateTo: ''
+        dateTo: '',
+        unmarked: false
     });
     
     // Get unique values for filter dropdowns
@@ -75,6 +76,9 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         if (filters.dateTo) {
             filtered = filtered.filter(r => new Date(r.createdAt) <= new Date(filters.dateTo + 'T23:59:59'));
         }
+        if (filters.unmarked) {
+            filtered = filtered.filter(r => !r.teacherRating || r.teacherRating === null || r.teacherRating === '');
+        }
 
         setFilteredResponses(filtered);
     }, [allResponses, filters]);
@@ -92,7 +96,8 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
             subject: '',
             topic: '',
             dateFrom: '',
-            dateTo: ''
+            dateTo: '',
+            unmarked: false
         });
     };
 
@@ -239,56 +244,82 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                 </div>
 
                 <div className="dashboard-filters">
-                    <div className="filter-row">
-                        <select 
-                            value={filters.student} 
-                            onChange={(e) => handleFilterChange('student', e.target.value)}
-                            className="filter-select"
-                        >
-                            <option value="">All Students</option>
-                            {uniqueStudents.map(student => (
-                                <option key={student} value={student}>{student}</option>
-                            ))}
-                        </select>
+                    <div className="filter-columns">
+                        <div className="filter-column-left">
+                            <label htmlFor="student">Filter By Student</label>
+                            <select 
+                                value={filters.student} 
+                                onChange={(e) => handleFilterChange('student', e.target.value)}
+                                className="filter-select"
+                            >
+                                <option value="">All Students</option>
+                                {uniqueStudents.map(student => (
+                                    <option key={student} value={student}>{student}</option>
+                                ))}
+                            </select>
+                        <label htmlFor="subject">Filter by Subject</label>
+                            <select 
+                                value={filters.subject} 
+                                onChange={(e) => handleFilterChange('subject', e.target.value)}
+                                className="filter-select"
+                            >
+                                <option value="">All Subjects</option>
+                                {uniqueSubjects.map(subject => (
+                                    <option key={subject} value={subject}>{subject}</option>
+                                ))}
+                            </select>
+                            <label htmlFor="topic">Filter by Topic</label>
+                            <select 
+                                value={filters.topic} 
+                                onChange={(e) => handleFilterChange('topic', e.target.value)}
+                                className="filter-select"
+                            >
+                                <option value="">All Topics</option>
+                                {uniqueTopics.map(topic => (
+                                    <option key={topic} value={topic}>{topic}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <select 
-                            value={filters.subject} 
-                            onChange={(e) => handleFilterChange('subject', e.target.value)}
-                            className="filter-select"
-                        >
-                            <option value="">All Subjects</option>
-                            {uniqueSubjects.map(subject => (
-                                <option key={subject} value={subject}>{subject}</option>
-                            ))}
-                        </select>
+                        <div className="filter-column-right">
+                            <label htmlFor="dateFrom">From Date</label>
+                            <input 
+                                type="date" 
+                                value={filters.dateFrom}
+                                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                                className="filter-date"
+                            />
 
-                        <select 
-                            value={filters.topic} 
-                            onChange={(e) => handleFilterChange('topic', e.target.value)}
-                            className="filter-select"
-                        >
-                            <option value="">All Topics</option>
-                            {uniqueTopics.map(topic => (
-                                <option key={topic} value={topic}>{topic}</option>
-                            ))}
-                        </select>
+                            <label htmlFor="dateTo">To Date</label>
+                            <input 
+                                type="date" 
+                                value={filters.dateTo}
+                                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                                className="filter-date"
+                            />
 
-                        <input 
-                            type="date" 
-                            value={filters.dateFrom}
-                            onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                            className="filter-date"
-                            placeholder="From Date"
-                        />
+                            <label htmlFor="dateTo">To Date</label>
+                            <input 
+                                type="date" 
+                                value={filters.dateTo}
+                                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                                className="filter-date"
+                                placeholder="To Date"
+                            />
 
-                        <input 
-                            type="date" 
-                            value={filters.dateTo}
-                            onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                            className="filter-date"
-                            placeholder="To Date"
-                        />
-
+                            <div className="filter-switch-container">
+                                <label className="filter-switch-label">
+                                    <Switch 
+                                        checked={filters.unmarked}
+                                        onChange={(checked) => handleFilterChange('unmarked', checked)}
+                                    />
+                                    <span className="filter-switch-text">{filters.unmarked ? 'Unmarked Only' : 'Show All'}  </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="filter-actions">
                         <button onClick={clearFilters} className="btn-secondary">Clear Filters</button>
                     </div>
                 </div>

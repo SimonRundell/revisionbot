@@ -3,6 +3,9 @@
   <p>Please report any issues to the development team via the Microsoft forms at: <a href="https://forms.microsoft.com/e/H10SRY6eRx">https://forms.microsoft.com/e/H10SRY6eRx</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Updated logo and branding across the application.</li>
+  <li>Refined button styles for a more modern look and feel.</li>
+  <li>Filter for teachers to see unmarked responses</li>
     <li>Enhanced user filtering in Admin Manager for better usability.</li>
     <li>Improved UI elements for clearer filter summaries.</li>
   </ul>

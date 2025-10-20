@@ -27,7 +27,7 @@ function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, curren
                 onClick={() => handleModeSwitch('student')}
                 className={studentMode ? 'active' : ''}
             >
-                Practice Questions
+                Questions
             </button>
             <button 
                 onClick={() => handleModeSwitch('dashboard')}
