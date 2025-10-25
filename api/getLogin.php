@@ -1,5 +1,9 @@
 <?php
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access (but allow legitimate login attempts)
+blockDirectAccess();
 
 $query = "SELECT * FROM tbluser WHERE LOWER(email) = LOWER(?) AND passwordHash = ?";
 $stmt = $mysqli->prepare($query);

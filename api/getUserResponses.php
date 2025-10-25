@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to user response data
+requireAuth();
 
 // Get user responses with AI feedback - simplified JOIN
 $query = "SELECT 

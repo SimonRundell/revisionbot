@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to admin delete functions
+requireAuth();
 
     // Check if ID is provided
     if (!isset($receivedData['id']) || empty($receivedData['id'])) {

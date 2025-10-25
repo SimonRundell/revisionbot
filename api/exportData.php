@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to data export
+requireAuth();
 
     // Get export type from request
     $exportType = isset($receivedData['type']) ? $receivedData['type'] : 'all';

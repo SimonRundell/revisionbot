@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to registration
+blockDirectAccess();
 
     $query = "INSERT INTO tbluser (email, passwordHash, userName, userLocation, userStatus, userLocale, avatar, admin)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)";

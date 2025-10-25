@@ -1,5 +1,9 @@
 <?php
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to admin bulk functions
+requireAuth();
 
 if (empty($receivedData) && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
     $receivedData = [];

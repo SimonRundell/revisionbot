@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to admin update functions
+requireAuth();
 
 $query = "UPDATE tbluser SET email=?, 
                              userName=?, 

@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to sensitive response data
+requireAuth();
 
 // Admin endpoint to get all student responses
 $query = "SELECT 

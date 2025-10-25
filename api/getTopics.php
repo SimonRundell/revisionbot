@@ -1,5 +1,9 @@
 <?php
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access
+blockDirectAccess();
 
 $query = "SELECT * FROM tbltopic WHERE subjectid = ? ORDER BY topic ASC";
 $stmt = $mysqli->prepare($query);

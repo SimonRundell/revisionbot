@@ -1,4 +1,10 @@
 <?php
+require_once 'simple_security.php';
+include 'setup.php';
+
+// Block direct browser access to user statistics
+requireAuth();
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -6,7 +12,6 @@ header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Get database connection
-    require_once 'setup.php';
     
     try {
         $userId = $_GET['userId'] ?? null;

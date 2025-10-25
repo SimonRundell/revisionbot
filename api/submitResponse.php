@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access
+blockDirectAccess();
 
 // Check if user already has a response for this question (for attempt numbering)
 $checkStmt = $mysqli->prepare("SELECT MAX(attempt_number) as max_attempt FROM tblresponse WHERE user_id = ? AND question_id = ?");

@@ -1,5 +1,9 @@
 <?php
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to admin delete functions
+requireAuth();
 
 $query = "DELETE FROM tbluser WHERE id = ?";
 $stmt = $mysqli->prepare($query);

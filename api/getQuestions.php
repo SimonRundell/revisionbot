@@ -1,5 +1,9 @@
 <?php
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access
+blockDirectAccess();
 
 $query = "SELECT * FROM tblquestion WHERE topicid = ? ORDER BY question_order ASC, id ASC";
 $stmt = $mysqli->prepare($query);

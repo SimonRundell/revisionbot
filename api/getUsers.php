@@ -1,5 +1,9 @@
 <?php
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to sensitive user data
+requireAuth();
 
 $query = "SELECT * FROM tbluser";
 $stmt = $mysqli->prepare($query);

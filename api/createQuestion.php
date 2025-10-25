@@ -1,6 +1,9 @@
 <?php
-
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Block direct browser access to admin functions
+requireAuth();
 
     // Get the next order number for this topic
     $orderQuery = "SELECT COALESCE(MAX(question_order), 0) + 1 as next_order FROM tblquestion WHERE topicid = ?";
