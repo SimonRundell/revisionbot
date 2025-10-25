@@ -1,6 +1,2 @@
 email,name,department,locale
-john.doe@school.ac.uk,John Doe,Mathematics,en-UK
-jane.smith@school.ac.uk,Jane Smith,Science,en-UK
-michael.johnson@school.ac.uk,Michael Johnson,History,en-UK
-sarah.williams@school.ac.uk,Sarah Williams,English,en-UK
-david.brown@school.ac.uk,David Brown,Physics,en-UK
+simon@codemonkey.design,Simon Codemonkey,ITDD,en-GB

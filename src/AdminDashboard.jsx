@@ -423,12 +423,12 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     ) : (<p>No attachments available</p>)}
                                 </div>
                                 
-                                <div className="answer-section">
+                                {/* <div className="answer-section">
                                     <h3>Student&apos;s Answer:</h3>
                                     <div className="past-answer-display">
                                         {selectedResponse.studentAnswer}
                                     </div>
-                                </div>
+                                </div> */}
 
                                 <div className="feedback-section">
                                     <h3>AI Assessment & Feedback:</h3>

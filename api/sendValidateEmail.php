@@ -8,13 +8,7 @@ require 'vendor/autoload.php';
 include 'setup.php';
 
 function send_email($to, $subject, $message, $config) {
-    // EMAIL SENDING DISABLED
-    log_info("Email sending disabled - would send to: $to with subject: $subject");
-    echo json_encode(["status_code" => 200, "message" => "Email sending disabled (success simulated)"]);
-    return;
-    
-    // ORIGINAL CODE COMMENTED OUT
-    /*
+    // EMAIL SENDING ENABLED
     log_info("Config: " . json_encode($config));
 
     $mail = new PHPMailer(true);
@@ -26,7 +20,7 @@ function send_email($to, $subject, $message, $config) {
         $mail->SMTPAuth = true;
         $mail->Username = $config['smtpUser'];
         $mail->Password = $config['smtpPass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Use STARTTLS for port 587
         $mail->Port = $config['smtpPort'];
 
         log_info("Received data for email sending: " . json_encode($config));
@@ -50,7 +44,6 @@ function send_email($to, $subject, $message, $config) {
         log_info("Email sending failed: " . $mail->ErrorInfo);
         echo json_encode(["status_code" => 500, "message" => "Failed to send email: {$mail->ErrorInfo}"]);
     }
-    */
 }
 
 // Log the received data for debugging

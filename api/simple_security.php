@@ -13,9 +13,10 @@ function isLegitimateApiCall() {
         return false;
     }
     
-    // Must have JSON content type (set by axios/fetch)
+    // Must have JSON content type (set by axios/fetch) OR multipart form data (for file uploads)
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-    if (strpos($contentType, 'application/json') === false) {
+    if (strpos($contentType, 'application/json') === false && 
+        strpos($contentType, 'multipart/form-data') === false) {
         return false;
     }
     

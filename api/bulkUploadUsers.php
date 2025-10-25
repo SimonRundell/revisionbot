@@ -1,11 +1,16 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'vendor/autoload.php';
 require_once 'simple_security.php';
 include 'setup.php';
 
 // Block direct browser access to admin bulk functions
 requireAuth();
 
-if (empty($receivedData) && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
+// For file uploads, we need to handle form data differently
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
     $receivedData = [];
     foreach ($_POST as $key => $value) {
         $receivedData[$key] = is_string($value) ? trim($value) : $value;
@@ -202,15 +207,14 @@ try {
     // Commit transaction
     $mysqli->commit();
     
-    // Send emails to new users - DISABLED for testing
-    // TODO: Re-enable when email server is working
+    // Send emails to new users - ENABLED
     foreach ($newUsers as $user) {
-        // Skipping email send for now
-        // if (sendWelcomeEmail($user['email'], $user['name'], $user['password'])) {
-        //     $emails_sent++;
-        // }
-        error_log("Would send email to: " . $user['email'] . " with password: " . $user['password']);
-        $emails_sent++; // Simulate successful email send
+        if (sendWelcomeEmail($user['email'], $user['name'], $user['password'])) {
+            $emails_sent++;
+            error_log("Successfully sent welcome email to: " . $user['email']);
+        } else {
+            error_log("Failed to send welcome email to: " . $user['email']);
+        }
     }
     
     $response = [
@@ -235,16 +239,16 @@ try {
 }
 
 function sendWelcomeEmail($email, $name, $password) {
-    // EMAIL SENDING DISABLED
-    error_log("Email sending disabled - would send welcome email to: $email");
-    return false; // Simulate email failure to avoid counting as sent
-    
-    // ORIGINAL CODE COMMENTED OUT
-    /*
+    // EMAIL SENDING ENABLED
     global $config;
     
     try {
+        error_log("Attempting to send welcome email to: $email");
+        
         $mail = new PHPMailer(true);
+        
+        // Enable verbose debug output (disable in production)
+        // $mail->SMTPDebug = 2;
         
         // Server settings
         $mail->isSMTP();
@@ -252,8 +256,10 @@ function sendWelcomeEmail($email, $name, $password) {
         $mail->SMTPAuth = true;
         $mail->Username = $config['smtpUser'];
         $mail->Password = $config['smtpPass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Use STARTTLS for port 587
         $mail->Port = $config['smtpPort'];
+        
+        error_log("SMTP Config - Host: {$config['smtpServer']}, Port: {$config['smtpPort']}, User: {$config['smtpUser']}");
         
         // Recipients
         $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
@@ -319,12 +325,12 @@ Educational Assessment System
         ";
         
         $mail->send();
+        error_log("Successfully sent welcome email to: $email");
         return true;
         
     } catch (Exception $e) {
         error_log("Email failed for $email: " . $e->getMessage());
         return false;
     }
-    */
 }
 ?>
