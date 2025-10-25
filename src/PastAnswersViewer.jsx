@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Spin } from 'antd';
 
 import { handleApiCall } from './utils/apiHelpers';
+import { formatDate, formatDateTime } from './utils/dateHelpers';
 import renderAttachments from './utils/renderAttachments';
 
 /****************************************************************
@@ -92,7 +93,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                                 }
                                             </div>
                                             <div className="response-date">
-                                                Completed: {new Date(response.createdAt).toLocaleDateString()}
+                                                Completed: {formatDate(response.createdAt)}
                                                 {response.attemptNumber > 1 && (
                                                     <span className="attempt-badge"> (Attempt #{response.attemptNumber})</span>
                                                 )}
@@ -178,7 +179,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                         <p>
                                             <em>
                                                 Feedback from {selectedResponse.teacherName || 'your teacher'} on{' '}
-                                                {new Date(selectedResponse.teacherFeedbackTimestamp).toLocaleString()}
+                                                {formatDateTime(selectedResponse.teacherFeedbackTimestamp)}
                                             </em>
                                         </p>
                                     </div>
@@ -188,7 +189,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                             <div className="response-metadata">
                                 <p><strong>Subject:</strong> {selectedResponse.subjectName}</p>
                                 <p><strong>Topic:</strong> {selectedResponse.topicName}</p>
-                                <p><strong>Completed:</strong> {new Date(selectedResponse.createdAt).toLocaleString()}</p>
+                                <p><strong>Completed:</strong> {formatDateTime(selectedResponse.createdAt)}</p>
                                 {selectedResponse.timeTaken && (
                                     <p>
                                         <strong>Time Taken:</strong> {Math.floor(selectedResponse.timeTaken / 60)}m{' '}

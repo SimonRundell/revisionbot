@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Spin, Switch } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
+import { formatDate, formatTime, formatDateTime } from './utils/dateHelpers';
 import './App.css';
 
 /****************************************************************************
@@ -241,6 +242,14 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                         <span>Filtered: {filteredResponses.length}</span>
                         <span>Students: {uniqueStudents.length}</span>
                     </div>
+                    {(filters.dateFrom || filters.dateTo) && (
+                        <div className="active-date-filter">
+                            <strong>Date Range: </strong>
+                            {filters.dateFrom && <span>From {formatDate(filters.dateFrom)}</span>}
+                            {filters.dateFrom && filters.dateTo && <span> - </span>}
+                            {filters.dateTo && <span>To {formatDate(filters.dateTo)}</span>}
+                        </div>
+                    )}
                 </div>
 
                 <div className="dashboard-filters">
@@ -298,15 +307,6 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                 className="filter-date"
                             />
 
-                            <label htmlFor="dateTo">To Date</label>
-                            <input 
-                                type="date" 
-                                value={filters.dateTo}
-                                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                                className="filter-date"
-                                placeholder="To Date"
-                            />
-
                             <div className="filter-switch-container">
                                 <label className="filter-switch-label">
                                     <Switch 
@@ -351,7 +351,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         }
                                     </div>
                                     <div className="response-metadata">
-                                        Submitted: {new Date(response.createdAt).toLocaleDateString()} at {new Date(response.createdAt).toLocaleTimeString()}
+                                        Submitted: {formatDate(response.createdAt)} at {formatTime(response.createdAt)}
                                         {response.timeTaken && (
                                             <span> • Time: {Math.floor(response.timeTaken / 60)}m {response.timeTaken % 60}s</span>
                                         )}
@@ -399,7 +399,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         <p><strong>Email:</strong> {selectedResponse.studentEmail}</p>
                                         <p><strong>Subject:</strong> {selectedResponse.subjectName}</p>
                                         <p><strong>Topic:</strong> {selectedResponse.topicName}</p>
-                                        <p><strong>Submitted:</strong> {new Date(selectedResponse.createdAt).toLocaleString()}</p>
+                                        <p><strong>Submitted:</strong> {formatDateTime(selectedResponse.createdAt)}</p>
                                         {selectedResponse.timeTaken && (
                                             <p><strong>Time Taken:</strong> {Math.floor(selectedResponse.timeTaken / 60)}m {selectedResponse.timeTaken % 60}s</p>
                                         )}
@@ -474,7 +474,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
                                         {selectedResponse.teacherFeedbackTimestamp && (
                                             <div className="existing-feedback-info">
-                                                <p><strong>Previous Feedback:</strong> Added by {selectedResponse.teacherName || 'Teacher'} on {new Date(selectedResponse.teacherFeedbackTimestamp).toLocaleString()}</p>
+                                                <p><strong>Previous Feedback:</strong> Added by {selectedResponse.teacherName || 'Teacher'} on {formatDateTime(selectedResponse.teacherFeedbackTimestamp)}</p>
                                             </div>
                                         )}
                                     </div>

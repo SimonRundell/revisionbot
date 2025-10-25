@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Spin, Modal } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
+import { formatChartDate, formatDateRange } from './utils/dateHelpers';
 import './App.css';
 
 /****************************************************************
@@ -154,7 +155,7 @@ const StudentProgressChart = ({ data }) => {
         for (let i = 0; i <= 4; i++) {
             const datePos = minDate + (dateRange * i / 4);
             const x = margin.left + (i / 4 * chartWidth);
-            const dateStr = new Date(datePos).toLocaleDateString();
+            const dateStr = formatChartDate(new Date(datePos));
             ctx.fillText(dateStr, x, margin.top + chartHeight + 20);
         }
         
@@ -201,7 +202,7 @@ const StudentProgressChart = ({ data }) => {
                 </div>
                 {data.progressData && data.progressData.length > 1 && (
                     <p style={{ marginTop: '10px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
-                        Progress from {new Date(data.progressData[0].date).toLocaleDateString()} to {new Date(data.progressData[data.progressData.length - 1].date).toLocaleDateString()}
+                        Progress {formatDateRange(data.progressData[0].date, data.progressData[data.progressData.length - 1].date)}
                     </p>
                 )}
             </div>
