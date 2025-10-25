@@ -1,8 +1,213 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { Spin } from 'antd';
+import { Spin, Modal } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import './App.css';
+
+/****************************************************************
+ * StudentProgressChart Component
+ * Renders a canvas-based chart showing RAG progress over time
+ *****************************************************************/
+const StudentProgressChart = ({ data }) => {
+    const canvasRef = useRef(null);
+    
+    useEffect(() => {
+        if (!data || !data.progressData || data.progressData.length === 0) return;
+        
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        // Set responsive canvas size
+        const containerWidth = canvas.parentElement.clientWidth;
+        const maxWidth = Math.min(containerWidth - 40, 700); // Leave room for padding
+        canvas.width = maxWidth;
+        canvas.height = Math.max(300, maxWidth * 0.6); // Maintain aspect ratio with minimum height
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Chart dimensions
+        const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+        const chartWidth = canvas.width - margin.left - margin.right;
+        const chartHeight = canvas.height - margin.top - margin.bottom;
+        
+        // Prepare data
+        const progressData = data.progressData;
+        const dates = progressData.map(d => new Date(d.date));
+        const minDate = Math.min(...dates);
+        const maxDate = Math.max(...dates);
+        const dateRange = maxDate - minDate || 1; // Prevent division by zero
+        
+        // Draw background
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(margin.left, margin.top, chartWidth, chartHeight);
+        
+        // Draw grid lines
+        ctx.strokeStyle = '#e1e5e9';
+        ctx.lineWidth = 1;
+        
+        // Horizontal grid lines (RAG levels)
+        for (let i = 1; i <= 3; i++) {
+            const y = margin.top + chartHeight - (i / 3 * chartHeight);
+            ctx.beginPath();
+            ctx.moveTo(margin.left, y);
+            ctx.lineTo(margin.left + chartWidth, y);
+            ctx.stroke();
+        }
+        
+        // Vertical grid lines (time)
+        for (let i = 0; i <= 5; i++) {
+            const x = margin.left + (i / 5 * chartWidth);
+            ctx.beginPath();
+            ctx.moveTo(x, margin.top);
+            ctx.lineTo(x, margin.top + chartHeight);
+            ctx.stroke();
+        }
+        
+        // Draw axes
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, margin.top);
+        ctx.lineTo(margin.left, margin.top + chartHeight);
+        ctx.lineTo(margin.left + chartWidth, margin.top + chartHeight);
+        ctx.stroke();
+        
+        // Draw data points and trend line
+        if (progressData.length > 1) {
+            // Trend line
+            ctx.strokeStyle = '#1890ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            progressData.forEach((point, index) => {
+                const date = new Date(point.date);
+                const x = margin.left + ((date - minDate) / dateRange) * chartWidth;
+                const y = margin.top + chartHeight - (point.cumulativeAverage / 3 * chartHeight);
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+        }
+        
+        // Draw individual points with labels
+        progressData.forEach((point) => {
+            const date = new Date(point.date);
+            const x = margin.left + ((date - minDate) / dateRange) * chartWidth;
+            const y = margin.top + chartHeight - (point.ragValue / 3 * chartHeight);
+            
+            // Color based on RAG rating
+            let fillColor, ratingText;
+            switch (point.rating) {
+                case 'R':
+                    fillColor = '#ff4d4f';
+                    ratingText = 'R';
+                    break;
+                case 'A':
+                    fillColor = '#faad14';
+                    ratingText = 'A';
+                    break;
+                case 'G':
+                    fillColor = '#52c41a';
+                    ratingText = 'G';
+                    break;
+                default:
+                    fillColor = '#d9d9d9';
+                    ratingText = '?';
+            }
+            
+            // Draw data point circle
+            ctx.fillStyle = fillColor;
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Add white border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Add rating label on the point
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(ratingText, x, y + 3);
+        });
+        
+        // Draw labels
+        ctx.fillStyle = '#333';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        
+        // Y-axis labels
+        ctx.textAlign = 'right';
+        ctx.fillText('Red (1)', margin.left - 10, margin.top + chartHeight - (1/3 * chartHeight) + 5);
+        ctx.fillText('Amber (2)', margin.left - 10, margin.top + chartHeight - (2/3 * chartHeight) + 5);
+        ctx.fillText('Green (3)', margin.left - 10, margin.top + chartHeight - (3/3 * chartHeight) + 5);
+        
+        // X-axis labels (dates)
+        ctx.textAlign = 'center';
+        for (let i = 0; i <= 4; i++) {
+            const datePos = minDate + (dateRange * i / 4);
+            const x = margin.left + (i / 4 * chartWidth);
+            const dateStr = new Date(datePos).toLocaleDateString();
+            ctx.fillText(dateStr, x, margin.top + chartHeight + 20);
+        }
+        
+        // Chart title
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('RAG Progress Over Time', canvas.width / 2, 15);
+        
+    }, [data]);
+    
+    if (!data || !data.progressData || data.progressData.length === 0) {
+        return (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+                <p>No progress data available for this student.</p>
+                <p>The student needs to have completed responses with teacher ratings to show progress.</p>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="progress-chart-container">
+            <canvas ref={canvasRef} style={{ display: 'block', margin: '0 auto' }} />
+            <div className="chart-legend">
+                <div className="legend-items">
+                    <span className="legend-item">
+                        <span style={{ color: '#ff4d4f', fontSize: '16px', fontWeight: 'bold' }}>● R</span> Red (Needs Improvement)
+                    </span>
+                    <span className="legend-item">
+                        <span style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold' }}>● A</span> Amber (Approaching Target)
+                    </span>
+                    <span className="legend-item">
+                        <span style={{ color: '#52c41a', fontSize: '16px', fontWeight: 'bold' }}>● G</span> Green (Meets Target)
+                    </span>
+                    <span className="legend-item">
+                        <span style={{ color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>─</span> Cumulative Trend
+                    </span>
+                </div>
+                <div className="chart-stats">
+                    <div><strong>Total Responses:</strong> {data.totalResponses}</div>
+                    <div><strong>Overall Average:</strong> {data.overallAverage}/3</div>
+                    {data.weeklyAverages && data.weeklyAverages.length > 0 && (
+                        <div><strong>Recent Week Avg:</strong> {data.weeklyAverages[data.weeklyAverages.length - 1].averageRag}/3</div>
+                    )}
+                </div>
+                {data.progressData && data.progressData.length > 1 && (
+                    <p style={{ marginTop: '10px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+                        Progress from {new Date(data.progressData[0].date).toLocaleDateString()} to {new Date(data.progressData[data.progressData.length - 1].date).toLocaleDateString()}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
 
 /****************************************************************
  * AnalyticsModule Component
@@ -28,10 +233,21 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
     const [departmentFilter, setDepartmentFilter] = useState('');
     const [studentFilter, setStudentFilter] = useState('');
     const [questionFilter, setQuestionFilter] = useState('');
+    
+    // Modal states
+    const [showProgressModal, setShowProgressModal] = useState(false);
+    const [selectedStudentProgress, setSelectedStudentProgress] = useState(null);
+    const [progressLoading, setProgressLoading] = useState(false);
+    const [modalStudentName, setModalStudentName] = useState('');
 
     const loadDepartments = useCallback(async () => {
-        const apiCall = () => axios.get(`${config.api}/getAdvancedStatistics.php?type=departments`, {
-            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        const apiCall = () => axios.post(`${config.api}/getAdvancedStatistics.php`, {
+            type: 'departments'
+        }, {
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.token}` 
+            }
         });
 
         await handleApiCall(
@@ -46,13 +262,16 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
     }, [config.api, currentUser.token, setSendErrorMessage]);
 
     const loadStudents = useCallback(async () => {
-        const apiCall = () => axios.get(`${config.api}/getUsers.php`, {
-            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        const apiCall = () => axios.post(`${config.api}/getUsers.php`, {}, {
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.token}` 
+            }
         });
 
         await handleApiCall(
             apiCall,
-            (users) => setStudents(users.filter(user => user.admin !== 1)),
+            setStudents,
             setIsLoading,
             null,
             setSendErrorMessage,
@@ -62,8 +281,13 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
     }, [config.api, currentUser.token, setSendErrorMessage]);
 
     const loadQuestions = useCallback(async () => {
-        const apiCall = () => axios.get(`${config.api}/getAdvancedStatistics.php?type=all_questions`, {
-            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        const apiCall = () => axios.post(`${config.api}/getAdvancedStatistics.php`, {
+            type: 'all_questions'
+        }, {
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.token}` 
+            }
         });
 
         await handleApiCall(
@@ -74,6 +298,34 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
             setSendErrorMessage,
             '',
             'Failed to load questions'
+        );
+    }, [config.api, currentUser.token, setSendErrorMessage]);
+
+    const loadStudentProgress = useCallback(async (studentId, studentName) => {
+        setProgressLoading(true);
+        setModalStudentName(studentName);
+        
+        const apiCall = () => axios.post(`${config.api}/getAdvancedStatistics.php`, {
+            type: 'studentProgress',
+            studentId: studentId
+        }, {
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.token}` 
+            }
+        });
+
+        await handleApiCall(
+            apiCall,
+            (data) => {
+                setSelectedStudentProgress(data);
+                setShowProgressModal(true);
+            },
+            setProgressLoading,
+            null,
+            setSendErrorMessage,
+            '',
+            'Failed to load student progress data'
         );
     }, [config.api, currentUser.token, setSendErrorMessage]);
 
@@ -221,17 +473,40 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.studentBreakdown.map((student, index) => (
-                                    <tr key={index}>
-                                        <td>{student.name}</td>
-                                        <td>{student.topicsAnswered}</td>
-                                        <td>{student.questionsAnswered}</td>
-                                        <td className="red-stat">{student.redCount} ({student.redPercent}%)</td>
-                                        <td className="amber-stat">{student.amberCount} ({student.amberPercent}%)</td>
-                                        <td className="green-stat">{student.greenCount} ({student.greenPercent}%)</td>
-                                        <td className="improvement-stat">{student.improvementCount}</td>
-                                    </tr>
-                                ))}
+                                {data.studentBreakdown.map((student, index) => {
+                                    // Find the actual student ID from the students array
+                                    const studentData = students.find(s => s.userName === student.name);
+                                    const studentId = studentData ? studentData.id : null;
+                                    
+                                    return (
+                                        <tr key={index}>
+                                            <td>
+                                                {studentId ? (
+                                                    <span 
+                                                        className="clickable-student-name"
+                                                        onClick={() => loadStudentProgress(studentId, student.name)}
+                                                        style={{ 
+                                                            cursor: 'pointer', 
+                                                            color: '#1890ff', 
+                                                            textDecoration: 'underline' 
+                                                        }}
+                                                        title="Click to view progress graph"
+                                                    >
+                                                        {student.name}
+                                                    </span>
+                                                ) : (
+                                                    student.name
+                                                )}
+                                            </td>
+                                            <td>{student.topicsAnswered}</td>
+                                            <td>{student.questionsAnswered}</td>
+                                            <td className="red-stat">{student.redCount} ({student.redPercent}%)</td>
+                                            <td className="amber-stat">{student.amberCount} ({student.amberPercent}%)</td>
+                                            <td className="green-stat">{student.greenCount} ({student.greenPercent}%)</td>
+                                            <td className="improvement-stat">{student.improvementCount}</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -534,6 +809,26 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 {selectedView === 'student' && renderStudentStats(analyticsData)}
                 {selectedView === 'question' && renderQuestionStats(analyticsData)}
             </div>
+
+            {/* Student Progress Modal */}
+            <Modal
+                title={`Progress Over Time - ${modalStudentName}`}
+                open={showProgressModal}
+                onCancel={() => setShowProgressModal(false)}
+                width={800}
+                footer={null}
+            >
+                {progressLoading ? (
+                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                        <Spin size="large" />
+                        <p>Loading progress data...</p>
+                    </div>
+                ) : selectedStudentProgress ? (
+                    <StudentProgressChart data={selectedStudentProgress} />
+                ) : (
+                    <p>No progress data available</p>
+                )}
+            </Modal>
         </div>
     );
 };

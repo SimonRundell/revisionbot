@@ -53,7 +53,9 @@ function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccess
 
 useEffect(() => {
     // Fetch subjects from the server when the component mounts
-    const apiCall = () => axios.get(config.api + '/getSubjects.php');
+    const apiCall = () => axios.post(config.api + '/getSubjects.php', {}, {
+        headers: { 'Content-Type': 'application/json' }
+    });
 
     handleApiCall(
         apiCall,
@@ -230,8 +232,11 @@ const handleCreateSubject = async () => {
             setShowSubjectModal(false);
             setNewSubject('');
             // Refresh subjects list
-            const refreshApiCall = () => axios.get(config.api + '/getSubjects.php', {
-                headers: { 'Authorization': `Bearer ${currentUser.token}` }
+            const refreshApiCall = () => axios.post(config.api + '/getSubjects.php', {}, {
+                headers: { 
+                    'Authorization': `Bearer ${currentUser.token}`,
+                    'Content-Type': 'application/json'
+                }
             });
             handleApiCall(refreshApiCall, setSubjects, setIsLoading, null, setSendErrorMessage);
         } else {
@@ -562,8 +567,11 @@ const handleConfirmDelete = async () => {
                 setQuestions([]); // Clear questions
                 setSelectedSubject(''); // Reset subject selection
                 setSelectedTopic(''); // Reset topic selection
-                const refreshApiCall = () => axios.get(config.api + '/getSubjects.php', {
-                    headers: { 'Authorization': `Bearer ${currentUser.token}` }
+                const refreshApiCall = () => axios.post(config.api + '/getSubjects.php', {}, {
+                    headers: { 
+                        'Authorization': `Bearer ${currentUser.token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
                 handleApiCall(refreshApiCall, setSubjects, setIsLoading, null, setSendErrorMessage);
             };
@@ -890,8 +898,11 @@ const updateQuestionOrder = async (newQuestions) => {
 // Statistics handler
 const loadStatistics = async () => {
     // console.log('Loading statistics...');
-    const apiCall = () => axios.get(config.api + '/getStatistics.php', {
-        headers: { 'Authorization': `Bearer ${currentUser.token}` }
+    const apiCall = () => axios.post(config.api + '/getStatistics.php', {}, {
+        headers: { 
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+        }
     });
 
     handleApiCall(
@@ -992,8 +1003,11 @@ const handleImportFile = async (event) => {
             setSendSuccessMessage('Data imported successfully');
             
             // Refresh all data
-            const refreshSubjects = () => axios.get(config.api + '/getSubjects.php', {
-                headers: { 'Authorization': `Bearer ${currentUser.token}` }
+            const refreshSubjects = () => axios.post(config.api + '/getSubjects.php', {}, {
+                headers: { 
+                    'Authorization': `Bearer ${currentUser.token}`,
+                    'Content-Type': 'application/json'
+                }
             });
             handleApiCall(refreshSubjects, setSubjects, setIsLoading, null, setSendErrorMessage);
             

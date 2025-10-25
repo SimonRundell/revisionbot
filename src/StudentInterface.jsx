@@ -96,8 +96,11 @@ function StudentInterface ({ userId,
     // Load subjects on component mount
     useEffect(() => {
         // Fetch subjects from the server when the component mounts
-        const apiCall = () => axios.get(config.api + '/getSubjects.php', {
-            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        const apiCall = () => axios.post(config.api + '/getSubjects.php', {}, {
+            headers: { 
+                'Authorization': `Bearer ${currentUser.token}`,
+                'Content-Type': 'application/json'
+            }
         });
 
         handleApiCall(

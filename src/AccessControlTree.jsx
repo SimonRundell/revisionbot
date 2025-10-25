@@ -22,8 +22,11 @@ function AccessControlTree ({
     // Load subjects and topics on component mount
     useEffect(() => {
         const loadSubjects = async () => {
-            const apiCall = () => axios.get(`${config.api}/getSubjects.php`, {
-                headers: { 'Authorization': `Bearer ${currentUser.token}` }
+            const apiCall = () => axios.post(`${config.api}/getSubjects.php`, {}, {
+                headers: { 
+                    'Authorization': `Bearer ${currentUser.token}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
             await handleApiCall(

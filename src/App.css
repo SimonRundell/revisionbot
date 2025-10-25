@@ -3969,3 +3969,96 @@ ANALYTICS MODULE STYLING
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Clickable Student Names in Analytics */
+.clickable-student-name {
+  cursor: pointer !important;
+  color: #1890ff !important;
+  text-decoration: underline !important;
+  transition: all 0.2s ease;
+}
+
+.clickable-student-name:hover {
+  color: #40a9ff !important;
+  text-decoration: none !important;
+  font-weight: bold;
+  background-color: rgba(24, 144, 255, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Modal Chart Styling */
+.ant-modal-content {
+  background-color: #1a1a1a !important;
+  border: 1px solid #333 !important;
+}
+
+.ant-modal-header {
+  background-color: #1a1a1a !important;
+  border-bottom: 1px solid #333 !important;
+}
+
+.ant-modal-title {
+  color: #fff !important;
+}
+
+.ant-modal-close-x {
+  color: #fff !important;
+}
+
+.ant-modal-body {
+  background-color: #1a1a1a !important;
+  color: #fff !important;
+}
+
+/* Progress Chart Container */
+.progress-chart-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 10px 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.progress-chart-container canvas {
+  max-width: 100% !important;
+  height: auto !important;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+/* Chart Legend */
+.chart-legend {
+  margin-top: 20px;
+  text-align: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.legend-items {
+  display: inline-flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chart-stats {
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  font-size: 14px;
+  color: #333;
+}
