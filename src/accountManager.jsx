@@ -71,6 +71,24 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
 
             if (parsedData !== null) {
                 setSendSuccessMessage('User details updated.');
+                
+                // Send password change notification if password was changed
+                if (password.trim() !== '') {
+                    try {
+                        await axios.post(config.api + '/sendPasswordChangeNotification.php', {
+                            email: eMail,
+                            userName: name,
+                            changedBy: 'user'
+                        }, {
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        console.log('Password change notification sent successfully');
+                    } catch (notificationError) {
+                        console.error('Failed to send password change notification:', notificationError);
+                        // Don't fail the main operation if notification fails
+                    }
+                }
+                
                 // set currentUser with new details
                 setCurrentUser(prevUser => ({
                     ...prevUser,

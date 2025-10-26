@@ -372,7 +372,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
             setIsLoading,
             setSendSuccessMessage,
             setSendErrorMessage,
-            'Analytics loaded successfully',
+            '',
             'Failed to load analytics'
         );
     }, [selectedView, selectedDepartment, selectedStudent, selectedQuestion, config.api, currentUser.token, setSendSuccessMessage, setSendErrorMessage]);

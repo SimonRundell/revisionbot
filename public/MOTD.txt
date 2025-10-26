@@ -1,9 +1,14 @@
 
   <h2>Beta Test</h2>
-  <p>Please report any issues to the development team via the Microsoft forms at: <a href="https://forms.microsoft.com/e/H10SRY6eRx">https://forms.microsoft.com/e/H10SRY6eRx</a></p>
+  <div class="motd-notice">
+  <p>Please report any issues to the development team via the Microsoft Form at: <a href="https://forms.microsoft.com/e/H10SRY6eRx">https://forms.microsoft.com/e/H10SRY6eRx</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
   <li>Improvements and graphing functions for student performance tracking.</li>
   <li>Secured PHP endpoints</li>
-  <li>eMail functionality</li>
+  <li>eMail functionality on registration and password change</li>
+  <li>Random question selection button added to student interface.</li>
+  <li>Better documentation throughout the codebase.</li>
+  <li>Various bug fixes and performance improvements.</li>
   </ul>
+  </div>

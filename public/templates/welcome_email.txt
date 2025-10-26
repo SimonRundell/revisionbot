@@ -1,0 +1,21 @@
+Welcome to the AI Revision Bot!
+
+Dear {{NAME}},
+
+Your student account has been created in our AI Revision Bot. You can now access the platform to:
+
+- Answer practice questions with AI-powered feedback
+- Review your past responses and progress  
+- Receive personalized learning recommendations
+
+Your Login Credentials:
+Email: {{EMAIL}}
+Temporary Password: {{PASSWORD}}
+
+⚠️ Important Security Notice:
+Please change your password immediately after your first login for security purposes.
+
+If you have any questions or need assistance, please contact your instructor or system administrator.
+
+Best regards,
+AI Revision Bot

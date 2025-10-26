@@ -40,7 +40,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
             setIsLoading,
             setSendSuccessMessage,
             setSendErrorMessage,
-            'Past responses loaded successfully.',
+            '',
             'Failed to load past responses.'
         );
     }, [

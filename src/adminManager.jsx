@@ -226,6 +226,24 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
 
             if (response.data.status_code === 200) {
                 setSendSuccessMessage('User details updated.');
+                
+                // Send password change notification if password was changed
+                if (editForm.password.trim() !== '') {
+                    try {
+                        await axios.post(config.api + '/sendPasswordChangeNotification.php', {
+                            email: editForm.email,
+                            userName: editForm.name,
+                            changedBy: 'administrator'
+                        }, {
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        console.log('Password change notification sent successfully');
+                    } catch (notificationError) {
+                        console.error('Failed to send password change notification:', notificationError);
+                        // Don't fail the main operation if notification fails
+                    }
+                }
+                
                 // Update the user in the users array
                 setUsers(prevUsers => 
                     prevUsers.map(user => 

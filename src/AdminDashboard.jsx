@@ -53,7 +53,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
             setIsLoading,
             setSendSuccessMessage,
             setSendErrorMessage,
-            'Student responses loaded successfully.',
+            '',
             'Failed to load student responses.'
         );
     }, [config.api, currentUser.token, setSendErrorMessage, setSendSuccessMessage]);

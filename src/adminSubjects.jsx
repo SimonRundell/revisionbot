@@ -63,7 +63,7 @@ useEffect(() => {
         setIsLoading,
         setSendSuccessMessage,
         setSendErrorMessage,
-        'Subjects loaded successfully.',
+        '',
         'Failed to load subjects.'
     );
 }, [config.api, setSendErrorMessage, setSendSuccessMessage]);
@@ -99,7 +99,7 @@ const handleSubjectChange = (event) => {
             setIsLoading,
             setSendSuccessMessage,
             setSendErrorMessage,
-            'Topics loaded successfully.',
+            '',
             'Failed to load topics.'
         );
     } else {
@@ -139,7 +139,7 @@ const handleTopicChange = (event) => {
             setIsLoading,
             setSendSuccessMessage,
             setSendErrorMessage,
-            'Questions loaded successfully.',
+            '',
             'Failed to load questions.'
         );
     } else {
@@ -914,7 +914,7 @@ const loadStatistics = async () => {
         setIsLoading,
         setSendSuccessMessage,
         setSendErrorMessage,
-        'Statistics loaded successfully.',
+        '',
         'Failed to load statistics.'
     );
 };

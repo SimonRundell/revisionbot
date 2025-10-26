@@ -267,62 +267,41 @@ function sendWelcomeEmail($email, $name, $password) {
         
         // Content
         $mail->isHTML(true);
-        $mail->Subject = 'Welcome to the Educational Assessment System';
+        $mail->CharSet = 'UTF-8';
+        $mail->Encoding = 'base64';
+        $mail->Subject = 'Welcome to the AI Revision Bot Revision Application';
         
-        $htmlBody = "
-        <html>
-        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-            <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                <h2 style='color: #1890ff; margin-bottom: 20px;'>Welcome to the Educational Assessment System!</h2>
-                
-                <p>Dear <strong>$name</strong>,</p>
-                
-                <p>Your student account has been created in our Educational Assessment System. You can now access the platform to:</p>
-                
-                <ul>
-                    <li>Answer practice questions with AI-powered feedback</li>
-                    <li>Review your past responses and progress</li>
-                    <li>Receive personalized learning recommendations</li>
-                </ul>
-                
-                <div style='background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                    <h3 style='margin-top: 0; color: #1890ff;'>Your Login Credentials:</h3>
-                    <p><strong>Email:</strong> $email</p>
-                    <p><strong>Temporary Password:</strong> <code style='background-color: #fff; padding: 2px 5px; border: 1px solid #ddd;'>$password</code></p>
-                </div>
-                
-                <div style='background-color: #fff2e6; padding: 15px; border-radius: 5px; border-left: 4px solid #faad14; margin: 20px 0;'>
-                    <h4 style='margin-top: 0; color: #faad14;'>⚠️ Important Security Notice:</h4>
-                    <p>Please change your password immediately after your first login for security purposes.</p>
-                </div>
-                
-                <p>If you have any questions or need assistance, please contact your instructor or system administrator.</p>
-                
-                <p>Best regards,<br>
-                <strong>Educational Assessment System</strong></p>
-            </div>
-        </body>
-        </html>";
+        // Load email template
+        $templatePath = '../public/templates/welcome_email.html';
+        if (file_exists($templatePath)) {
+            $htmlBody = file_get_contents($templatePath);
+            
+            // Replace placeholders with actual values
+            $htmlBody = str_replace('{{NAME}}', htmlspecialchars($name), $htmlBody);
+            $htmlBody = str_replace('{{EMAIL}}', htmlspecialchars($email), $htmlBody);
+            $htmlBody = str_replace('{{PASSWORD}}', htmlspecialchars($password), $htmlBody);
+        } else {
+            error_log("Email template not found: $templatePath");
+            throw new Exception("Email template file not found");
+        }
         
         $mail->Body = $htmlBody;
         
         // Plain text version
-        $mail->AltBody = "
-Welcome to the Educational Assessment System!
-
-Dear $name,
-
-Your student account has been created. 
-
-Login Credentials:
-Email: $email
-Temporary Password: $password
-
-Please change your password immediately after your first login.
-
-Best regards,
-Educational Assessment System
-        ";
+        $textTemplatePath = '../public/templates/welcome_email.txt';
+        if (file_exists($textTemplatePath)) {
+            $textBody = file_get_contents($textTemplatePath);
+            
+            // Replace placeholders with actual values
+            $textBody = str_replace('{{NAME}}', $name, $textBody);
+            $textBody = str_replace('{{EMAIL}}', $email, $textBody);
+            $textBody = str_replace('{{PASSWORD}}', $password, $textBody);
+            
+            $mail->AltBody = $textBody;
+        } else {
+            // Fallback plain text version
+            $mail->AltBody = "Welcome to the AI Revision Bot!\n\nDear $name,\n\nYour account has been created.\n\nLogin: $email\nPassword: $password\n\nBest regards,\nAI Revision Bot";
+        }
         
         $mail->send();
         error_log("Successfully sent welcome email to: $email");

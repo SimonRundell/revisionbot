@@ -8,15 +8,15 @@ import './App.css';
 
 /****************************************************************
  * StudentInterface Component
- * Enablkes students to practice questions based on subjects and topics.
+ * Enables students to practice questions based on subjects and topics.
  * Integrates with AI for answer assessment and feedback.
 *****************************************************************/
 
 function StudentInterface ({ userId, 
                              config, 
                              currentUser, 
-                            setSendErrorMessage, 
-                            setSendSuccessMessage }) {
+                             setSendErrorMessage, 
+                             setSendSuccessMessage }) {
 
     const [subjects, setSubjects] = useState([]);
     const [topics, setTopics] = useState([]);
@@ -117,7 +117,7 @@ function StudentInterface ({ userId,
             setIsLoading,
             setSendSuccessMessage,
             setSendErrorMessage,
-            'Subjects loaded successfully.',
+            '',
             'Failed to load subjects.'
         );
 
@@ -156,7 +156,7 @@ function StudentInterface ({ userId,
                 setIsLoading,
                 setSendSuccessMessage,
                 setSendErrorMessage,
-                'Topics loaded successfully.',
+                '',
                 'Failed to load topics.'
             );
         } else {
@@ -164,6 +164,16 @@ function StudentInterface ({ userId,
             setQuestions([]); // Clear questions when subject changes
             setSelectedTopic(''); // Reset topic selection
         }
+    };
+
+    // Helper function to shuffle an array (Fisher-Yates shuffle algorithm)
+    const shuffleArray = (array) => {
+        const shuffled = [...array]; // Create a copy to avoid mutating original
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
     };
 
     const handleTopicChange = (event) => {
@@ -185,11 +195,15 @@ function StudentInterface ({ userId,
 
             handleApiCall(
                 apiCall,
-                setQuestions,
+                (questionsData) => {
+                    // Randomize the order of questions before setting them
+                    const shuffledQuestions = shuffleArray(questionsData);
+                    setQuestions(shuffledQuestions);
+                },
                 setIsLoading,
                 setSendSuccessMessage,
                 setSendErrorMessage,
-                'Questions loaded successfully.',
+                '',
                 'Failed to load questions.'
             );
         } else {
@@ -329,6 +343,14 @@ function StudentInterface ({ userId,
         continueBtn.addEventListener('click', handleClose);
     };
 
+        const handleRandomQuestion = () => {
+            if (questions.length > 0) {
+                const randomIndex = Math.floor(Math.random() * questions.length);
+                handleQuestionSelect(questions[randomIndex]);
+            } else {
+                setSendErrorMessage('You need to select a subject and topic with available questions first.');
+            }
+        };
 
     return (
         <>
@@ -344,6 +366,7 @@ function StudentInterface ({ userId,
             <div className="student-interface">
                 <div className="interface-header">
                     <h2>Practice Questions</h2>
+                    
                 </div>
 
                 {isLoading && <Spin size="large" />}
@@ -387,6 +410,12 @@ function StudentInterface ({ userId,
                 {selectedTopic && questions.length > 0 && (
                     <div className="questions-grid">
                         <h2>Practice Questions</h2>
+                        <button 
+                            onClick={handleRandomQuestion} 
+                            className="random-question-btn"
+                        >
+                            🎲 Random Question
+                        </button>
                         <div className="questions-list">
                             {questions.map((question, index) => (
                                 <div
