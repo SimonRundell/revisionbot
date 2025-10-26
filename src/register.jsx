@@ -4,13 +4,19 @@ import CryptoJS from 'crypto-js';
 import SelectLocale from './SelectLocale';
 import { parseApiResponse } from './utils/apiHelpers';
 
-/****************************************************************
+/****************************************************************************
  * Register Component
- * Renders the registration form for new users.
- * Includes fields for email, password, username, and avatar selection.
- * Currently not in use as registration is disabled and users
- * are added via bulk upload only.
-*****************************************************************/
+ * Renders the registration form for new users with email, password, username, and locale fields.
+ * Handles password hashing, form validation, and user account creation.
+ * Currently not in use as registration is disabled and users are added via bulk upload only.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Function} props.setShowRegister - Function to control registration form visibility
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @returns {JSX.Element} The Register component
+****************************************************************************/
 
 function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccessMessage }) {
     const [email, setEmail] = useState('');
@@ -23,6 +29,15 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
     const avatar = '/default_avatar.png';
     const admin = false;
 
+    /**
+     * Handle registration form submission
+     * Validates required fields, hashes password with MD5, and creates new user account
+     * Sends welcome email notification and updates parent component state
+     * 
+     * @async
+     * @param {Event} e - Form submission event
+     * @returns {Promise<void>} Promise that resolves when registration is complete
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
 

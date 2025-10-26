@@ -2,10 +2,20 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { handleApiCall, parseApiResponse } from './utils/apiHelpers';
 
-/****************************************************************
+/****************************************************************************
  * AccessControlTree Component
- * Renders the access control tree for subjects and topics.
-*****************************************************************/
+ * Renders hierarchical access control interface for subjects and topics.
+ * Allows setting granular permissions for users with expandable tree structure.
+ * Supports 'all' access or specific topic-level permissions per subject.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.currentUser - Current user object with authentication token
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Object} props.userAccess - Current user access permissions object
+ * @param {Function} props.onAccessChange - Callback function when access permissions change
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @returns {JSX.Element} The AccessControlTree component
+****************************************************************************/
 
 function AccessControlTree ({ 
     currentUser, 

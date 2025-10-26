@@ -9,6 +9,13 @@ import './App.css';
  * AdminDashboard Component
  * Renders the admin dashboard for managing student responses.
  * Includes filtering, viewing, and providing feedback on student answers.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Object} props.currentUser - Current user object with authentication token and admin details
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @returns {JSX.Element} The AdminDashboard component
 ****************************************************************************/
 
 function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSuccessMessage }) {
@@ -84,6 +91,13 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         setFilteredResponses(filtered);
     }, [allResponses, filters]);
 
+    /**
+     * Handle filter changes for response filtering
+     * Updates the specified filter type with new value
+     * 
+     * @param {string} filterType - The type of filter to update (student, subject, topic, dateFrom, dateTo, unmarked)
+     * @param {string|boolean} value - The new filter value
+     */
     const handleFilterChange = (filterType, value) => {
         setFilters(prev => ({
             ...prev,
@@ -91,6 +105,10 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         }));
     };
 
+    /**
+     * Clear all active filters and reset to default state
+     * Resets all filter fields to empty/default values
+     */
     const clearFilters = () => {
         setFilters({
             student: '',
@@ -102,6 +120,12 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         });
     };
 
+    /**
+     * Handle selection of a student response for detailed view
+     * Sets the selected response and initializes teacher feedback form
+     * 
+     * @param {Object} response - The student response object containing answer, AI feedback, and existing teacher feedback
+     */
     const handleResponseClick = (response) => {
         setSelectedResponse(response);
         setTeacherFeedback({
@@ -110,6 +134,13 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         });
     };
 
+    /**
+     * Save teacher feedback for the selected student response
+     * Submits teacher comment and rating to database and updates local state
+     * 
+     * @async
+     * @returns {Promise<void>} Promise that resolves when feedback is saved
+     */
     const saveTeacherFeedback = async () => {
         if (!selectedResponse) return;
 

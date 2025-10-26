@@ -14,10 +14,14 @@ import AdminDashboard from './AdminDashboard.jsx';
 import PastAnswersViewer from './PastAnswersViewer.jsx';
 import AnalyticsModule from './AnalyticsModule.jsx';
 
-/****************************************************************
+/****************************************************************************
  * App Component
- * Renders the main application layout and components.
-*****************************************************************/
+ * Main application component that manages global state and routing.
+ * Handles user authentication, configuration loading, and message display.
+ * Controls visibility of different application modes and manages the overall layout.
+ * 
+ * @returns {JSX.Element} The main App component with conditional rendering based on auth state
+****************************************************************************/
 
 function App() {
   const [config, setConfig] = useState(null);

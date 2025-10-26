@@ -6,11 +6,19 @@ import PastAnswersViewer from './PastAnswersViewer';
 import renderAttachments from './utils/renderAttachments';
 import './App.css';
 
-/****************************************************************
+/****************************************************************************
  * StudentInterface Component
- * Enables students to practice questions based on subjects and topics.
- * Integrates with AI for answer assessment and feedback.
-*****************************************************************/
+ * Main component for students to practice questions, submit answers, and receive AI feedback.
+ * Supports subject/topic filtering and user access control with randomized question display.
+ * 
+ * @param {Object} props - Component props
+ * @param {string|number} props.userId - The current user's ID
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Object} props.currentUser - Current user object containing token, access, and admin status
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @returns {JSX.Element} The StudentInterface component
+****************************************************************************/
 
 function StudentInterface ({ userId, 
                              config, 
@@ -32,7 +40,12 @@ function StudentInterface ({ userId,
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId] = useState(() => 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11));
     
-    // Helper function to parse user access permissions
+    /**
+     * Parse user access data from JSON string or return object directly
+     * Handles both string JSON and object formats with error recovery
+     * 
+     * @returns {Object} Parsed user access permissions object, empty object on error
+     */
     const getUserAccess = useCallback(() => {
         if (!currentUser || !currentUser.userAccess) {
             return {};
@@ -47,7 +60,13 @@ function StudentInterface ({ userId,
         }
     }, [currentUser]);
 
-    // Helper function to filter subjects based on user access
+    /**
+     * Filter subjects based on user access permissions
+     * Admin users can access all subjects, regular users are filtered by their access rights
+     * 
+     * @param {Array} allSubjects - Array of all available subject objects
+     * @returns {Array} Filtered array of subjects the user can access
+     */
     const filterSubjectsByAccess = useCallback((allSubjects) => {
         // Admin users can access everything
         if (currentUser?.admin === 1) {
@@ -65,7 +84,14 @@ function StudentInterface ({ userId,
         );
     }, [currentUser, getUserAccess]);
 
-    // Helper function to filter topics based on user access
+    /**
+     * Filter topics based on user access permissions for a specific subject
+     * Admin users can access all topics, regular users are filtered by their subject-specific access rights
+     * 
+     * @param {Array} allTopics - Array of all available topic objects for the subject
+     * @param {string|number} subjectId - The ID of the subject to filter topics for
+     * @returns {Array} Filtered array of topics the user can access within the subject
+     */
     const filterTopicsByAccess = useCallback((allTopics, subjectId) => {
         // Admin users can access everything
         if (currentUser?.admin === 1) {
@@ -123,6 +149,13 @@ function StudentInterface ({ userId,
 
     }, [userId, config.api, currentUser.token, setSendErrorMessage, setSendSuccessMessage, filterSubjectsByAccess]);
 
+    /**
+     * Handle subject selection change event
+     * Fetches topics for selected subject and applies access filtering
+     * Resets topic and question selections when subject changes
+     * 
+     * @param {Event} event - The select change event containing the new subject ID
+     */
     const handleSubjectChange = (event) => {
         const subjectId = event.target.value;
         setSelectedSubject(subjectId);
@@ -166,7 +199,13 @@ function StudentInterface ({ userId,
         }
     };
 
-    // Helper function to shuffle an array (Fisher-Yates shuffle algorithm)
+    /**
+     * Shuffle an array using Fisher-Yates shuffle algorithm
+     * Creates a copy to avoid mutating the original array
+     * 
+     * @param {Array} array - The array to shuffle
+     * @returns {Array} A new shuffled array without modifying the original
+     */
     const shuffleArray = (array) => {
         const shuffled = [...array]; // Create a copy to avoid mutating original
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -176,6 +215,12 @@ function StudentInterface ({ userId,
         return shuffled;
     };
 
+    /**
+     * Handle topic selection change event
+     * Fetches questions for selected topic and randomizes their order
+     * 
+     * @param {Event} event - The select change event containing the new topic ID
+     */
     const handleTopicChange = (event) => {
         const topicId = event.target.value;
         setSelectedTopic(topicId);
@@ -211,6 +256,12 @@ function StudentInterface ({ userId,
         }
     };
 
+    /**
+     * Handle question selection and prepare answer modal
+     * Sets up timing tracking and clears previous answer input
+     * 
+     * @param {Object} question - The selected question object containing id, question text, attachments, etc.
+     */
     const handleQuestionSelect = (question) => {
         setSelectedQuestion(question);
         setStudentAnswer('');
@@ -218,6 +269,14 @@ function StudentInterface ({ userId,
         setShowAnswerModal(true);
     };
 
+    /**
+     * Handle student answer submission and AI assessment
+     * Submits answer to database, requests AI feedback, and displays results
+     * Manages loading states and error handling throughout the process
+     * 
+     * @async
+     * @returns {Promise<void>} Promise that resolves when submission and AI assessment complete
+     */
     const handleSubmitAnswer = async () => {
         if (!studentAnswer.trim()) {
             alert('Please provide an answer before submitting.');
@@ -308,6 +367,13 @@ function StudentInterface ({ userId,
         }
     };
 
+    /**
+     * Display AI feedback in a modal overlay
+     * Creates a DOM modal with AI assessment results and proper cleanup
+     * Manages modal state and event listeners for closing actions
+     * 
+     * @param {string} feedback - HTML formatted AI feedback content to display
+     */
     const showAIFeedback = (feedback) => {
         // Create feedback modal
         const feedbackModal = document.createElement('div');
@@ -332,6 +398,10 @@ function StudentInterface ({ userId,
         const closeBtn = feedbackModal.querySelector('#close-feedback-btn');
         const continueBtn = feedbackModal.querySelector('#continue-studying-btn');
         
+        /**
+         * Handle modal close action and state cleanup
+         * Removes modal from DOM and resets component state
+         */
         const handleClose = () => {
             feedbackModal.remove();
             setShowAnswerModal(false); // Properly reset the state
@@ -343,14 +413,19 @@ function StudentInterface ({ userId,
         continueBtn.addEventListener('click', handleClose);
     };
 
-        const handleRandomQuestion = () => {
-            if (questions.length > 0) {
-                const randomIndex = Math.floor(Math.random() * questions.length);
-                handleQuestionSelect(questions[randomIndex]);
-            } else {
-                setSendErrorMessage('You need to select a subject and topic with available questions first.');
-            }
-        };
+    /**
+     * Handle random question selection from available questions
+     * Selects a random question from the current topic's question pool
+     * Shows error if no questions are available
+     */
+    const handleRandomQuestion = () => {
+        if (questions.length > 0) {
+            const randomIndex = Math.floor(Math.random() * questions.length);
+            handleQuestionSelect(questions[randomIndex]);
+        } else {
+            setSendErrorMessage('You need to select a subject and topic with available questions first.');
+        }
+    };
 
     return (
         <>

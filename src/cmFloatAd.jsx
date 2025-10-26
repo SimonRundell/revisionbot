@@ -1,10 +1,16 @@
 import {useState, useEffect} from 'react';
 
-/****************************************************************
+/****************************************************************************
  * CMFloatAd Component
- * Renders a floating advertisement banner with customizable colors.
- * This version modified for Exeter College by Simon Rundell - Dept of ITDD
-*****************************************************************/
+ * Renders a floating advertisement banner with customizable colors and responsive design.
+ * Features hover expansion, mobile optimization, and smooth transitions.
+ * This version modified for Exeter College by Simon Rundell - Dept of ITDD.
+ * 
+ * @param {Object} props - Component props
+ * @param {string} [props.color='#ffffff'] - Text color for the advertisement content
+ * @param {string} [props.bgColor='transparent'] - Background color for the floating banner
+ * @returns {JSX.Element} The CMFloatAd component
+****************************************************************************/
 
 function CMFloatAd({color = '#ffffff', bgColor = 'transparent'}) {
     const [isHovered, setIsHovered] = useState(false);

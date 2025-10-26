@@ -4,11 +4,19 @@ import {Spin} from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import { formatAttachmentSize, getFileIconMeta } from './utils/fileAttachments';
 
-/****************************************************************
+/****************************************************************************
  * AdminSubjects Component
- * Renders the subject management interface for the admin.
- * Includes subject, topic, and question management.
-*****************************************************************/
+ * Comprehensive admin interface for managing subjects, topics, and questions.
+ * Provides CRUD operations, bulk actions, file attachments, and statistical analysis.
+ * Supports question reordering, bulk uploads, and data export functionality.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Object} props.currentUser - Current user object with authentication token and admin details
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @returns {JSX.Element} The AdminSubjects component
+****************************************************************************/
 
 function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccessMessage}) {
 

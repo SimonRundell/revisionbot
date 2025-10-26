@@ -4,14 +4,20 @@ import { Spin } from 'antd';
 import axios from 'axios';
 import Register from './register';
 
-/****************************************************************
+/****************************************************************************
  * Login Component
- * Renders the login form for user authentication.
- * Includes email/password fields and a login button.
+ * Renders the login form for user authentication with email and password.
  * Displays a message of the day (MOTD) loaded from an external file.
- * Registration function currently disabled, but structure in place
- * because student upload is bulk only at the moment.
-*****************************************************************/
+ * Handles password hashing and authentication with the API.
+ * Registration function currently disabled, bulk upload used instead.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Function} props.setCurrentUser - Function to set current user state after successful login
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @returns {JSX.Element} The Login component
+****************************************************************************/
 
 const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMessage}) => {
   const [email, setEmail] = useState('');
@@ -39,6 +45,15 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
     fetchMotd();
   }, []);
 
+  /**
+   * Handle login form submission
+   * Hashes password with MD5, converts email to lowercase, and authenticates with API
+   * Sets current user on successful login or displays error message
+   * 
+   * @async
+   * @param {Event} e - Form submission event
+   * @returns {Promise<void>} Promise that resolves when login attempt is complete
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);

@@ -1,18 +1,33 @@
 import { useState } from 'react';
 import { Modal } from 'antd';
 
-/****************************************************************
+/****************************************************************************
  * AvatarManager Component
  * Renders the avatar selection and management options for the user.
- * Includes image upload, preview, and reset to default.
-*****************************************************************/
+ * Includes image upload, preview, lightbox modal, and reset to default functionality.
+ * Handles file validation (size/type) and base64 encoding for avatar storage.
+ * 
+ * @param {Object} props - Component props
+ * @param {string|null} props.currentAvatar - Current avatar data (base64 or URL) or null for default
+ * @param {Function} props.onAvatarChange - Callback function when avatar is changed or reset
+ * @param {Function} props.setSendErrorMessage - Function to set error messages for validation failures
+ * @param {number} [props.size=60] - Size in pixels for avatar display (width and height)
+ * @param {string} [props.className="avatar"] - CSS class name for the avatar image element
+ * @returns {JSX.Element} The AvatarManager component
+****************************************************************************/
 
 function AvatarManager  ({ currentAvatar, onAvatarChange, setSendErrorMessage, size = 60, className = "avatar"}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const avatarPreview = currentAvatar || '/default_avatar.png';
 
-  // Handle file selection
+  /**
+   * Handle file selection for avatar upload
+   * Validates file size (max 5MB) and type (images only)
+   * Converts selected image to base64 and calls onAvatarChange callback
+   * 
+   * @param {Event} event - File input change event containing selected file
+   */
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -42,13 +57,19 @@ function AvatarManager  ({ currentAvatar, onAvatarChange, setSendErrorMessage, s
     event.target.value = '';
   };
 
-  // Reset avatar to default
+  /**
+   * Reset avatar to default image
+   * Calls onAvatarChange with null to use default avatar and closes modal
+   */
   const resetAvatar = () => {
     onAvatarChange(null);
     setIsModalOpen(false);
   };
 
-  // Open lightbox
+  /**
+   * Open lightbox modal for avatar preview
+   * Sets modal visibility state to true
+   */
   const openLightbox = () => {
     setIsModalOpen(true);
   };

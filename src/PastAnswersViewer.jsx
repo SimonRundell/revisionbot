@@ -6,11 +6,20 @@ import { handleApiCall } from './utils/apiHelpers';
 import { formatDate, formatDateTime } from './utils/dateHelpers';
 import renderAttachments from './utils/renderAttachments';
 
-/****************************************************************
+/****************************************************************************
  * PastAnswersViewer Component
  * Renders the past answers and feedback for the user.
- * Includes options to view, edit, and delete past responses.
-*****************************************************************/
+ * Includes options to view past responses with AI and teacher feedback.
+ * Displays response history in chronological order with detailed information.
+ * 
+ * @param {Object} props - Component props
+ * @param {string|number} props.userId - The current user's ID for filtering responses
+ * @param {Object} props.currentUser - Current user object with authentication token
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @returns {JSX.Element} The PastAnswersViewer component
+****************************************************************************/
 
 function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, setSendSuccessMessage}) {
 
@@ -18,6 +27,11 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
     const [selectedResponse, setSelectedResponse] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    /**
+     * Load past responses for the current user from the API
+     * Fetches user's response history with AI and teacher feedback
+     * Only executes if userId and authentication token are available
+     */
     const loadPastResponses = useCallback(() => {
         if (!userId || !currentUser?.token) {
             return;

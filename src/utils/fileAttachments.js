@@ -78,6 +78,14 @@ export const FILE_ICON_LABELS = {
     default: 'FILE'
 };
 
+/**
+ * Determine the file type key for icon display based on MIME type and filename extension
+ * Prioritizes file extension over MIME type for accurate categorization
+ * 
+ * @param {string} mimeType - The MIME type of the file (e.g., 'application/pdf')
+ * @param {string} filename - The filename with extension (e.g., 'document.pdf')
+ * @returns {string} File type key for icon mapping (pdf, word, excel, etc.) or 'default'
+ */
 export const getFileTypeKey = (mimeType = '', filename = '') => {
     const extension = filename.includes('.')
         ? filename.split('.').pop().toLowerCase()
@@ -108,6 +116,14 @@ export const getFileTypeKey = (mimeType = '', filename = '') => {
     return 'default';
 };
 
+/**
+ * Get file icon metadata including type key and display label
+ * Combines file type detection with appropriate display labeling
+ * 
+ * @param {string} mimeType - The MIME type of the file
+ * @param {string} filename - The filename with extension
+ * @returns {Object} Object containing typeKey and label for file icon display
+ */
 export const getFileIconMeta = (mimeType = '', filename = '') => {
     const typeKey = getFileTypeKey(mimeType, filename);
     const extension = filename.includes('.')
@@ -124,6 +140,14 @@ export const getFileIconMeta = (mimeType = '', filename = '') => {
     };
 };
 
+/**
+ * Ensure data is properly formatted as a data URL for display/download
+ * Handles both base64 strings and existing data URLs
+ * 
+ * @param {string} rawData - Base64 encoded data or existing data URL
+ * @param {string} mimeType - MIME type for the data URL header
+ * @returns {string} Properly formatted data URL or empty string if no data
+ */
 export const ensureDataUrl = (rawData, mimeType) => {
     if (!rawData) {
         return '';
@@ -138,6 +162,13 @@ export const ensureDataUrl = (rawData, mimeType) => {
     return `data:${mimeType || 'application/octet-stream'};base64,${trimmed}`;
 };
 
+/**
+ * Format file size in bytes to human-readable format (KB, MB, GB)
+ * Handles various input types and validates numeric values
+ * 
+ * @param {number|string} size - File size in bytes
+ * @returns {string} Formatted size string (e.g., '1.5 MB') or empty string if invalid
+ */
 export const formatAttachmentSize = (size) => {
     if (size === undefined || size === null) {
         return '';

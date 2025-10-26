@@ -5,10 +5,16 @@ import { handleApiCall } from './utils/apiHelpers';
 import { formatChartDate, formatDateRange } from './utils/dateHelpers';
 import './App.css';
 
-/****************************************************************
+/****************************************************************************
  * StudentProgressChart Component
- * Renders a canvas-based chart showing RAG progress over time
- *****************************************************************/
+ * Renders a canvas-based chart showing RAG (Red/Amber/Green) progress over time
+ * Uses HTML5 Canvas to draw interactive progress graphs with trend lines and data points
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.data - Progress data object containing progressData array and statistics
+ * @param {Array} props.data.progressData - Array of progress points with date, rating, and values
+ * @returns {JSX.Element} Canvas-based progress chart component
+****************************************************************************/
 const StudentProgressChart = ({ data }) => {
     const canvasRef = useRef(null);
     
@@ -210,12 +216,19 @@ const StudentProgressChart = ({ data }) => {
     );
 };
 
-/****************************************************************
+/****************************************************************************
  * AnalyticsModule Component
  * Renders the analytics dashboard for monitoring user activity.
- * Includes filtering and viewing feedback on student answers
- * with staticstical analysis.
-*****************************************************************/
+ * Includes filtering and viewing feedback on student answers with statistical analysis.
+ * Provides department, student, and question-level analytics with progress tracking.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Object} props.currentUser - Current user object with authentication token and admin details
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @returns {JSX.Element} The AnalyticsModule component
+****************************************************************************/
 
 const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -241,6 +254,13 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
     const [progressLoading, setProgressLoading] = useState(false);
     const [modalStudentName, setModalStudentName] = useState('');
 
+    /**
+     * Load departments data for analytics filtering
+     * Fetches all available departments from the API for dropdown selection
+     * 
+     * @async
+     * @returns {Promise<void>} Promise that resolves when departments are loaded
+     */
     const loadDepartments = useCallback(async () => {
         const apiCall = () => axios.post(`${config.api}/getAdvancedStatistics.php`, {
             type: 'departments'
@@ -262,6 +282,13 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
         );
     }, [config.api, currentUser.token, setSendErrorMessage]);
 
+    /**
+     * Load students data for analytics filtering
+     * Fetches all users/students from the API for dropdown selection
+     * 
+     * @async
+     * @returns {Promise<void>} Promise that resolves when students are loaded
+     */
     const loadStudents = useCallback(async () => {
         const apiCall = () => axios.post(`${config.api}/getUsers.php`, {}, {
             headers: { 

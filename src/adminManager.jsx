@@ -7,11 +7,21 @@ import AvatarManager from './AvatarManager'
 import AccessControlTree from './AccessControlTree'
 import { handleApiCall } from './utils/apiHelpers'
 
-/****************************************************************
+/****************************************************************************
  * AdminManager Component
  * Admin management interface for managing user accounts, including
  * creating, editing, deleting, and bulk uploading users.
-*****************************************************************/
+ * Provides comprehensive user management with access control and filtering.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Object} props.currentUser - Current user object with authentication token and admin details
+ * @param {Function} props.setSendSuccessMessage - Function to set success messages in parent component
+ * @param {Function} props.setSendErrorMessage - Function to set error messages in parent component
+ * @param {Function} props.setShowAdminManager - Function to control admin manager visibility
+ * @param {boolean} props.showAdminManager - Boolean indicating if admin manager should be visible
+ * @returns {JSX.Element} The AdminManager component
+****************************************************************************/
 
 function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorMessage,
                         setShowAdminManager, showAdminManager}) {
@@ -82,11 +92,25 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         setShowAdminManager(false);
     }
 
+    /**
+     * Show delete confirmation modal for selected user
+     * Sets up the user to be deleted and displays confirmation dialog
+     * 
+     * @param {Object} user - User object to be deleted
+     */
     const showDeleteConfirmation = (user) => {
         setUserToDelete(user);
         setDeleteModalVisible(true);
     };
 
+    /**
+     * Handle confirmed user deletion
+     * Sends delete request to API and updates local state
+     * Manages loading states and error handling
+     * 
+     * @async
+     * @returns {Promise<void>} Promise that resolves when deletion is complete
+     */
     const handleDeleteConfirm = async () => {
         if (!userToDelete) return;
 
@@ -174,7 +198,12 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         });
     };
 
-    // Handle avatar change from AvatarManager component
+    /**
+     * Handle avatar change from AvatarManager component
+     * Updates the edit form with new avatar data and preview
+     * 
+     * @param {string} newAvatar - Base64 encoded avatar data or avatar path
+     */
     const handleAvatarChange = (newAvatar) => {
         setEditForm(prev => ({
             ...prev,
@@ -183,7 +212,12 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         }));
     };
 
-    // Handle access control change from AccessControlTree component
+    /**
+     * Handle access control change from AccessControlTree component
+     * Updates the edit form with new user access permissions
+     * 
+     * @param {Object} newUserAccess - Access control object with subject/topic permissions
+     */
     const handleAccessControlChange = (newUserAccess) => {
         setEditForm(prev => ({
             ...prev,
@@ -191,6 +225,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         }));
     };
 
+    /**
+     * Handle user update submission
+     * Validates form data, hashes password if changed, and submits to API
+     * Updates local user list on success
+     * 
+     * @async
+     * @returns {Promise<void>} Promise that resolves when user update is complete
+     */
     const handleUpdateUser = async () => {
         if (!userToEdit) return;
 
