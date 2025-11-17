@@ -1,4 +1,23 @@
 <?php
+/****************************************************************************
+ * Get Topics Endpoint
+ * 
+ * Retrieves all topics for a specified subject.
+ * Returns topics sorted alphabetically for consistent UI display.
+ * 
+ * Security:
+ * - Protected by blockDirectAccess()
+ * - Filters by subject ID to prevent unauthorized access
+ * - Available to all authenticated users
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['subjectid'] - Subject ID to filter topics
+ * @output JSON array of topics for the specified subject
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

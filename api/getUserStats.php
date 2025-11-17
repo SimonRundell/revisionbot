@@ -1,4 +1,32 @@
 <?php
+/****************************************************************************
+ * Get User Statistics Endpoint
+ * 
+ * Retrieves detailed statistics for a specific user including:
+ * - Questions attempted and completed per subject/topic
+ * - Average grades
+ * - Total time spent
+ * - Last activity timestamp
+ * 
+ * Used for:
+ * - Student progress dashboards
+ * - Analytics and reporting
+ * - Teacher review of individual students
+ * 
+ * Security:
+ * - Protected by requireAuth()
+ * - Uses GET method (different from other endpoints)
+ * - Validates user ID parameter
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input $_GET['userId'] - User ID to retrieve stats for
+ * @output JSON object with statistics keyed by subject_topic
+ * 
+ * @version 1.0
+ * @note Uses GET instead of POST - consider standardizing to POST
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

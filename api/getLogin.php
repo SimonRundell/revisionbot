@@ -1,4 +1,25 @@
 <?php
+/****************************************************************************
+ * User Authentication Endpoint
+ * 
+ * Authenticates users by email and password hash.
+ * Returns user data if credentials are valid.
+ * 
+ * Security:
+ * - Protected by blockDirectAccess() - POST with JSON only
+ * - Password already hashed on client side
+ * - Case-insensitive email matching
+ * - Returns all user fields including admin status
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['email'] - User email address
+ * @input receivedData['passwordHash'] - SHA-256 hashed password
+ * @output JSON array with user data or error message
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

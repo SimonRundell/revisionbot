@@ -1,4 +1,29 @@
 <?php
+/****************************************************************************
+ * Create Subject Endpoint (Admin)
+ * 
+ * Creates new subject categories in the system.
+ * Subjects are top-level organizational units containing topics and questions.
+ * 
+ * Examples:
+ * - Computing
+ * - Mathematics
+ * - Science
+ * - History
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - Simple text field validation
+ * - Subject names should be unique (enforced at app level)
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['subject'] - Subject name
+ * @output Success or error message
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

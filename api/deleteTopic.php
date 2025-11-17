@@ -1,4 +1,31 @@
 <?php
+/****************************************************************************
+ * Delete Topic Endpoint (Admin)
+ * 
+ * Permanently deletes a topic and all associated questions.
+ * Performs cascade deletion:
+ * 1. Delete all questions in the topic
+ * 2. Delete the topic itself
+ * 
+ * Warning:
+ * - Deletion is permanent and cannot be undone
+ * - Deletes ALL questions under this topic
+ * - May orphan student responses
+ * - Returns count of deleted questions
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - Validates topic ID required
+ * - Returns 404 if topic not found
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['id'] - Topic ID to delete (required)
+ * @output Success message with deleted question count
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

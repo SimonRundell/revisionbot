@@ -1,4 +1,22 @@
 <?php
+/****************************************************************************
+ * Get Subjects Endpoint
+ * 
+ * Retrieves all available subjects from the database.
+ * Used to populate subject selection dropdowns in student and admin interfaces.
+ * 
+ * Security:
+ * - Protected by blockDirectAccess()
+ * - No sensitive data exposed
+ * - Available to all authenticated users
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @output JSON array of all subjects with id and subject name
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

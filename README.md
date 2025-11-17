@@ -7,14 +7,15 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
 
 - **Student Interface**: Interactive question answering with AI feedback and randomized question selection
 - **AI Assessment**: Integration with Google's Gemini 2.5 Flash for intelligent immediate feedback
-- **Past Answers Review**: Students can review their previous responses and feedback
-- **Admin Dashboard**: Teachers can review all student responses and add ratings/comments
+- **Multimodal Student Responses**: Students can upload graphics (PNG/JPG/GIF/BMP) as part of their answers
+- **Past Answers Review**: Students can review their previous responses, graphics, and feedback
+- **Admin Dashboard**: Teachers can review all student responses including uploaded graphics and add ratings/comments
 - **RAG Rating System**: Teachers can rate responses with Relevant, Adequate, Good scale
 - **User Management**: Registration, login, and role-based access control
 - **Bulk Student Upload**: Import multiple student accounts from CSV files with automatic email notifications
 - **Email Notifications**: Automated welcome emails and password change notifications with professional templates
 - **Advanced Analytics**: Time-based progress tracking, improvement analysis, and comprehensive student statistics
-- **Security**: Protected API endpoints with role-based access control
+- **Security**: Protected API endpoints with role-based access control and directory browsing prevention
 
 ## Setup Instructions
 
@@ -120,7 +121,8 @@ All API endpoints are now protected against direct browser access while maintain
 - `getSubjects.php` - Subject listings
 - `getTopics.php` - Topic listings
 - `getQuestions.php` - Question data
-- `submitResponse.php` - Student answer submission
+- `submitResponse.php` - Student answer submission (supports multimodal with graphics)
+- `geminiAPI.php` - AI assessment (supports multimodal text + image analysis)
 - `InsertUser.php` - User registration
 
 ### Protection Features
@@ -128,15 +130,18 @@ All API endpoints are now protected against direct browser access while maintain
 #### ✅ **What's Blocked:**
 - Direct browser GET requests to any endpoint
 - Casual browsing/scraping of API data
+- Directory listings of /api folder (via index.php)
 - Unauthorized access to sensitive user data
 - Direct access to admin functions
+- Prompt injection attacks in AI prompts
 
 #### ✅ **What Still Works:**
 - All React app functionality
 - Legitimate POST requests with JSON content-type
+- Multimodal submissions (text + images)
 - Normal login and registration flows
 - All admin panel operations
-- Student quiz functionality
+- Student quiz functionality with graphic uploads
 
 ### Security Implementation
 
@@ -145,11 +150,17 @@ All API endpoints are now protected against direct browser access while maintain
 - `requireAuth()` - Enhanced protection  
 - `isLegitimateApiCall()` - Validation logic
 
+**Directory Protection:** `api/index.php`
+- Returns 403 Forbidden for directory browsing
+- Prevents file/folder listing of /api directory
+- Does not interfere with endpoint access
+
 **Protection Method:**
 - Requires POST method (not GET)
 - Requires `application/json` or `multipart/form-data` content-type
 - Blocks browser address bar access
 - Allows all React app requests
+- Prevents prompt injection in AI interactions
 
 ## Bulk Student Upload
 
@@ -189,6 +200,100 @@ jane.smith@school.edu,Jane Smith,Science,en-US
 2. Sign in with your Google account
 3. Create a new API key
 4. Copy the key to your `api/.config.json` file
+
+## 🎨 Multimodal Student Responses
+
+The system supports multimodal student responses, allowing students to upload graphics alongside their text answers for comprehensive AI assessment.
+
+### Feature Overview
+
+**Students can:**
+- Upload images (PNG, JPG, GIF, BMP) as part of their answers
+- Preview images before submission
+- Remove and replace images if needed
+- Submit text-only, image-only, or combined responses
+
+**Teachers see:**
+- Student text answers
+- Uploaded graphics in admin dashboard
+- Graphics in past answers review
+- All content together in AI feedback modal
+
+**AI analyzes:**
+- Text responses with traditional NLP
+- Visual content (diagrams, sketches, screenshots)
+- Combined multimodal understanding
+- Provides feedback on both text and visual elements
+
+### Technical Implementation
+
+#### Client-Side (StudentInterface.jsx)
+```javascript
+// File validation: PNG/JPG/GIF/BMP, max 5MB
+const handleGraphicSelect = (event) => {
+  const file = event.target.files[0];
+  // Validation logic
+  // Convert to base64 data URL
+  // Set preview and state
+};
+```
+
+#### Database Schema
+```sql
+ALTER TABLE tblresponse 
+ADD COLUMN student_graphic LONGTEXT NULL 
+COMMENT 'Base64-encoded student uploaded image';
+```
+
+#### API Endpoints
+
+**submitResponse.php:**
+- Accepts `studentGraphic` parameter (optional)
+- Stores base64 data URL in database
+- Type: LONGTEXT (supports up to ~4GB)
+
+**geminiAPI.php:**
+- Extracts MIME type from data URL
+- Sends multimodal request to Gemini API
+- Format: `{parts: [{text: "..."}, {inline_data: {...}}]}`
+
+### Usage Example
+
+**Student workflow:**
+1. Select question to answer
+2. Type text response
+3. Click "Upload Graphic" (optional)
+4. Select image file from device
+5. Preview shows thumbnail
+6. Submit for AI assessment
+7. View feedback with question, answer, graphic, and AI assessment
+
+**Data flow:**
+```
+StudentInterface → submitResponse.php → Database (tblresponse.student_graphic)
+                ↓
+              geminiAPI.php → Gemini 2.5 Flash (multimodal analysis)
+                ↓
+              AI Feedback Modal (displays all content)
+```
+
+### Security Considerations
+
+**Client-side:**
+- File type validation (image formats only)
+- File size limit (5MB maximum)
+- Preview before submission
+
+**Server-side:**
+- POST-only requests
+- Content-type validation
+- Base64 encoding prevents script injection
+- LONGTEXT storage for large images
+
+**AI Protection:**
+- Prompt engineering prevents AI from revealing graphics in text output
+- Instruction: "do not include any images that I have uploaded" in prompt
+- Ensures AI feedback focuses on assessment, not data leakage
 
 ## 📧 Email System
 
@@ -476,18 +581,31 @@ const chartData = progressData.map(entry => ({
 
 ## Recent Enhancements
 
+### Multimodal Assessment (November 2025)
+- **Student Graphic Uploads**: Students can attach images (PNG/JPG/GIF/BMP, max 5MB) to answers
+- **AI Image Analysis**: Gemini AI analyzes both text and uploaded graphics together
+- **Base64 Storage**: Graphics stored as LONGTEXT base64 data in database (student_graphic column)
+- **Display Integration**: Graphics shown in AI feedback, past answers, and admin review
+- **File Validation**: Client-side validation for file type and size
+- **Preview Feature**: Real-time preview of uploaded images before submission
+- **Database Schema**: New student_graphic LONGTEXT column in tblresponse table
+
 ### UI/UX Improvements
 - **Question Randomization**: Students get randomized question order for varied practice
 - **Random Question Button**: Quick access to random questions with professional styling
 - **Consistent Login Design**: Unified styling between login container and MOTD sections
-- **Enhanced Student Interface**: Improved navigation and visual feedback
+- **Enhanced Student Interface**: Improved navigation and visual feedback with graphic upload
 - **Interactive Student Progress**: Clickable student names with visual progress graphs
+- **Graphic Preview**: Real-time preview of uploaded images with remove functionality
+- **Responsive Image Display**: Graphics scale appropriately in all viewing contexts
 
 ### Security Enhancements
 - **Comprehensive API Protection**: All endpoints secured against direct browser access
 - **Content-Type Validation**: Strict validation of request formats
 - **Role-Based Access Control**: Different security levels for different endpoint types
 - **Password Change Notifications**: Automatic security alerts for password changes
+- **Directory Browsing Prevention**: index.php blocks /api folder listings
+- **Prompt Injection Protection**: AI prompts engineered to prevent security bypasses
 
 ### Email System
 - **Template-Based Architecture**: Centralized email templates for easy maintenance

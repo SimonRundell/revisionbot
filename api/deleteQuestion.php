@@ -1,4 +1,29 @@
 <?php
+/****************************************************************************
+ * Delete Question Endpoint (Admin)
+ * 
+ * Permanently deletes a question from the system.
+ * Validates question ID exists before deletion.
+ * 
+ * Warning:
+ * - Deletion is permanent and cannot be undone
+ * - May orphan student responses if not handled properly
+ * - Consider soft delete or cascade delete for responses
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - Validates question ID required
+ * - Returns 404 if question not found
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['id'] - Question ID to delete (required)
+ * @output Success or error message with affected rows
+ * 
+ * @version 1.0
+ * @todo Consider cascade delete for related responses
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

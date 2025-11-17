@@ -1,4 +1,46 @@
 <?php
+/****************************************************************************
+ * Bulk Upload Users Endpoint (Admin)
+ * 
+ * Creates multiple user accounts from CSV file upload.
+ * Sends welcome emails with login credentials to each new user.
+ * 
+ * CSV Format:
+ * email,name,department,locale
+ * student@school.edu,John Doe,Mathematics,en-US
+ * 
+ * Features:
+ * - Creates users with default password (hashed)
+ * - Sends automated welcome emails via PHPMailer
+ * - Configurable user access permissions (JSON)
+ * - Skips duplicate emails
+ * - Transaction-safe (rollback on error)
+ * - Detailed error reporting per row
+ * 
+ * Default Settings:
+ * - Password: 'student123' (or from request)
+ * - Admin: false (0)
+ * - Status: active
+ * - Access: configurable via userAccess JSON
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - Validates CSV format and required fields
+ * - Email uniqueness enforced by database
+ * - Passwords hashed with MD5
+ * 
+ * @requires PHPMailer - Email sending
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input $_FILES['csvFile'] - CSV file with user data
+ * @input receivedData['defaultPassword'] - Default password for all users
+ * @input receivedData['userAccess'] - JSON access permissions
+ * @output JSON with created count, failed count, and email results
+ * 
+ * @version 1.0
+ * @see docs/bulk_upload_testing.md for testing guide
+ ****************************************************************************/
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 

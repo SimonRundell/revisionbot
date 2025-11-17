@@ -1,4 +1,30 @@
 <?php
+/****************************************************************************
+ * Delete User Endpoint (Admin)
+ * 
+ * Permanently deletes a user account from the system.
+ * 
+ * Warning:
+ * - Deletion is permanent and cannot be undone
+ * - May orphan student responses and statistics
+ * - Consider soft delete or data export before deletion
+ * - No cascade delete implemented for user data
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - No validation to prevent deleting own account
+ * - Should add protection against self-deletion
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['id'] - User ID to delete (required)
+ * @output Success or error message
+ * 
+ * @version 1.0
+ * @todo Add protection against self-deletion
+ * @todo Consider cascade delete for user responses
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

@@ -1,13 +1,17 @@
 /*
- Educational Assessment System - Database Template
- 
- This template creates the database structure with a default admin user.
- 
- Default Admin Credentials:
- Email: admin@example.com
- Password: admin123
- 
- IMPORTANT: Change the admin password immediately after installation!
+ Navicat Premium Data Transfer
+
+ Source Server         : LOCALHOST
+ Source Server Type    : MySQL
+ Source Server Version : 80403 (8.4.3)
+ Source Host           : localhost:3306
+ Source Schema         : newaibot
+
+ Target Server Type    : MySQL
+ Target Server Version : 80403 (8.4.3)
+ File Encoding         : 65001
+
+ Date: 17/11/2025 20:46:03
 */
 
 SET NAMES utf8mb4;
@@ -26,7 +30,7 @@ CREATE TABLE `tblquestion`  (
   `question_order` int NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_question_order`(`topicid` ASC, `question_order` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 35 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for tblresponse
@@ -39,6 +43,7 @@ CREATE TABLE `tblresponse`  (
   `subject_id` int NOT NULL,
   `topic_id` int NOT NULL,
   `student_answer` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `student_graphic` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'base64 encoded graphic uploaded by student',
   `response_timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `time_taken` int NULL DEFAULT NULL,
   `ai_feedback` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
@@ -67,7 +72,7 @@ CREATE TABLE `tblresponse`  (
   CONSTRAINT `fk_response_subject` FOREIGN KEY (`subject_id`) REFERENCES `tblsubject` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_response_topic` FOREIGN KEY (`topic_id`, `subject_id`) REFERENCES `tbltopic` (`id`, `subjectid`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_response_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 21 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for tblsubject
@@ -77,7 +82,7 @@ CREATE TABLE `tblsubject`  (
   `id` int NOT NULL AUTO_INCREMENT,
   `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for tbltopic
@@ -88,7 +93,7 @@ CREATE TABLE `tbltopic`  (
   `subjectid` int NOT NULL,
   `topic` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`, `subjectid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for tbluser
@@ -102,11 +107,12 @@ CREATE TABLE `tbluser`  (
   `userLocation` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `userStatus` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `userLocale` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+  `userAccess` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL,
   `avatar` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL,
   `admin` tinyint NOT NULL DEFAULT 0 COMMENT '1 = admin',
   `userEmailValidated` tinyint NOT NULL DEFAULT 0 COMMENT '1 = validated default = 0',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 124 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for tbluser_stats
@@ -129,19 +135,6 @@ CREATE TABLE `tbluser_stats`  (
   CONSTRAINT `fk_stats_subject` FOREIGN KEY (`subject_id`) REFERENCES `tblsubject` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_stats_topic` FOREIGN KEY (`topic_id`, `subject_id`) REFERENCES `tbltopic` (`id`, `subjectid`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_stats_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Insert default admin user
--- Password hash for 'admin123' - CHANGE THIS IMMEDIATELY AFTER INSTALLATION!
--- ----------------------------
-INSERT INTO `tbluser` (`id`, `email`, `passwordHash`, `userName`, `userLocation`, `userStatus`, `userLocale`, `avatar`, `admin`, `userEmailValidated`) VALUES 
-(1, 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', 'System', 'Active', 'en-US', NULL, 1, 1);
-
--- ----------------------------
--- Insert sample subject and topic for testing
--- ----------------------------
-INSERT INTO `tblsubject` (`id`, `subject`) VALUES (1, 'Sample Subject');
-INSERT INTO `tbltopic` (`id`, `subjectid`, `topic`) VALUES (1, 1, 'Sample Topic');
+) ENGINE = InnoDB AUTO_INCREMENT = 41 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 SET FOREIGN_KEY_CHECKS = 1;

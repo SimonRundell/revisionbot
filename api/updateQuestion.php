@@ -1,4 +1,33 @@
 <?php
+/****************************************************************************
+ * Update Question Endpoint (Admin)
+ * 
+ * Updates existing question details including text, topic, attachments, and markscheme.
+ * Validates question ID exists before updating.
+ * 
+ * Updatable fields:
+ * - Question text
+ * - Topic association (can move to different topic)
+ * - Attachments array (JSON)
+ * - Markscheme criteria
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - Validates question ID required
+ * - Returns 404 if question not found
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['id'] - Question ID (required)
+ * @input receivedData['question'] - Updated question text
+ * @input receivedData['topicid'] - Topic ID
+ * @input receivedData['attachments'] - Array of attachment references
+ * @input receivedData['markscheme'] - Updated assessment criteria
+ * @output Success or error message
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

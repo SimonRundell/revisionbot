@@ -1,4 +1,32 @@
 <?php
+/****************************************************************************
+ * Delete Subject Endpoint (Admin)
+ * 
+ * Permanently deletes a subject and all associated topics and questions.
+ * Performs cascade deletion in proper order:
+ * 1. Delete all questions in all topics
+ * 2. Delete all topics
+ * 3. Delete the subject
+ * 
+ * Warning:
+ * - Deletion is permanent and cannot be undone
+ * - Deletes ALL topics and questions under this subject
+ * - May orphan student responses
+ * - Returns count of deleted items for confirmation
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - Validates subject ID required
+ * - Returns 404 if subject not found
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['id'] - Subject ID to delete (required)
+ * @output JSON with deleted counts {questionsDeleted, topicsDeleted, subjectDeleted}
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

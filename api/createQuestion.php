@@ -1,4 +1,33 @@
 <?php
+/****************************************************************************
+ * Create Question Endpoint (Admin)
+ * 
+ * Creates new practice questions in the system.
+ * Automatically assigns the next available question_order number for proper sequencing.
+ * 
+ * Question structure:
+ * - Question text
+ * - Topic association
+ * - Attachments (JSON array of file references)
+ * - Markscheme (assessment criteria)
+ * - Question order (auto-incremented)
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin only
+ * - Validates topic ID exists
+ * - JSON-encodes attachments array
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['question'] - Question text
+ * @input receivedData['topicid'] - Topic ID
+ * @input receivedData['attachments'] - Array of attachment references
+ * @input receivedData['markscheme'] - Assessment criteria
+ * @output Success or error message
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

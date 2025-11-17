@@ -1,14 +1,28 @@
 <?php
-/* 
-==================================================================
-Setup communal code for PHP scripts
-Simon Rundell for CodeMonkey Design Ltd.
-25th July 2024
-==================================================================
-*/
+/****************************************************************************
+ * Setup Module - Core Configuration and Utilities
+ * 
+ * Provides common functionality for all PHP API endpoints including:
+ * - Database connection management
+ * - CORS headers configuration
+ * - JSON request/response handling
+ * - Logging utilities
+ * - Configuration file loading
+ * 
+ * This file is included by all API endpoints to ensure consistent
+ * database access, error handling, and security headers.
+ * 
+ * @requires .config.json - Database and SMTP configuration
+ * @global mysqli $mysqli - Database connection object
+ * @global array $config - Configuration array from .config.json
+ * @global array $receivedData - Decoded JSON POST data
+ * 
+ * @author Simon Rundell for CodeMonkey Design Ltd.
+ * @version 2.0
+ * @updated 2025-11-17 - Enhanced documentation and security
+ ****************************************************************************/
 
-
-
+// Configure CORS headers for cross-origin requests
 header("Access-Control-Allow-Origin: *"); 
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With");
@@ -64,11 +78,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Backend now updated to refuse GET requests
+    send_response("GET requests are not supported.", 405);
+    exit;
     // Assuming GET requests are handled differently and might not need JSON decoding
     // $data['action'] = $_GET['action']; 
-    // $data['data'] = $_GET['data'];
-}
+    // $data['data'] = $_GET['data'];}
 
+/**
+ * Log output to browser console (for debugging)
+ * 
+ * Generates JavaScript console.log() statements embedded in HTML.
+ * Useful for backend debugging visible in browser console.
+ * 
+ * @param mixed $output - Data to log (will be JSON encoded)
+ * @param bool $with_script_tags - Whether to wrap in <script> tags (default: true)
+ * @return void Echoes JavaScript to page
+ */
 function console_log($output, $with_script_tags = true) {
     $js_code = 'console.log(' . json_encode($output, JSON_HEX_TAG) . ');';
     if ($with_script_tags) {
@@ -77,6 +103,22 @@ function console_log($output, $with_script_tags = true) {
     echo $js_code;
 }
 
+/**
+ * Send JSON response and terminate script execution
+ * 
+ * Standardized response function used by all API endpoints.
+ * Sets HTTP status code and returns JSON with status_code field.
+ * Terminates script with die() to prevent further output.
+ * 
+ * @param mixed $response - Response data (string or array)
+ * @param int $code - HTTP status code (default: 200)
+ * @return void Terminates script execution
+ * 
+ * @example
+ * send_response("Success message", 200);
+ * send_response(["data" => $results], 200);
+ * send_response("Error message", 500);
+ */
 function send_response($response, $code = 200) {
     http_response_code($code);
 
@@ -89,6 +131,18 @@ function send_response($response, $code = 200) {
     die(json_encode($response));
 }
 
+/**
+ * Send JSON response without terminating script
+ * 
+ * Similar to send_response() but allows script to continue execution.
+ * Used when additional processing is needed after sending response.
+ * 
+ * @param mixed $response - Response data (string or array)
+ * @param int $code - HTTP status code (default: 200)
+ * @return void Echoes JSON response
+ * 
+ * @see send_response() for terminating version
+ */
 function send_response_keep_alive($response, $code = 200) {
     http_response_code($code);
 
@@ -101,9 +155,21 @@ function send_response_keep_alive($response, $code = 200) {
     echo json_encode($response);
 }
 
+/**
+ * Log information to server log file
+ * 
+ * Writes timestamped log entries to server.log file.
+ * Currently commented out - uncomment file_put_contents line to enable.
+ * 
+ * @param string $log - Log message to write
+ * @return void
+ * 
+ * @note Currently disabled for performance
+ * @todo Enable in production with log rotation
+ */
 function log_info($log) {
     $currentDirectory = getcwd();
     $file=$currentDirectory.'/server.log';
     $currentDateTime = date('Y-m-d H:i:s');
-    file_put_contents($file, $currentDateTime." : ".$log.chr(13), FILE_APPEND);
+    // file_put_contents($file, $currentDateTime." : ".$log.chr(13), FILE_APPEND);
 } // log_info

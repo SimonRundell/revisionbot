@@ -44,7 +44,7 @@ upload.ps1
 
 # Protect actual database exports (with real data)
 data/*.sql
-!data/database_template.sql
+!data/newaibot_design.sql
 
 # Protect CSV files that might contain real student data
 data/*.csv

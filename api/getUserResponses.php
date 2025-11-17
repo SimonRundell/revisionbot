@@ -1,4 +1,31 @@
 <?php
+/****************************************************************************
+ * Get User Responses Endpoint
+ * 
+ * Retrieves all responses for a specific user with AI feedback, teacher ratings,
+ * and complete question/subject/topic context.
+ * 
+ * Returns:
+ * - Student answers and graphics
+ * - AI feedback and timestamps
+ * - Teacher comments and RAG ratings
+ * - Question text, markscheme, attachments
+ * - Subject and topic information
+ * 
+ * Security:
+ * - Protected by requireAuth() - Enhanced security for user data
+ * - Filters responses by user_id
+ * - Only returns responses with AI feedback
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['userId'] - User ID to retrieve responses for
+ * @output JSON array of user responses with full context
+ * 
+ * @version 2.0
+ * @updated 2025-11-17 - Added student_graphic support
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

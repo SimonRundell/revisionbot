@@ -1,4 +1,36 @@
 <?php
+/****************************************************************************
+ * Save Teacher Feedback Endpoint
+ * 
+ * Allows teachers to add ratings and comments to student responses.
+ * Updates existing responses with teacher assessment data.
+ * 
+ * RAG Rating System:
+ * - R (Red): Relevant - Partially addresses the question
+ * - A (Amber): Adequate - Meets basic requirements
+ * - G (Green): Good - Demonstrates thorough understanding
+ * 
+ * Updates:
+ * - teacher_comment: Text feedback from teacher
+ * - teacher_rating: RAG rating (R, A, or G)
+ * - teacher_feedback_timestamp: Auto-set to current time
+ * - teacher_id: ID of teacher providing feedback
+ * 
+ * Security:
+ * - No explicit security (relies on frontend validation)
+ * - Should be enhanced with requireAuth() in production
+ * - Validates response_id exists
+ * 
+ * @requires setup.php - Database connection
+ * @input receivedData['teacherComment'] - Teacher's text feedback
+ * @input receivedData['teacherRating'] - RAG rating (R/A/G)
+ * @input receivedData['teacherId'] - Teacher user ID
+ * @input receivedData['responseId'] - Response ID to update
+ * @output Success or error message with affected rows
+ * 
+ * @version 1.0
+ * @todo Add requireAuth() for production security
+ ****************************************************************************/
 
 include 'setup.php';
 

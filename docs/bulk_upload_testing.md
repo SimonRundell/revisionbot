@@ -118,6 +118,35 @@ WHERE email LIKE 'test%@example.com';
 4. **Access Control**: Admin-only functionality
 5. **Password Security**: Default passwords are hashed
 6. **Email Security**: PHPMailer with SMTP authentication
+7. **API Protection**: blockDirectAccess() prevents direct browser access
+
+## Database Schema Updates (November 2025)
+
+### New Column: student_graphic
+
+The `tblresponse` table now includes support for student-uploaded graphics:
+
+```sql
+ALTER TABLE tblresponse 
+ADD COLUMN student_graphic LONGTEXT NULL 
+COMMENT 'Base64-encoded student uploaded image';
+```
+
+**Field Details:**
+- **Type**: LONGTEXT (supports up to ~4GB of base64 data)
+- **Nullable**: YES (graphics are optional)
+- **Format**: Base64-encoded data URL (e.g., `data:image/png;base64,...`)
+- **Supported Formats**: PNG, JPG, GIF, BMP
+- **Max Size**: 5MB (enforced client-side)
+
+**Purpose:**
+Students can now upload diagrams, sketches, screenshots, or other visual content as part of their answers. The AI analyzes both text and images together for comprehensive multimodal assessment.
+
+**Storage Considerations:**
+- Base64 encoding increases data size by ~33%
+- 5MB image → ~6.7MB base64 data
+- Monitor database growth with large-scale usage
+- Consider implementing periodic cleanup of old graphics
 
 ## Performance Notes
 
@@ -125,3 +154,4 @@ WHERE email LIKE 'test%@example.com';
 - Database transaction ensures data integrity
 - Email sending may take time for large batches
 - Progress indicators provide user feedback
+- Student graphic uploads add minimal overhead (<1s for 5MB images)

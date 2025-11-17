@@ -1,4 +1,31 @@
 <?php
+/****************************************************************************
+ * Get All Student Responses Endpoint (Admin)
+ * 
+ * Admin endpoint that retrieves all student responses across all users.
+ * Used by teachers in the Admin Dashboard to review and rate student work.
+ * 
+ * Returns:
+ * - All student answers and graphics
+ * - AI feedback for each response
+ * - Existing teacher ratings and comments
+ * - Student names and email addresses
+ * - Question context (text, markscheme, attachments)
+ * - Subject and topic information
+ * 
+ * Security:
+ * - Protected by requireAuth() - Admin/teacher only
+ * - Returns sensitive student data
+ * - Includes student email addresses
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @output JSON array of all student responses with complete context
+ * 
+ * @version 2.0
+ * @updated 2025-11-17 - Added student_graphic field
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

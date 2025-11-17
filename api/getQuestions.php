@@ -1,4 +1,23 @@
 <?php
+/****************************************************************************
+ * Get Questions Endpoint
+ * 
+ * Retrieves all questions for a specified topic.
+ * Returns questions ordered by question_order for proper sequencing.
+ * 
+ * Security:
+ * - Protected by blockDirectAccess()
+ * - Filters by topic ID
+ * - Includes question text, markscheme, and attachments
+ * 
+ * @requires simple_security.php - Security validation
+ * @requires setup.php - Database connection
+ * @input receivedData['topicid'] - Topic ID to filter questions
+ * @output JSON array of questions with full details
+ * 
+ * @version 1.0
+ ****************************************************************************/
+
 require_once 'simple_security.php';
 include 'setup.php';
 

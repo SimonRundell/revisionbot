@@ -156,6 +156,30 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                 ) : (<p>No attachments available</p>)}
                             </div>
 
+                            <div className="answer-section">
+                                <h3>Your Answer:</h3>
+                                <div className="student-answer-display">
+                                    {selectedResponse.studentAnswer}
+                                </div>
+                                
+                                {selectedResponse.studentGraphic && (
+                                    <div className="student-graphic-section" style={{ marginTop: '15px' }}>
+                                        <h4>Your Uploaded Image:</h4>
+                                        <img 
+                                            src={selectedResponse.studentGraphic} 
+                                            alt="Student uploaded graphic" 
+                                            style={{ 
+                                                maxWidth: '100%', 
+                                                maxHeight: '400px',
+                                                border: '2px solid #ddd',
+                                                borderRadius: '4px',
+                                                marginTop: '10px'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="feedback-section">
                                 <h3>AI Assessment & Feedback:</h3>
                                 <div
