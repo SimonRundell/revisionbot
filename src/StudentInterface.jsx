@@ -34,6 +34,8 @@ function StudentInterface ({ userId,
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [showAnswerModal, setShowAnswerModal] = useState(false);
     const [studentAnswer, setStudentAnswer] = useState('');
+    const [studentGraphic, setStudentGraphic] = useState(null);
+    const [graphicPreview, setGraphicPreview] = useState(null);
     const [timeStarted, setTimeStarted] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
@@ -265,8 +267,51 @@ function StudentInterface ({ userId,
     const handleQuestionSelect = (question) => {
         setSelectedQuestion(question);
         setStudentAnswer('');
+        setStudentGraphic(null);
+        setGraphicPreview(null);
         setTimeStarted(Date.now());
         setShowAnswerModal(true);
+    };
+
+    /**
+     * Handle graphic file selection for student upload
+     * Validates file type and size, converts to base64 for storage
+     * 
+     * @param {Event} event - File input change event
+     */
+    const handleGraphicSelect = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp'];
+        if (!validTypes.includes(file.type)) {
+            setSendErrorMessage('Please select a valid image file (PNG, JPG, GIF, or BMP)');
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            setSendErrorMessage('Image file must be less than 5MB');
+            return;
+        }
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            setStudentGraphic(base64String);
+            setGraphicPreview(URL.createObjectURL(file));
+        };
+        reader.readAsDataURL(file);
+    };
+
+    /**
+     * Remove uploaded graphic and reset preview
+     */
+    const handleRemoveGraphic = () => {
+        setStudentGraphic(null);
+        setGraphicPreview(null);
     };
 
     /**
@@ -294,6 +339,7 @@ function StudentInterface ({ userId,
             subjectId: selectedSubject,
             topicId: selectedTopic,
             studentAnswer: studentAnswer,
+            studentGraphic: studentGraphic,
             timeTaken: timeTaken,
             sessionId: sessionId
         };
@@ -314,7 +360,8 @@ function StudentInterface ({ userId,
                 jsonData ={
                     question: selectedQuestion.question,
                     markscheme: selectedQuestion.markscheme,
-                    useranswer: studentAnswer
+                    useranswer: studentAnswer,
+                    studentGraphic: studentGraphic
                 };
 
                 // console.log("Requesting AI feedback with:", jsonData);
@@ -378,6 +425,30 @@ function StudentInterface ({ userId,
         // Create feedback modal
         const feedbackModal = document.createElement('div');
         feedbackModal.className = 'ai-feedback-modal';
+        
+        // Build question section
+        const questionSection = selectedQuestion ? `
+            <div class="feedback-section">
+                <h3>Question:</h3>
+                <p>${selectedQuestion.question}</p>
+            </div>
+        ` : '';
+        
+        // Build student response section with optional graphic
+        const graphicDisplay = studentGraphic ? `
+            <div class="feedback-graphic">
+                <img src="${studentGraphic}" alt="Student uploaded graphic" style="max-width: 100%; max-height: 400px; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+        ` : '';
+        
+        const responseSection = `
+            <div class="feedback-section">
+                <h3>Your Response:</h3>
+                <p>${studentAnswer}</p>
+                ${graphicDisplay}
+            </div>
+        `;
+        
         feedbackModal.innerHTML = `
             <div class="ai-feedback-content">
                 <div class="ai-feedback-header">
@@ -385,7 +456,12 @@ function StudentInterface ({ userId,
                     <button class="close-feedback" id="close-feedback-btn">×</button>
                 </div>
                 <div class="ai-feedback-body">
-                    ${feedback}
+                    ${questionSection}
+                    ${responseSection}
+                    <div class="feedback-section">
+                        <h3>AI Feedback:</h3>
+                        ${feedback}
+                    </div>
                 </div>
                 <div class="ai-feedback-footer">
                     <button class="btn-primary" id="continue-studying-btn">Continue Studying</button>
@@ -407,6 +483,8 @@ function StudentInterface ({ userId,
             setShowAnswerModal(false); // Properly reset the state
             setSelectedQuestion(null); // Reset selected question
             setStudentAnswer(''); // Reset answer
+            setStudentGraphic(null); // Reset graphic
+            setGraphicPreview(null); // Reset graphic preview
         };
 
         closeBtn.addEventListener('click', handleClose);
@@ -513,7 +591,7 @@ function StudentInterface ({ userId,
                                         )}
                                     </div>
                                     <div className="question-status">
-                                        <span className="start-arrow">→</span>
+                                        <span className="start-arrow">▶</span>
                                     </div>
                                 </div>
                             ))}
@@ -558,6 +636,32 @@ function StudentInterface ({ userId,
                                         className="answer-textarea"
                                         rows="10"
                                     />
+                                </div>
+
+                                <div className="graphic-upload-section">
+                                    <h3>Upload Graphic (Optional):</h3>
+                                    <label className="upload-button">
+                                        📎 Upload Graphic (PNG/JPG/GIF/BMP, max 5MB)
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleGraphicSelect}
+                                            style={{ display: 'none' }}
+                                        />
+                                    </label>
+                                    
+                                    {graphicPreview && (
+                                        <div className="graphic-preview">
+                                            <img src={graphicPreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '200px' }} />
+                                            <button 
+                                                className="remove-graphic-btn"
+                                                onClick={handleRemoveGraphic}
+                                                type="button"
+                                            >
+                                                ✕ Remove Graphic
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

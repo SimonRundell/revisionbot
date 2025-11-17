@@ -32,9 +32,12 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: 0");
 
-// debug
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Error reporting for development - DISABLE IN PRODUCTION
+// For production, set display_errors to 0 and log errors instead
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/php_errors.log');
 error_reporting(E_ALL);
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -84,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Assuming GET requests are handled differently and might not need JSON decoding
     // $data['action'] = $_GET['action']; 
     // $data['data'] = $_GET['data'];}
-
+}
 /**
  * Log output to browser console (for debugging)
  * 

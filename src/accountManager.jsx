@@ -80,7 +80,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
             userLocale: locale,
             avatar: avatar,
             admin: admin,
-            userAccess: currentUser.userAccess // Preserve existing access permissions
+            userAccess: currentUser.userAccess || '' // Preserve existing access permissions, default to empty string
         };
         // console.log("updating user with ", jsonData)
 
