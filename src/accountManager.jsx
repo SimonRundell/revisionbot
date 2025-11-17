@@ -79,7 +79,8 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
             userLocation: department,
             userLocale: locale,
             avatar: avatar,
-            admin: admin
+            admin: admin,
+            userAccess: currentUser.userAccess // Preserve existing access permissions
         };
         // console.log("updating user with ", jsonData)
 
