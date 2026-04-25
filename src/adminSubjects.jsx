@@ -3,6 +3,10 @@ import axios from 'axios';
 import {Spin} from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import { formatAttachmentSize, getFileIconMeta } from './utils/fileAttachments';
+import RichTextEditor from './RichTextEditor';
+import RichTextContent from './RichTextContent';
+import { isRichTextEmpty, sanitizeRichText } from './utils/richText';
+import {truncateText, firstthreesentances} from './utils/textUtils';
 
 /****************************************************************************
  * AdminSubjects Component
@@ -310,15 +314,15 @@ const handleCreateTopic = async () => {
 };
 
 const handleCreateQuestion = async () => {
-    if (!newQuestion.trim() || !newQuestionTopic) {
+    if (isRichTextEmpty(newQuestion) || !newQuestionTopic) {
         setSendErrorMessage('Question text and topic are required');
         return;
     }
 
     const jsonData = { 
-        question: newQuestion.trim(), 
+        question: sanitizeRichText(newQuestion), 
         topicid: parseInt(newQuestionTopic),
-        markscheme: newQuestionMarkScheme,
+        markscheme: sanitizeRichText(newQuestionMarkScheme),
         attachments: newQuestionFiles
     };
 
@@ -399,16 +403,16 @@ const handleEditQuestion = (question) => {
 };
 
 const handleUpdateQuestion = async () => {
-    if (!editQuestion.trim() || !editQuestionTopic) {
+    if (isRichTextEmpty(editQuestion) || !editQuestionTopic) {
         setSendErrorMessage('Question text and topic are required');
         return;
     }
 
     const jsonData = { 
         id: editingQuestion.id,
-        question: editQuestion.trim(), 
+        question: sanitizeRichText(editQuestion), 
         topicid: parseInt(editQuestionTopic),
-        markscheme: editQuestionMarkScheme,
+        markscheme: sanitizeRichText(editQuestionMarkScheme),
         attachments: editQuestionFiles
     };
 
@@ -1103,7 +1107,7 @@ const handleImportFile = async (event) => {
                                         {statistics.recentQuestions.map(question => (
                                             <div key={question.id} className="recent-item">
                                                 <span className="recent-id">Q{question.id}</span>
-                                                <span className="recent-text">{question.question.substring(0, 100)}...</span>
+                                                <span className="recent-text">{truncateText(question.question, 100)}</span>
                                                 <span className="recent-location">{question.subject} → {question.topic}</span>
                                             </div>
                                         ))}
@@ -1272,13 +1276,14 @@ const handleImportFile = async (event) => {
                                             className="question-checkbox"
                                         />
                                     )}
-                                    <span 
+                                    <div 
                                         onClick={() => !showBulkActions && handleEditQuestion(question)}
                                         className={`question-link ${showBulkActions ? 'bulk-mode' : ''}`}
                                         title={showBulkActions ? 'Bulk selection mode' : 'Click to edit question'}
                                     >
-                                        <strong>Q{question.id}:&nbsp;&nbsp;</strong> {question.question}
-                                    </span>
+                                        <span className="question-id">Q{question.id}</span>
+                                        <RichTextContent value={firstthreesentances(question.question)} className="question-text question-text-preview" />
+                                    </div>
                                     {!showBulkActions && (
                                         <button 
                                             onClick={(e) => {
@@ -1460,24 +1465,22 @@ const handleImportFile = async (event) => {
                         </div>
                         <div className="subject-dropdown-container">
                             <label htmlFor="new-question">Question Text:</label>
-                            <textarea
-                                id="new-question"
+                            <RichTextEditor
                                 value={newQuestion}
-                                onChange={(e) => setNewQuestion(e.target.value)}
+                                onChange={setNewQuestion}
                                 placeholder="Enter the question text..."
-                                className="full-width-input"
-                                rows={4}
+                                minHeight={180}
+                                theme="light"
                             />
                         </div>
                         <div className="subject-dropdown-container">
                             <label htmlFor="new-question">Markscheme:</label>
-                            <textarea
-                                id="new-question"
+                            <RichTextEditor
                                 value={newQuestionMarkScheme}
-                                onChange={(e) => setNewQuestionMarkScheme(e.target.value)}
+                                onChange={setNewQuestionMarkScheme}
                                 placeholder="Enter the markscheme..."
-                                className="full-width-input"
-                                rows={4}
+                                minHeight={160}
+                                theme="light"
                             />
                         </div>
                         <div className="subject-dropdown-container">
@@ -1592,24 +1595,22 @@ const handleImportFile = async (event) => {
                         </div>
                         <div className="subject-dropdown-container">
                             <label htmlFor="edit-question">Question Text:</label>
-                            <textarea
-                                id="edit-question"
+                            <RichTextEditor
                                 value={editQuestion}
-                                onChange={(e) => setEditQuestion(e.target.value)}
+                                onChange={setEditQuestion}
                                 placeholder="Enter the question text..."
-                                className="full-width-input"
-                                rows={4}
+                                minHeight={180}
+                                theme="light"
                             />
                         </div>
                         <div className="subject-dropdown-container">
                             <label htmlFor="edit-question-markscheme">Markscheme:</label>
-                            <textarea
-                                id="edit-question-markscheme"
+                            <RichTextEditor
                                 value={editQuestionMarkScheme}
-                                onChange={(e) => setEditQuestionMarkScheme(e.target.value)}
+                                onChange={setEditQuestionMarkScheme}
                                 placeholder="Enter the markscheme..."
-                                className="full-width-input"
-                                rows={4}
+                                minHeight={160}
+                                theme="light"
                             />
                         </div>
                         <div className="subject-dropdown-container">

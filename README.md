@@ -6,6 +6,7 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
 ## Features
 
 - **Student Interface**: Interactive question answering with AI feedback and randomized question selection
+- **Rich Text Editing**: Questions, mark schemes, student answers, and teacher feedback support bold, italic, underline, ordered/unordered lists, code, blockquotes, undo, and redo
 - **AI Assessment**: Integration with Google's Gemini 2.5 Flash for intelligent immediate feedback
 - **Multimodal Student Responses**: Students can upload graphics (PNG/JPG/GIF/BMP) as part of their answers
 - **Past Answers Review**: Students can review their previous responses, graphics, and feedback
@@ -72,10 +73,18 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
    npm install
    ```
 
+  This installs the Tiptap editor packages used for rich text editing in the admin question editor, student answer modal, and teacher feedback form.
+
 4. Start the development server:
    ```bash
    npm run dev
    ```
+
+### Rich Text Notes
+
+- Rich text content is stored as HTML and rendered in question review, student marking, and past-answer screens.
+- Existing plain-text content still displays correctly; new formatting is available when content is edited through the UI.
+- The supported formatting toolbar includes normal paragraph text, bold, italic, underline, ordered list, unordered list, inline code, blockquote, undo, and redo.
 
 ### API Endpoints
 

@@ -5,6 +5,8 @@ import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import { formatDate, formatDateTime } from './utils/dateHelpers';
 import renderAttachments from './utils/renderAttachments';
+import RichTextContent from './RichTextContent';
+import { richTextPreview } from './utils/richText';
 
 /****************************************************************************
  * PastAnswersViewer Component
@@ -101,10 +103,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                                 {response.subjectName} &gt; {response.topicName}
                                             </div>
                                             <div className="response-question-preview">
-                                                {response.question.question.length > 100
-                                                    ? `${response.question.question.substring(0, 100)}...`
-                                                    : response.question.question
-                                                }
+                                                {richTextPreview(response.question.question, 100)}
                                             </div>
                                             <div className="response-date">
                                                 Completed: {formatDate(response.createdAt)}
@@ -144,9 +143,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                         <div className="answer-modal-body">
                             <div className="question-section">
                                 <h3>Question:</h3>
-                                <div className="question-content">
-                                    {selectedResponse.question.question}
-                                </div>
+                                <RichTextContent value={selectedResponse.question.question} className="question-content" />
 
                                 {selectedResponse.question.attachments ? (
                                     <div className="attachments-section">
@@ -158,9 +155,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
 
                             <div className="answer-section">
                                 <h3>Your Answer:</h3>
-                                <div className="student-answer-display">
-                                    {selectedResponse.studentAnswer}
-                                </div>
+                                <RichTextContent value={selectedResponse.studentAnswer} className="student-answer-display" />
                                 
                                 {selectedResponse.studentGraphic && (
                                     <div className="student-graphic-section" style={{ marginTop: '15px' }}>
@@ -209,9 +204,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                         )}
                                     </h3>
                                     {selectedResponse.teacherComment && (
-                                        <div className="teacher-comment-display">
-                                            {selectedResponse.teacherComment}
-                                        </div>
+                                        <RichTextContent value={selectedResponse.teacherComment} className="teacher-comment-display" />
                                     )}
                                     <div className="teacher-feedback-meta">
                                         <p>

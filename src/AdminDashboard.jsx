@@ -3,6 +3,9 @@ import axios from 'axios';
 import { Spin, Switch } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import { formatDate, formatTime, formatDateTime } from './utils/dateHelpers';
+import RichTextEditor from './RichTextEditor';
+import RichTextContent from './RichTextContent';
+import {truncateText} from './utils/textUtils';
 import './App.css';
 
 /****************************************************************************
@@ -376,10 +379,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         {response.subjectName} › {response.topicName}
                                     </div>
                                     <div className="response-question-preview">
-                                        {response.question.question.length > 120 
-                                            ? response.question.question.substring(0, 120) + '...'
-                                            : response.question.question
-                                        }
+                                        {truncateText(response.question.question, 255)}
                                     </div>
                                     <div className="response-metadata">
                                         Submitted: {formatDate(response.createdAt)} at {formatTime(response.createdAt)}
@@ -442,9 +442,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
                                 <div className="question-section">
                                     <h3>Question:</h3>
-                                    <div className="question-content">
-                                        {selectedResponse.question.question}
-                                    </div>
+                                    <RichTextContent value={selectedResponse.question.question} className="question-content" />
                                     
                                     {selectedResponse.question.attachments ? (
                                         <div className="attachments-section">
@@ -455,10 +453,8 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                 </div>
                                 
                                 <div className="answer-section">
-                                    <h3>Student&apos;s Answer:</h3>
-                                    <div className="past-answer-display">
-                                        {selectedResponse.studentAnswer}
-                                    </div>
+                                    {/* <h3>Student&apos;s Answer:</h3>
+                                    <RichTextContent value={selectedResponse.studentAnswer} className="past-answer-display" /> */}
                                     
                                     {selectedResponse.studentGraphic && (
                                         <div className="student-graphic-section" style={{ marginTop: '15px' }}>
@@ -510,13 +506,11 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
                                         <div className="comment-section">
                                             <label htmlFor="teacher-comment">Teacher Comment:</label>
-                                            <textarea
-                                                id="teacher-comment"
+                                            <RichTextEditor
                                                 value={teacherFeedback.comment}
-                                                onChange={(e) => setTeacherFeedback(prev => ({...prev, comment: e.target.value}))}
+                                                onChange={(value) => setTeacherFeedback(prev => ({...prev, comment: value}))}
                                                 placeholder="Add your feedback for the student..."
-                                                className="teacher-comment-textarea"
-                                                rows="6"
+                                                minHeight={160}
                                             />
                                         </div>
 

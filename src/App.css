@@ -868,9 +868,39 @@ ADMIN SUBJECTS STYLING
 }
 
 .question-link:hover {
+  text-decoration: none;
+}
+
+.question-link .question-id {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.question-text-preview {
+  flex: 1;
+  margin-left: 0;
+  margin-bottom: 0;
+  max-height: 4.8em;
+  overflow: hidden;
+}
+
+.question-text-preview:hover{
+  overflow: auto;
+  text-decoration: none;
+}
+
+.question-text-preview p,
+.question-text-preview ul,
+.question-text-preview ol,
+.question-text-preview blockquote,
+.question-text-preview pre {
+  margin: 0;
+}
+
+.question-link:hover {
   color: #535bf2;
   background-color: rgba(100, 108, 255, 0.1);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .question-link.bulk-mode {
@@ -898,6 +928,7 @@ ADMIN SUBJECTS STYLING
 
 .question-item-content:hover {
   background-color: rgba(255, 255, 255, 0.02);
+  text-decoration: none;
 }
 
 .question-checkbox {
@@ -1060,7 +1091,7 @@ ADMIN SUBJECTS STYLING
 .subjects-management-section h3,
 .topics-management-section h3 {
   font-size: 0.9em;
-  color: #888;
+  color: #fcfcfc;
   margin: 0 0 8px 0;
   font-weight: normal;
 }
@@ -1079,15 +1110,16 @@ ADMIN SUBJECTS STYLING
   gap: 4px;
   padding: 4px 6px;
   background-color: rgba(100, 108, 255, 0.05);
-  border-radius: 3px;
-  border: 1px solid rgba(100, 108, 255, 0.2);
+  border-radius: 4px;
+  border: 1px solid #fcfcfc;
   font-size: 0.8em;
+
 }
 
 .subject-name,
 .topic-name {
   font-weight: normal;
-  color: #999;
+  color: #fcfcfc;
 }
 
 .subject-item .delete-btn.small,
@@ -1100,6 +1132,8 @@ ADMIN SUBJECTS STYLING
 .subject-item:hover,
 .topic-item:hover {
   opacity: 1;
+  /* border: 1px solid #ff0000; */
+  background-color: #433d97;
 }
 
 /* Delete Modal Styles */
@@ -1821,6 +1855,10 @@ LARGE DESKTOP STYLES
   margin-bottom: 5px;
 }
 
+.question-text:hover {
+     text-decoration: none;
+}
+
 .attachment-indicator {
   color: #999;
   font-size: 12px;
@@ -1933,6 +1971,23 @@ ANSWER MODAL STYLING
   line-height: 1.6;
   font-size: 18px;
   margin-bottom: 20px;
+}
+
+.question-id {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 4px 8px;
+  background: #333;
+  color: #999;
+  font-size: 12px;
+  border-radius: 8px;
+  /* width: 33%; */
+  text-align: center;
+}
+
+.question-text{
+  margin-bottom: 15px;
+  margin-left: 20px;
 }
 
 .attachments-section {
@@ -2061,6 +2116,184 @@ ANSWER MODAL STYLING
   margin: 0 0 15px 0;
   color: #646cff;
   font-size: 18px;
+}
+
+.answer-section .rich-text-editor .ProseMirror {
+  font-size: 18px;
+}
+
+.teacher-feedback-section .rich-text-editor .ProseMirror {
+  font-size: 18px;
+}
+
+.rich-text-editor {
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #242424;
+  overflow: hidden;
+}
+
+.rich-text-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #333;
+  background: #1c1c1c;
+}
+
+.rich-text-toolbar-button {
+  min-width: 44px;
+  padding: 6px 10px;
+  border: 1px solid #4a4a4a;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #f4f4f4;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rich-text-toolbar-button i {
+  font-size: 14px;
+}
+
+.rich-text-toolbar-button:hover:not(:disabled),
+.rich-text-toolbar-button.is-active {
+  border-color: #646cff;
+  background: rgba(100, 108, 255, 0.18);
+}
+
+.rich-text-toolbar-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rich-text-editor .ProseMirror {
+  min-height: var(--rich-text-min-height, 180px);
+  padding: 15px;
+  color: #fff;
+  line-height: 1.6;
+  outline: none;
+  white-space: pre-wrap;
+  font-synthesis: weight style;
+}
+
+.rich-text-editor .ProseMirror strong,
+.rich-text-render strong {
+  font-weight: 700;
+}
+
+.rich-text-editor .ProseMirror em,
+.rich-text-render em {
+  font-style: italic;
+}
+
+.rich-text-editor--light {
+  background: #ffffff;
+  border-color: #d4d4d4;
+}
+
+.rich-text-editor--light .rich-text-toolbar {
+  background: #f6f7fb;
+  border-bottom-color: #d4d4d4;
+}
+
+.rich-text-editor--light .rich-text-toolbar-button {
+  background: #ffffff;
+  border-color: #c7cad8;
+  color: #1f2937;
+}
+
+.rich-text-editor--light .rich-text-toolbar-button:hover:not(:disabled),
+.rich-text-editor--light .rich-text-toolbar-button.is-active {
+  border-color: #4f46e5;
+  background: #eef0ff;
+}
+
+.rich-text-editor--light .ProseMirror {
+  color: #111827;
+}
+
+.rich-text-editor--light .ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+}
+
+.rich-text-editor--light .ProseMirror pre {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.rich-text-editor--light .ProseMirror code {
+  background: rgba(17, 24, 39, 0.1);
+}
+
+.rich-text-editor--light .ProseMirror blockquote {
+  color: #374151;
+}
+
+.rich-text-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #8d8d8d;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.rich-text-editor .ProseMirror ul,
+.rich-text-editor .ProseMirror ol,
+.rich-text-render ul,
+.rich-text-render ol {
+  padding-left: 24px;
+}
+
+.rich-text-editor .ProseMirror pre,
+.rich-text-render pre {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.rich-text-editor .ProseMirror code,
+.rich-text-render code {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.rich-text-editor .ProseMirror blockquote,
+.rich-text-render blockquote {
+  margin: 1rem 0;
+  padding-left: 12px;
+  border-left: 3px solid #646cff;
+  color: #ddd;
+}
+
+.rich-text-render {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  font-synthesis: weight style;
+}
+
+.rich-text-render p:first-child,
+.rich-text-render ul:first-child,
+.rich-text-render ol:first-child,
+.rich-text-render blockquote:first-child,
+.rich-text-render pre:first-child {
+  margin-top: 0;
+}
+
+.rich-text-render p:last-child,
+.rich-text-render ul:last-child,
+.rich-text-render ol:last-child,
+.rich-text-render blockquote:last-child,
+.rich-text-render pre:last-child {
+  margin-bottom: 0;
 }
 
 .answer-textarea {

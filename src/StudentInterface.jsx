@@ -4,6 +4,9 @@ import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import PastAnswersViewer from './PastAnswersViewer';
 import renderAttachments from './utils/renderAttachments';
+import RichTextEditor from './RichTextEditor';
+import RichTextContent from './RichTextContent';
+import { isRichTextEmpty, renderRichTextMarkup, richTextPreview } from './utils/richText';
 import './App.css';
 
 /****************************************************************************
@@ -323,7 +326,7 @@ function StudentInterface ({ userId,
      * @returns {Promise<void>} Promise that resolves when submission and AI assessment complete
      */
     const handleSubmitAnswer = async () => {
-        if (!studentAnswer.trim()) {
+        if (isRichTextEmpty(studentAnswer)) {
             alert('Please provide an answer before submitting.');
             return;
         }
@@ -430,7 +433,7 @@ function StudentInterface ({ userId,
         const questionSection = selectedQuestion ? `
             <div class="feedback-section">
                 <h3>Question:</h3>
-                <p>${selectedQuestion.question}</p>
+                <div class="rich-text-render">${renderRichTextMarkup(selectedQuestion.question)}</div>
             </div>
         ` : '';
         
@@ -444,7 +447,7 @@ function StudentInterface ({ userId,
         const responseSection = `
             <div class="feedback-section">
                 <h3>Your Response:</h3>
-                <p>${studentAnswer}</p>
+                <div class="rich-text-render">${renderRichTextMarkup(studentAnswer)}</div>
                 ${graphicDisplay}
             </div>
         `;
@@ -579,10 +582,7 @@ function StudentInterface ({ userId,
                                     <div className="question-number">Q{index + 1}</div>
                                     <div className="question-preview">
                                         <div className="question-text">
-                                            {question.question.length > 150
-                                                ? question.question.substring(0, 150) + '...'
-                                                : question.question
-                                            }
+                                            {richTextPreview(question.question, 150)}
                                         </div>
                                         {question.attachments && (
                                             <div className="attachment-indicator">
@@ -615,9 +615,7 @@ function StudentInterface ({ userId,
                             <div className="answer-modal-body">
                                 <div className="question-section">
                                     <h3>Question:</h3>
-                                    <div className="question-content">
-                                        {selectedQuestion.question}
-                                    </div>
+                                    <RichTextContent value={selectedQuestion.question} className="question-content" />
 
                                     {selectedQuestion.attachments ? (
                                         <div className="attachments-section">
@@ -629,12 +627,11 @@ function StudentInterface ({ userId,
 
                                 <div className="answer-section">
                                     <h3>Your Answer:</h3>
-                                    <textarea
+                                    <RichTextEditor
                                         value={studentAnswer}
-                                        onChange={(e) => setStudentAnswer(e.target.value)}
+                                        onChange={setStudentAnswer}
                                         placeholder="Type your answer here..."
-                                        className="answer-textarea"
-                                        rows="10"
+                                        minHeight={220}
                                     />
                                 </div>
 
@@ -676,7 +673,7 @@ function StudentInterface ({ userId,
                                 <button
                                     className="btn-primary"
                                     onClick={handleSubmitAnswer}
-                                    disabled={isSubmitting || !studentAnswer.trim()}
+                                    disabled={isSubmitting || isRichTextEmpty(studentAnswer)}
                                 >
                                     {isSubmitting ? 'Processing...' : 'Submit Answer'}
                                 </button>
