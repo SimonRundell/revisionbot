@@ -62,7 +62,8 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
     // Convert email to lowercase for case-insensitive login
     const JSONData = { email: email.toLowerCase(), passwordHash: hashedPassword };
 
-    // console.log("JSONData:", JSONData);
+    console.log("JSONData:", JSONData);
+    console.log("API Endpoint:", config.api + '/getLogin.php');
 
     try {
       const response = await axios.post(config.api + '/getLogin.php', JSONData, {

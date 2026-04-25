@@ -212,7 +212,7 @@ useEffect(() => {
 
       </div>
       )}
-	<CMFloatAd color='#ffffff' />
+	<CMFloatAd color='#ffffff' bgColor='#242424'/>
     </>
   )
 }

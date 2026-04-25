@@ -40,6 +40,24 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
    composer install
    ```
 
+5. Create `api/.htaccess` to prevent Apache from applying any inherited authentication to the API directory:
+   ```apache
+   # RevisionBot API
+   # Explicitly disable any inherited auth config for this directory.
+
+   AuthType None
+
+   <IfModule mod_authz_core.c>
+       Require all granted
+   </IfModule>
+
+   <IfModule mod_authz_host.c>
+       Order allow,deny
+       Allow from all
+   </IfModule>
+   ```
+   > **Note:** Without this file, Apache may inherit Basic Auth from a parent directory config, causing all API endpoints to return `401 Unauthorized`. This file is not committed to the repository because it can vary per environment.
+
 ### Frontend Configuration
 
 1. Copy the example configuration file:

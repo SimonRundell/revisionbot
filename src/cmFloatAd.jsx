@@ -54,6 +54,7 @@ function CMFloatAd({color = '#ffffff', bgColor = 'transparent'}) {
       const hoverStyle = isHovered ? {
         maxWidth: isMobile ? '90%' : '75%',
         width: '100%',
+        zIndex: 1000,
         border: '1px solid #747474',
         paddingRight: isMobile ? '10px' : '40px',
       } : {};

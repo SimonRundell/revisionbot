@@ -1,0 +1,13 @@
+# RevisionBot API
+# Explicitly disable any inherited auth config for this directory.
+
+AuthType None
+
+<IfModule mod_authz_core.c>
+	Require all granted
+</IfModule>
+
+<IfModule mod_authz_host.c>
+	Order allow,deny
+	Allow from all
+</IfModule>

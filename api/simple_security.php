@@ -37,12 +37,17 @@ function blockDirectAccess() {
 
 /**
  * Enhanced security for sensitive endpoints
+ * TODO: Implement proper JWT token validation when ready
+ * For now, just ensure it's a proper API call
  */
 function requireAuth() {
     blockDirectAccess();
     
-    // Add token validation here if you have JWT tokens
-    // For now, just ensure it's a proper API call
+    // Token validation is currently disabled
+    // In future, add JWT validation here:
+    // - Extract token from Authorization header
+    // - Validate JWT signature and expiration
+    // - Check user permissions
     
     return true;
 }
