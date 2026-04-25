@@ -1,14 +1,10 @@
-
-  <h2>Beta Test Version 0.3.1</h2>
+  <h2>Beta Test Version 0.3.2</h2>
   <div class="motd-notice">
   <p>Please report any issues to the development team via the Microsoft Form at: <a href="https://forms.microsoft.com/e/H10SRY6eRx">https://forms.microsoft.com/e/H10SRY6eRx</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
-  <li>Added ability for students to upload hand-drawn graphs or diagrams as part of their answers.</li>
-  <li>Updated AI feedback prompt to avoid revealing security credentials or unrelated information.</li>
-  <li>Improvements and graphing functions for student performance tracking.</li>
-  <li>Secured PHP endpoints</li>
-  <li>Better documentation throughout the codebase.</li>
-  <li>Various bug fixes and performance improvements.</li>
+  <li>Rich Text Answers</li>
+  <li>UI/UX Improvements</li>
+  <li>More capacity for long questions and scenarios for 12-mark questions</li>
   </ul>
   </div>

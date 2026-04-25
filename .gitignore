@@ -36,6 +36,7 @@ config.json
 api/.config.json
 public/.config.json
 upload.ps1
+api/.config.live.json
 
 # Database files
 *.db

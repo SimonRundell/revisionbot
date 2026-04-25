@@ -169,7 +169,7 @@ function StudentInterface ({ userId,
         
         if (subjectId) {
             // Fetch topics for the selected subject
-            console.log("Fetching topics for subject ID:", subjectId);
+            // console.log("Fetching topics for subject ID:", subjectId);
             const apiCall = () => axios.post(config.api + '/getTopics.php', 
                 { subjectid: subjectId },
                 {
@@ -183,12 +183,12 @@ function StudentInterface ({ userId,
             handleApiCall(
                 apiCall,
                 (allTopics) => {
-                    console.log("All topics received:", allTopics);
-                    console.log("User access:", getUserAccess());
-                    console.log("Subject ID:", subjectId);
+                    // console.log("All topics received:", allTopics);
+                    // console.log("User access:", getUserAccess());
+                    // console.log("Subject ID:", subjectId);
                     // Filter topics based on user access permissions
                     const filteredTopics = filterTopicsByAccess(allTopics, subjectId);
-                    console.log("Filtered topics:", filteredTopics);
+                    // console.log("Filtered topics:", filteredTopics);
                     setTopics(filteredTopics);
                 },
                 setIsLoading,
@@ -232,7 +232,7 @@ function StudentInterface ({ userId,
 
         if (topicId) {
             // Fetch questions for the selected topic
-            console.log("Fetching questions for topic ID:", topicId);
+            // console.log("Fetching questions for topic ID:", topicId);
             const apiCall = () => axios.post(config.api + '/getQuestions.php',
                 { topicid: topicId },
                 {
@@ -565,7 +565,7 @@ function StudentInterface ({ userId,
 
                 {selectedTopic && questions.length > 0 && (
                     <div className="questions-grid">
-                        <h2>Practice Questions</h2>
+
                         <button 
                             onClick={handleRandomQuestion} 
                             className="random-question-btn"
@@ -584,14 +584,14 @@ function StudentInterface ({ userId,
                                         <div className="question-text">
                                             {richTextPreview(question.question, 150)}
                                         </div>
-                                        {question.attachments && (
+                                        {question.attachments != "[]" && (
                                             <div className="attachment-indicator">
                                                 📎 Has attachments
                                             </div>
                                         )}
                                     </div>
                                     <div className="question-status">
-                                        <span className="start-arrow">▶</span>
+                                        <div className="response-arrow">→</div>
                                     </div>
                                 </div>
                             ))}

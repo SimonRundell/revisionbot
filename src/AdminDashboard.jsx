@@ -5,7 +5,7 @@ import { handleApiCall } from './utils/apiHelpers';
 import { formatDate, formatTime, formatDateTime } from './utils/dateHelpers';
 import RichTextEditor from './RichTextEditor';
 import RichTextContent from './RichTextContent';
-import {truncateText} from './utils/textUtils';
+import {truncateText, stripHtmlTags} from './utils/textUtils';
 import './App.css';
 
 /****************************************************************************
@@ -379,7 +379,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         {response.subjectName} › {response.topicName}
                                     </div>
                                     <div className="response-question-preview">
-                                        {truncateText(response.question.question, 255)}
+                                        {stripHtmlTags(truncateText(response.question.question, 255))}
                                     </div>
                                     <div className="response-metadata">
                                         Submitted: {formatDate(response.createdAt)} at {formatTime(response.createdAt)}

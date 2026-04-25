@@ -17,3 +17,8 @@ export const firstthreesentances = (text) => {
     }
     return text;
 };
+
+export const stripHtmlTags = (html) => {
+    return String(html ?? '').replace(/<[^>]*>/g, '');
+};
+

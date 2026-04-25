@@ -6,7 +6,7 @@ import { formatAttachmentSize, getFileIconMeta } from './utils/fileAttachments';
 import RichTextEditor from './RichTextEditor';
 import RichTextContent from './RichTextContent';
 import { isRichTextEmpty, sanitizeRichText } from './utils/richText';
-import {truncateText, firstthreesentances} from './utils/textUtils';
+import {truncateText, firstthreesentances, stripHtmlTags} from './utils/textUtils';
 
 /****************************************************************************
  * AdminSubjects Component
@@ -1107,7 +1107,7 @@ const handleImportFile = async (event) => {
                                         {statistics.recentQuestions.map(question => (
                                             <div key={question.id} className="recent-item">
                                                 <span className="recent-id">Q{question.id}</span>
-                                                <span className="recent-text">{truncateText(question.question, 100)}</span>
+                                                <span className="recent-text">{stripHtmlTags(truncateText(question.question, 100))}</span>
                                                 <span className="recent-location">{question.subject} → {question.topic}</span>
                                             </div>
                                         ))}

@@ -48,8 +48,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 
 // Read connection information from a secure location
-$config = json_decode(file_get_contents('./.config.json'), true);
-$mysqli = new mysqli($config['servername'], $config['username'], $config['password'], $config['dbname']);
+$configPath = __DIR__ . '/.config.json';
+
+if (!file_exists($configPath)) {
+    send_response('Server configuration file is missing.', 500);
+}
+
+$configRaw = file_get_contents($configPath);
+if ($configRaw === false) {
+    send_response('Server configuration file could not be read.', 500);
+}
+
+$config = json_decode($configRaw, true);
+if (!is_array($config)) {
+    send_response('Server configuration is invalid JSON.', 500);
+}
+
+$requiredKeys = ['servername', 'username', 'password', 'dbname'];
+foreach ($requiredKeys as $requiredKey) {
+    if (!array_key_exists($requiredKey, $config) || $config[$requiredKey] === '') {
+        send_response('Server configuration is missing required database settings.', 500);
+    }
+}
+
+try {
+    $mysqli = new mysqli(
+        $config['servername'],
+        $config['username'],
+        $config['password'],
+        $config['dbname'],
+        isset($config['port']) ? (int) $config['port'] : 3306
+    );
+} catch (Throwable $exception) {
+    log_info('Database connection exception: ' . $exception->getMessage());
+    send_response('Database connection failed.', 500);
+}
 
 // Check connection
 if ($mysqli->connect_error) {

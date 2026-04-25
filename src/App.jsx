@@ -43,8 +43,8 @@ function App() {
     axios.get(`/.config.json?t=${timestamp}`)
       .then(response => {
         setConfig(response.data);
-        console.log('Config loaded:', response.data);
-        messageApi.success('Config loaded');
+        // console.log('Config loaded:', response.data);
+        messageApi.success('Welcome to the AI Revision Bot!');
       })
       .catch(error => {
         console.error('Error fetching config:', error);
@@ -111,25 +111,19 @@ useEffect(() => {
           
           {/* Horizontal Steampunk Menus */}
           <div className="steampunk-menu-bar">
-            <div className="steampunk-nav-section">
-              <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
-                    studentMode={studentMode} setStudentMode={setStudentMode}
-                    dashboard={dashboard} setDashboard={setDashboard}
-                    analytics={analytics} setAnalytics={setAnalytics}
-                    currentUser={currentUser} />
-            </div>
-          
-          {currentUser && (
-
-              <AccountBlock config={config}
+            <AccountBlock config={config}
                             currentUser={currentUser} 
                             setCurrentUser={setCurrentUser}
                             setShowAccountManager={setShowAccountManager} 
                             showAccountManager={showAccountManager}
                             showAdminManager={showAdminManager}
                             setShowAdminManager={setShowAdminManager} />
-
-          )}
+                    
+              <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
+                    studentMode={studentMode} setStudentMode={setStudentMode}
+                    dashboard={dashboard} setDashboard={setDashboard}
+                    analytics={analytics} setAnalytics={setAnalytics}
+                    currentUser={currentUser} />
         </div>
         </div>
 

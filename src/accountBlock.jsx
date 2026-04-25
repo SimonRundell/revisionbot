@@ -25,7 +25,7 @@ function AccountBlock({currentUser, setCurrentUser,
         <div className="account-block">
             {currentUser.userName} <img src={currentUser.avatar} alt="avatar" className="avatar-menubar" />
             <button onClick={() => setCurrentUser(null)}>Logout</button>
-            <button onClick={() => setShowAccountManager(!showAccountManager)}>Manage</button>
+            <button onClick={() => setShowAccountManager(!showAccountManager)}>My Profile</button>
             {currentUser.admin === 1 && (
                 <button onClick={() => setShowAdminManager(!showAdminManager)}>Admin</button>
             )}

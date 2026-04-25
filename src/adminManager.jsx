@@ -279,7 +279,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                         }, {
                             headers: { 'Content-Type': 'application/json' }
                         });
-                        console.log('Password change notification sent successfully');
+                        // console.log('Password change notification sent successfully');
                     } catch (notificationError) {
                         console.error('Failed to send password change notification:', notificationError);
                         // Don't fail the main operation if notification fails
