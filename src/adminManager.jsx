@@ -656,7 +656,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                                 checked={editForm.admin}
                                                 onChange={e => setEditForm(prev => ({ ...prev, admin: e.target.checked }))}
                                             /></span>
-                                            <span className="leftgap">{editForm.admin ? 'Administrator' : 'Regular User'}</span>
+                                            <span className="leftgap">{editForm.admin ? 'Administrator (uncheck box to change)' : 'Regular User (check box to change)'}</span>
                                         </label>
                                     </td>
                                 </tr>

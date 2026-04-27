@@ -39,6 +39,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         dateTo: '',
         unmarked: false
     });
+    const [filtersOpen, setFiltersOpen] = useState(false);
     
     // Get unique values for filter dropdowns
     const uniqueStudents = [...new Set(allResponses.map(r => r.studentName))].sort();
@@ -287,6 +288,11 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                 </div>
 
                 <div className="dashboard-filters">
+                    <div className="filters-header" onClick={() => setFiltersOpen(o => !o)}>
+                        <span className="filters-header-title">Filters</span>
+                        <span className={`filters-toggle-arrow${filtersOpen ? ' open' : ''}`}>▼</span>
+                    </div>
+                    <div className={`filters-body${filtersOpen ? ' open' : ''}`}>
                     <div className="filter-columns">
                         <div className="filter-column-left">
                             <label htmlFor="student">Filter By Student</label>
@@ -355,6 +361,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                     
                     <div className="filter-actions">
                         <button onClick={clearFilters} className="btn-secondary">Clear Filters</button>
+                    </div>
                     </div>
                 </div>
 
@@ -441,9 +448,9 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                 </div>
 
                                 <div className="question-section">
-                                    <h3>Question:</h3>
+                                    {/* <h3>Question:</h3>
                                     <RichTextContent value={selectedResponse.question.question} className="question-content" />
-                                    
+                                     */}
                                     {selectedResponse.question.attachments ? (
                                         <div className="attachments-section">
                                             <h4>Attachments:</h4>

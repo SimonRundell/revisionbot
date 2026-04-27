@@ -1,6 +1,6 @@
   <h2>Beta Test Version 0.3.3</h2>
   <div class="motd-notice">
-  <p>Please report any issues to the development team via the Microsoft Form at: <a href="https://forms.microsoft.com/e/H10SRY6eRx">https://forms.microsoft.com/e/H10SRY6eRx</a></p>
+  <p>Please report any issues to the development team: <a class="little-button" href="https://forms.microsoft.com/e/H10SRY6eRx">Report an issue</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
   <li>Prevent Cut and Paste in student answers</li>

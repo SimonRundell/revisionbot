@@ -653,6 +653,23 @@ TWEAKS
     background-color: rgba(255, 255, 255, 0.8);
   }
 
+.little-button {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.8em;
+  background-color: #8e8e8e;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.little-button:hover {
+  background-color: #333;
+  border-color: #888;
+}
 /************************************************
 
 FILE INPUT STYLING
@@ -2848,7 +2865,48 @@ ANSWER MODAL STYLING
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 8px;
-  padding: 20px;
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 16px 20px;
+  user-select: none;
+  color: #fff;
+}
+
+.filters-header:hover {
+  background: #222;
+  border-radius: 8px;
+}
+
+.filters-header-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.filters-toggle-arrow {
+  font-size: 13px;
+  color: #aaa;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+.filters-toggle-arrow.open {
+  transform: rotate(180deg);
+}
+
+.filters-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+
+.filters-body.open {
+  max-height: 600px;
+  padding: 0 20px 20px;
 }
 
 .filter-columns {
@@ -2895,14 +2953,15 @@ ANSWER MODAL STYLING
   gap: 15px;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 10px;;
 }
 
 .filter-select, .filter-date {
   padding: 8px 12px;
   border: 1px solid #333;
   border-radius: 4px;
-  background: #242424;
-  color: #fff;
+  background: #ffffff;
+  color: #000000;
   min-width: 150px;
 }
 
@@ -3933,8 +3992,8 @@ ANALYTICS MODULE STYLING
   padding: 8px 12px;
   border-radius: 4px;
   border: 1px solid #555;
-  background-color: #1a1a1a;
-  color: #fff;
+  background-color: #ffffff;
+  color: #000000;
   font-size: 14px;
   transition: border-color 0.3s ease;
 }
