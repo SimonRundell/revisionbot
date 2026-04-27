@@ -2137,6 +2137,16 @@ ANSWER MODAL STYLING
   overflow: hidden;
 }
 
+.rich-text-blocked-msg {
+  padding: 6px 12px;
+  background: #7f1d1d;
+  color: #fca5a5;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #991b1b;
+}
+
 .rich-text-toolbar {
   display: flex;
   flex-wrap: wrap;

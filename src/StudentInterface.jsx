@@ -632,6 +632,7 @@ function StudentInterface ({ userId,
                                         onChange={setStudentAnswer}
                                         placeholder="Type your answer here..."
                                         minHeight={220}
+                                        blockPaste={true}
                                     />
                                 </div>
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -20,7 +20,36 @@ function ToolbarButton({ editor, onClick, label, iconClass, isActive, disabled =
   );
 }
 
-function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme = 'dark' }) {
+const BLOCKED_TIMEOUT = 1200;
+
+function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme = 'dark', blockPaste = false }) {
+  const [blockedMsg, setBlockedMsg] = useState('');
+
+  const showBlocked = (msg) => {
+    setBlockedMsg(msg);
+    setTimeout(() => setBlockedMsg(''), BLOCKED_TIMEOUT);
+  };
+
+  const pasteBlockProps = blockPaste ? {
+    handleDOMEvents: {
+      copy:        (_, e) => { e.preventDefault(); showBlocked('Copying is not allowed'); return true; },
+      cut:         (_, e) => { e.preventDefault(); showBlocked('Cutting is not allowed');  return true; },
+      paste:       (_, e) => { e.preventDefault(); showBlocked('Pasting is not allowed');  return true; },
+      drop:        (_, e) => { e.preventDefault(); showBlocked('Dropping is not allowed'); return true; },
+      contextmenu: ()     => { showBlocked('Right-click is not allowed'); return false; },
+    },
+    handlePaste: () => true,
+    handleDrop:  () => true,
+    handleKeyDown: (_, e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        showBlocked('Pasting is not allowed');
+        return true;
+      }
+      return false;
+    },
+  } : {};
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -38,6 +67,7 @@ function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme =
       attributes: {
         class: 'rich-text-editor-surface',
       },
+      ...pasteBlockProps,
     },
   });
 
@@ -126,6 +156,7 @@ function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme =
           disabled={!editor?.can().chain().focus().redo().run()}
         />
       </div>
+      {blockedMsg && <div className="rich-text-blocked-msg">{blockedMsg}</div>}
       <EditorContent editor={editor} />
     </div>
   );

@@ -1,8 +1,9 @@
-  <h2>Beta Test Version 0.3.2</h2>
+  <h2>Beta Test Version 0.3.3</h2>
   <div class="motd-notice">
   <p>Please report any issues to the development team via the Microsoft Form at: <a href="https://forms.microsoft.com/e/H10SRY6eRx">https://forms.microsoft.com/e/H10SRY6eRx</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Prevent Cut and Paste in student answers</li>
   <li>Rich Text Answers</li>
   <li>UI/UX Improvements</li>
   <li>More capacity for long questions and scenarios for 12-mark questions</li>

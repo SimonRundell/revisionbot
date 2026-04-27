@@ -43,7 +43,7 @@ function App() {
     axios.get(`/.config.json?t=${timestamp}`)
       .then(response => {
         setConfig(response.data);
-        // console.log('Config loaded:', response.data);
+        console.log('Config loaded:', response.data);
         messageApi.success('Welcome to the AI Revision Bot!');
       })
       .catch(error => {

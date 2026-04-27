@@ -1,6 +1,6 @@
 {
-    "apiBaseUrl": "http://localhost/your-project-folder/api",
+    "api": "http://localhost/your-project-folder/api",
     "appName": "AIRevision Bot",
     "strapline": "AI-powered revision assistant",
-    "credits": "Simon Rundell 2025 - All rights reserved",
+    "credits": "Simon Rundell 2025 - All rights reserved"
 }
