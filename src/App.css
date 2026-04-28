@@ -415,7 +415,8 @@ input, select, textarea {
   margin: 0 auto;
 }
 
-.filter-column-right, .filter-column-left label{
+.filter-column-right label,
+.filter-column-left label {
   margin-left: 8px;
   font-size: 12px;
 }
@@ -2916,6 +2917,50 @@ ANSWER MODAL STYLING
   margin-bottom: 20px;
 }
 
+.filter-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 14px;
+  table-layout: fixed;
+  margin-bottom: 12px;
+  background: transparent;
+}
+
+.filter-table tbody,
+.filter-table tr,
+.filter-table tbody tr:nth-child(even),
+.filter-table tbody tr:nth-child(odd),
+.filter-table tbody tr:hover {
+  background: transparent;
+}
+
+.filter-table td {
+  width: 50%;
+  vertical-align: top;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.filter-table td:first-child {
+  padding-right: 15px;
+}
+
+.filter-table td:last-child {
+  padding-left: 15px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-field label {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
 .filter-column-left,
 .filter-column-right {
   display: flex;
@@ -2931,6 +2976,7 @@ ANSWER MODAL STYLING
 .filter-switch-container {
   display: flex;
   align-items: center;
+  margin: 4px 0 20px;
 }
 
 .filter-switch-label {
@@ -2957,12 +3003,15 @@ ANSWER MODAL STYLING
 }
 
 .filter-select, .filter-date {
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px 12px;
   border: 1px solid #333;
   border-radius: 4px;
   background: #ffffff;
   color: #000000;
-  min-width: 150px;
+  min-width: 140px;
+  font-size: 12px;
 }
 
 .filter-date {
@@ -3095,6 +3144,29 @@ ANSWER MODAL STYLING
   .filter-columns {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .filter-table,
+  .filter-table tbody,
+  .filter-table tr,
+  .filter-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .filter-table {
+    border-spacing: 0;
+    margin-bottom: 8px;
+  }
+
+  .filter-table tr {
+    margin-bottom: 16px;
+  }
+
+  .filter-table td:first-child,
+  .filter-table td:last-child {
+    padding-left: 0;
+    padding-right: 0;
   }
   
   .filter-row {
