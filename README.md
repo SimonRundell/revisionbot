@@ -1,21 +1,24 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-A comprehensive web-based educational assessment platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, and advanced analytics.
+**Version 0.4.0** — April 2026
+
+A comprehensive web-based educational assessment platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
 ## Features
 
-- **Student Interface**: Interactive question answering with AI feedback and randomized question selection
-- **Rich Text Editing**: Questions, mark schemes, student answers, and teacher feedback support bold, italic, underline, ordered/unordered lists, code, blockquotes, undo, and redo
+- **Student Interface**: Interactive question answering with AI feedback and randomized question selection; previously answered questions visually marked with a green ✓ badge while remaining retryable
+- **Rich Text Editing**: Questions, mark schemes, student answers, and teacher feedback support bold, italic, underline, ordered/unordered lists, code, blockquotes, undo, redo, and Tab-key indentation
 - **AI Assessment**: Integration with Google's Gemini 2.5 Flash for intelligent immediate feedback
 - **Multimodal Student Responses**: Students can upload graphics (PNG/JPG/GIF/BMP) as part of their answers
 - **Past Answers Review**: Students can review their previous responses, graphics, and feedback
-- **Admin Dashboard**: Teachers can review all student responses including uploaded graphics and add ratings/comments
-- **RAG Rating System**: Teachers can rate responses with Relevant, Adequate, Good scale
-- **User Management**: Registration, login, and role-based access control
+- **Admin Dashboard**: Teachers can review all student responses including uploaded graphics and add ratings/comments; auto-refreshes every 30 or 60 seconds with a manual Refresh Now button
+- **RAG Rating System**: Teachers can rate responses with Red/Amber/Green
+- **Student Reward System**: Badge achievements earned from RAG-rated performance across four tracks (Green %, Amber/Green %, No-Red streak, Green streak); displayed in the nav bar and on a dedicated My Progress page
+- **User Management**: Registration, login, and role-based access control; students cannot edit their own name/email/department (admin only)
 - **Bulk Student Upload**: Import multiple student accounts from CSV files with automatic email notifications
 - **Email Notifications**: Automated welcome emails and password change notifications with professional templates
-- **Advanced Analytics**: Time-based progress tracking, improvement analysis, and comprehensive student statistics
+- **Advanced Analytics**: Time-based progress tracking, improvement analysis, comprehensive student statistics, and per-student badge display
 - **Security**: Protected API endpoints with role-based access control and directory browsing prevention
 
 ## Setup Instructions
@@ -94,6 +97,7 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
 - `getAllStudentResponses.php` - Admin: Get all student responses
 - `saveTeacherFeedback.php` - Admin: Save teacher feedback and ratings
 - `bulkUploadUsers.php` - Admin: Bulk upload student accounts from CSV
+- `getStudentRewards.php` - Compute badge achievements and stats for a student
 
 ### Security Notes
 
@@ -608,6 +612,31 @@ const chartData = progressData.map(entry => ({
 
 ## Recent Enhancements
 
+### v0.4.0 — Student Rewards, Dashboard UX & Analytics Badges (April 2026)
+
+#### Student Reward & Badge System
+- **Four badge tracks** computed from RAG-rated latest attempts per question:
+  - *Green %* — percentage of latest attempts rated Green (thresholds 25–90%)
+  - *Amber/Green %* — percentage rated Amber or Green (thresholds 25–90%)
+  - *No-Red streak* — consecutive latest-attempt questions without a Red (lengths 2–20)
+  - *Green streak* — consecutive latest-attempt questions all Green (lengths 2–20)
+- **My Progress page** — new student-facing page (`StudentProgress.jsx`) showing 10 stat tiles and all earned badges per track
+- **Nav bar badges** — highest badge from each earned track shown as icons beneath the username with rich hover tooltips (e.g. `Green %: 72.5% → G-70 badge`); auto-refreshes every 30 seconds
+- **Analytics badge display** — per-student badges visible in the Teaching Analytics Dashboard: a badge strip in the department breakdown table and a full Earned Badges section in the individual student view
+- **Backend API** — `getStudentRewards.php` computes all stats and badge tracks server-side using latest-attempt-per-question logic
+
+#### Admin Dashboard UX
+- **Auto-refresh** — configurable interval (30 s / 60 s) with a toggle switch; responses reload in the background without a full-page spinner
+- **Manual Refresh Now** button with last-refreshed timestamp
+- **Tidied header layout** — stats and refresh controls separated into a clean toolbar
+
+#### Student Interface
+- **Answered question markers** — questions the student has previously submitted are highlighted with a darker background and a green ✓ badge; they remain fully retryable
+- **Profile field locking** — name, email, and department fields are read-only for students; only password and avatar remain editable
+
+#### Rich Text Editor
+- **Tab-key indentation** — pressing Tab in the TipTap editor inserts a tab character in both blockPaste and standard modes
+
 ### Multimodal Assessment (November 2025)
 - **Student Graphic Uploads**: Students can attach images (PNG/JPG/GIF/BMP, max 5MB) to answers
 - **AI Image Analysis**: Gemini AI analyzes both text and uploaded graphics together
@@ -648,6 +677,7 @@ const chartData = progressData.map(entry => ({
 - **Interactive Progress Graphs**: Canvas-based charts with clickable student names
 - **Visual RAG Progression**: Color-coded data points showing learning trajectories
 - **Cumulative Trend Analysis**: Professional charts with rich metadata and context
+- **Per-Student Badge Display**: Highest badges per track shown in department table and individual student analytics view
 
 ## Next Steps for Further Enhancement
 
