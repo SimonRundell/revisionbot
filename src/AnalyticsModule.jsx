@@ -254,6 +254,9 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
     const [progressLoading, setProgressLoading] = useState(false);
     const [modalStudentName, setModalStudentName] = useState('');
 
+    // Badge rewards cache: userId (string) -> rewards data from getStudentRewards.php
+    const [studentRewardsCache, setStudentRewardsCache] = useState({});
+
     /**
      * Load departments data for analytics filtering
      * Fetches all available departments from the API for dropdown selection
@@ -357,6 +360,53 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
         );
     }, [config.api, currentUser.token, setSendErrorMessage]);
 
+    // Fetch rewards for a single student (by numeric id), caches by id string
+    const fetchStudentRewards = useCallback(async (studentId) => {
+        const key = studentId.toString();
+        // Already cached — skip
+        setStudentRewardsCache(prev => {
+            if (prev[key] !== undefined) return prev;
+            return prev; // will fetch below
+        });
+
+        try {
+            const response = await axios.post(
+                `${config.api}/getStudentRewards.php`,
+                { userId: studentId },
+                { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}` } }
+            );
+            const d = response.data;
+            const parsed = d?.success ? (d.data ?? d) : null;
+            if (parsed) {
+                setStudentRewardsCache(prev => ({ ...prev, [key]: parsed }));
+            }
+        } catch (_) { /* silently ignore */ }
+    }, [config.api, currentUser.token]);
+
+    // Build ordered highest-badge array from a rewards object
+    const getHighestBadges = (rewards) => {
+        if (!rewards?.highestBadges) return [];
+        const hb = rewards.highestBadges;
+        return [
+            hb.greenPercent           ? { ...hb.greenPercent,           track: 'greenPercent'           } : null,
+            hb.amberOrGreenPercent    ? { ...hb.amberOrGreenPercent,    track: 'amberOrGreenPercent'    } : null,
+            hb.noRedStreak            ? { ...hb.noRedStreak,            track: 'noRedStreak'            } : null,
+            hb.greenStreak            ? { ...hb.greenStreak,            track: 'greenStreak'            } : null,
+        ].filter(Boolean);
+    };
+
+    // Rich tooltip text for a badge given the full rewards object
+    const badgeTooltip = (badge, rewards) => {
+        if (!rewards) return badge.filename.replace('.png', '');
+        switch (badge.track) {
+            case 'greenPercent':        return `Green %: ${rewards.greenPercentOverall}% → ${badge.filename.replace('.png', '')} badge`;
+            case 'amberOrGreenPercent': return `Amber/Green %: ${rewards.amberOrGreenPercentOverall}% → ${badge.filename.replace('.png', '')} badge`;
+            case 'noRedStreak':         return `No-Red streak: ${rewards.noRedStreak} in a row → ${badge.filename.replace('.png', '')} badge`;
+            case 'greenStreak':         return `Green streak: ${rewards.greenStreak} in a row → ${badge.filename.replace('.png', '')} badge`;
+            default:                    return badge.filename.replace('.png', '');
+        }
+    };
+
     const loadAnalytics = useCallback(async () => {
         let endpoint = '';
         let params = {};
@@ -424,6 +474,32 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
             loadAnalytics();
         }
     }, [selectedStudent, selectedView, loadAnalytics]);
+
+    // When a specific student is selected, pre-fetch their rewards
+    useEffect(() => {
+        if (selectedView === 'student' && selectedStudent) {
+            const key = selectedStudent.toString();
+            if (!studentRewardsCache[key]) {
+                fetchStudentRewards(selectedStudent);
+            }
+        }
+    }, [selectedStudent, selectedView, studentRewardsCache, fetchStudentRewards]);
+
+    // When department breakdown loads, batch-fetch rewards for all students in it
+    useEffect(() => {
+        if (selectedView === 'department' && analyticsData?.studentBreakdown) {
+            analyticsData.studentBreakdown.forEach((student) => {
+                const studentData = students.find(s => s.userName === student.name);
+                if (studentData) {
+                    const key = studentData.id.toString();
+                    if (!studentRewardsCache[key]) {
+                        fetchStudentRewards(studentData.id);
+                    }
+                }
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [analyticsData, selectedView]);
 
     // Auto-load analytics when question selection changes
     useEffect(() => {
@@ -498,6 +574,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     <th>Amber</th>
                                     <th>Green</th>
                                     <th>Improvement</th>
+                                    <th>Badges</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -505,7 +582,9 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     // Find the actual student ID from the students array
                                     const studentData = students.find(s => s.userName === student.name);
                                     const studentId = studentData ? studentData.id : null;
-                                    
+                                    const rewards = studentId ? studentRewardsCache[studentId.toString()] : null;
+                                    const badges = rewards ? getHighestBadges(rewards) : null;
+
                                     return (
                                         <tr key={index}>
                                             <td>
@@ -532,6 +611,25 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                             <td className="amber-stat">{student.amberCount} ({student.amberPercent}%)</td>
                                             <td className="green-stat">{student.greenCount} ({student.greenPercent}%)</td>
                                             <td className="improvement-stat">{student.improvementCount}</td>
+                                            <td>
+                                                {!studentId ? null : !rewards ? (
+                                                    <span className="analytics-badges-loading-small">…</span>
+                                                ) : badges.length === 0 ? (
+                                                    <span className="analytics-badges-empty-small">—</span>
+                                                ) : (
+                                                    <div className="analytics-badge-strip">
+                                                        {badges.map((badge) => (
+                                                            <img
+                                                                key={badge.track}
+                                                                src={badge.src}
+                                                                alt={badge.filename.replace('.png', '')}
+                                                                className="analytics-badge-strip-img"
+                                                                title={badgeTooltip(badge, rewards)}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -628,6 +726,35 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                         </table>
                     </div>
                 )}
+
+                {(() => {
+                    const rewards = studentRewardsCache[selectedStudent];
+                    const badges = rewards ? getHighestBadges(rewards) : null;
+                    return (
+                        <div className="analytics-badges-section">
+                            <h4>Earned Badges</h4>
+                            {!rewards ? (
+                                <p className="analytics-badges-loading">Loading badges…</p>
+                            ) : badges.length === 0 ? (
+                                <p className="analytics-badges-empty">No badges earned yet.</p>
+                            ) : (
+                                <div className="analytics-badges-grid">
+                                    {badges.map((badge) => (
+                                        <div key={badge.track} className="analytics-badge-item">
+                                            <img
+                                                src={badge.src}
+                                                alt={badge.filename.replace('.png', '')}
+                                                className="analytics-badge-img"
+                                                title={badgeTooltip(badge, rewards)}
+                                            />
+                                            <span className="analytics-badge-label">{badgeTooltip(badge, rewards)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
             </div>
         );
     };

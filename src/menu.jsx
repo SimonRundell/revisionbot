@@ -17,7 +17,7 @@
  * @returns {JSX.Element} The Menu component
 ****************************************************************************/
 
-function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, currentUser, dashboard, setDashboard, analytics, setAnalytics}) {
+function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, currentUser, dashboard, setDashboard, analytics, setAnalytics, progressMode, setProgressMode}) {
 
     /**
      * Handle mode switching between different application modes
@@ -30,6 +30,7 @@ function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, curren
         setStudentMode(mode === 'student');
         setDashboard(mode === 'dashboard');
         setAnalytics(mode === 'analytics');
+        setProgressMode(mode === 'progress');
     };
 
     return (
@@ -48,6 +49,14 @@ function Menu ({quizBuilder, setQuizBuilder, studentMode, setStudentMode, curren
             >
                 Questions
             </button>
+            {currentUser?.admin !== 1 && (
+                <button
+                    onClick={() => handleModeSwitch('progress')}
+                    className={progressMode ? 'active' : ''}
+                >
+                    My Progress
+                </button>
+            )}
             <button 
                 onClick={() => handleModeSwitch('dashboard')}
                 className={dashboard ? 'active' : ''}

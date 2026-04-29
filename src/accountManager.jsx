@@ -156,11 +156,11 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                 <tbody>
                     <tr>
                         <td>Name</td>
-                        <td><input type="text" value={name} onChange={e => setName(e.target.value)} /></td>
+                        <td><input type="text" value={name} onChange={e => setName(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student profile name cannot be changed" : ""} /></td>
                     </tr>
                     <tr>
                         <td>Email/Login</td>
-                        <td><input type="text" value={eMail} onChange={e => setEmail(e.target.value)} /></td>
+                        <td><input type="text" value={eMail} onChange={e => setEmail(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student email cannot be changed" : ""} /></td>
                     </tr>
                     <tr>
                         <td>New Password</td>
@@ -168,7 +168,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                     </tr>
                     <tr>
                         <td>Department</td>
-                        <td><input type="text" value={department} onChange={e => setDepartment(e.target.value)} /></td>
+                        <td><input type="text" value={department} onChange={e => setDepartment(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student department cannot be changed" : ""} /></td>
                     </tr>
                     <tr>
                         <td>Locale</td>

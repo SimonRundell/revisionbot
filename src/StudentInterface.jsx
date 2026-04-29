@@ -44,6 +44,7 @@ function StudentInterface ({ userId,
     const [isLoadingAI, setIsLoadingAI] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId] = useState(() => 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11));
+    const [answeredQuestionIds, setAnsweredQuestionIds] = useState([]);
     
     /**
      * Parse user access data from JSON string or return object directly
@@ -219,6 +220,51 @@ function StudentInterface ({ userId,
         }
         return shuffled;
     };
+
+    /**
+     * Load answered question IDs for tracking which questions have been attempted
+     * Fetches user's response history and extracts question IDs
+     * 
+     * @returns {Promise<void>}
+     */
+    const loadAnsweredQuestions = useCallback(() => {
+        if (!userId || !currentUser?.token) {
+            return;
+        }
+
+        const apiCall = () => axios.post(
+            `${config.api}/getUserResponses.php`,
+            { userId },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentUser.token}`
+                }
+            }
+        );
+
+        handleApiCall(
+            apiCall,
+            (responses) => {
+                // Extract unique question IDs from responses
+                const questionIds = [...new Set(responses.map(r => {
+                    const qId = r.question?.id;
+                    return qId ? Number(qId) : null;
+                }).filter(id => id != null))];
+                setAnsweredQuestionIds(questionIds);
+            },
+            () => {}, // No-op function for setIsLoading (don't show loading state)
+            () => {}, // Silent success
+            () => {}, // Silent error
+            '',
+            ''
+        );
+    }, [userId, currentUser?.token, config.api]);
+
+    // Load answered questions on component mount
+    useEffect(() => {
+        loadAnsweredQuestions();
+    }, [loadAnsweredQuestions]);
 
     /**
      * Handle topic selection change event
@@ -573,13 +619,20 @@ function StudentInterface ({ userId,
                             🎲 Random Question
                         </button>
                         <div className="questions-list">
-                            {questions.map((question, index) => (
+                            {questions.map((question, index) => {
+                                const questionId = Number(question.id);
+                                const isAnswered = answeredQuestionIds.includes(questionId);
+                                return (
                                 <div
                                     key={question.id}
-                                    className="question-item"
+                                    className={`question-item ${isAnswered ? 'question-answered' : ''}`}
                                     onClick={() => handleQuestionSelect(question)}
+                                    title={isAnswered ? 'You have previously answered this question. Click to retry.' : ''}
                                 >
-                                    <div className="question-number">Q{index + 1}</div>
+                                    <div className="question-number">
+                                        Q{index + 1}
+                                        {isAnswered && <span className="answered-badge">✓</span>}
+                                    </div>
                                     <div className="question-preview">
                                         <div className="question-text">
                                             {richTextPreview(question.question, 150)}
@@ -594,7 +647,8 @@ function StudentInterface ({ userId,
                                         <div className="response-arrow">→</div>
                                     </div>
                                 </div>
-                            ))}
+                            );
+                            })}
                         </div>
                     </div>
                 )}

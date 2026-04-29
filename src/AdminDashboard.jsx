@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Spin, Switch } from 'antd';
-import { handleApiCall } from './utils/apiHelpers';
+import { parseApiResponse } from './utils/apiHelpers';
 import { formatDate, formatTime, formatDateTime } from './utils/dateHelpers';
 import RichTextEditor from './RichTextEditor';
 import RichTextContent from './RichTextContent';
@@ -41,6 +41,9 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         unmarked: false
     });
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+    const [autoRefreshMs, setAutoRefreshMs] = useState(30000);
+    const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
     
     // Get unique values for filter dropdowns
     const uniqueStudents = [...new Set(allResponses.map(r => r.studentName))].sort();
@@ -48,8 +51,11 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
     const uniqueTopics = [...new Set(allResponses.map(r => r.topicName))].sort();
     const uniqueLocations = [...new Set(allResponses.map(r => r.userLocation).filter(Boolean))].sort();
 
-    // Load all student responses on component mount
-    useEffect(() => {
+    const fetchResponses = useCallback(async (showLoader = true, notifySuccess = false) => {
+        if (showLoader) {
+            setIsLoading(true);
+        }
+
         const apiCall = () => axios.post(config.api + '/getAllStudentResponses.php',
             {},
             {
@@ -60,16 +66,52 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
             }
         );
 
-        handleApiCall(
-            apiCall,
-            setAllResponses,
-            setIsLoading,
-            setSendSuccessMessage,
-            setSendErrorMessage,
-            '',
-            'Failed to load student responses.'
-        );
+        try {
+            const response = await apiCall();
+            const parsedData = parseApiResponse(
+                response.data,
+                null,
+                setSendErrorMessage,
+                '',
+                'Failed to load student responses.'
+            );
+
+            if (parsedData !== null) {
+                setAllResponses(parsedData);
+                setLastRefreshedAt(new Date());
+                if (notifySuccess) {
+                    setSendSuccessMessage('Dashboard refreshed.');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading student responses:', error);
+            setSendErrorMessage('Network error. Please try again.');
+        } finally {
+            if (showLoader) {
+                setIsLoading(false);
+            }
+        }
     }, [config.api, currentUser.token, setSendErrorMessage, setSendSuccessMessage]);
+
+    // Load all student responses on component mount
+    useEffect(() => {
+        fetchResponses(true, false);
+    }, [fetchResponses]);
+
+    // Auto-refresh response list for ongoing teacher marking
+    useEffect(() => {
+        if (!autoRefreshEnabled) {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            fetchResponses(false, false);
+        }, autoRefreshMs);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [autoRefreshEnabled, autoRefreshMs, fetchResponses]);
 
     // Apply filters whenever responses or filters change
     useEffect(() => {
@@ -207,6 +249,10 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
         }
     };
 
+    const handleManualRefresh = () => {
+        fetchResponses(true, true);
+    };
+
     const getRatingColor = (rating) => {
         switch(rating) {
             case 'R': return '#dc3545'; // Red
@@ -278,10 +324,34 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
             <div className="admin-dashboard">
                 <div className="dashboard-header">
                     <h1>Student Response Review Dashboard</h1>
-                    <div className="dashboard-stats">
-                        <span>Total Responses: {allResponses.length}</span>
-                        <span>Filtered: {filteredResponses.length}</span>
-                        <span>Students: {uniqueStudents.length}</span>
+                    <div className="dashboard-toolbar">
+                        <div className="dashboard-stats">
+                            <span>Total Responses: {allResponses.length}</span>
+                            <span>Filtered: {filteredResponses.length}</span>
+                            <span>Students: {uniqueStudents.length}</span>
+                        </div>
+                        <div className="dashboard-refresh-controls">
+                            <button className="btn-secondary" onClick={handleManualRefresh}>Refresh Now</button>
+                            <label className="dashboard-refresh-switch-label">
+                                <Switch
+                                    checked={autoRefreshEnabled}
+                                    onChange={(checked) => setAutoRefreshEnabled(checked)}
+                                />
+                                <span>Auto-refresh</span>
+                            </label>
+                            <select
+                                value={autoRefreshMs}
+                                onChange={(e) => setAutoRefreshMs(Number(e.target.value))}
+                                disabled={!autoRefreshEnabled}
+                                className="dashboard-refresh-interval"
+                            >
+                                <option value={30000}>Every 30 seconds</option>
+                                <option value={60000}>Every 1 minute</option>
+                            </select>
+                            {lastRefreshedAt && (
+                                <span className="dashboard-last-refresh">Last refresh: {formatTime(lastRefreshedAt)}</span>
+                            )}
+                        </div>
                     </div>
                     {(filters.dateFrom || filters.dateTo) && (
                         <div className="active-date-filter">

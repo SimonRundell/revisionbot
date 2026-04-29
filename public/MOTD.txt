@@ -1,8 +1,12 @@
-  <h2>Beta Test Version 0.3.3</h2>
+  <h2>Beta Test Version 0.4.0</h2>
   <div class="motd-notice">
   <p>Please report any issues to the development team: <a class="little-button" href="https://forms.microsoft.com/e/H10SRY6eRx">Report an issue</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Automatic refresh of admin list of work as completed<li>
+  <li>Badge system for student performance</li>
+  <li>New student analytics</li>
+  <li>Added filter to filter by Class</li>
   <li>Prevent Cut and Paste in student answers</li>
   <li>Rich Text Answers</li>
   <li>UI/UX Improvements</li>

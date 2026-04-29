@@ -108,7 +108,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                             <div className="response-date">
                                                 Completed: {formatDate(response.createdAt)}
                                                 {response.attemptNumber > 1 && (
-                                                    <span className="attempt-badge"> (Attempt #{response.attemptNumber})</span>
+                                                    <span className="attempt-badge"> Attempt #{response.attemptNumber}</span>
                                                 )}
                                                 {(response.teacherComment || response.teacherRating) && (
                                                     <span className="teacher-feedback-notification">

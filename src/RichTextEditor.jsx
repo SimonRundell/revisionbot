@@ -40,7 +40,14 @@ function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme =
     },
     handlePaste: () => true,
     handleDrop:  () => true,
-    handleKeyDown: (_, e) => {
+    handleKeyDown: (view, e) => {
+      // Allow Tab key for indentation
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        view.dispatch(view.state.tr.insertText('\t'));
+        return true;
+      }
+      // Block paste shortcuts
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
         e.preventDefault();
         showBlocked('Pasting is not allowed');
@@ -48,7 +55,17 @@ function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme =
       }
       return false;
     },
-  } : {};
+  } : {
+    handleKeyDown: (view, e) => {
+      // Allow Tab key for indentation even when paste blocking is off
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        view.dispatch(view.state.tr.insertText('\t'));
+        return true;
+      }
+      return false;
+    },
+  };
 
   const editor = useEditor({
     extensions: [

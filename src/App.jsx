@@ -13,6 +13,7 @@ import StudentInterface from './StudentInterface.jsx';
 import AdminDashboard from './AdminDashboard.jsx';
 import PastAnswersViewer from './PastAnswersViewer.jsx';
 import AnalyticsModule from './AnalyticsModule.jsx';
+import StudentProgress from './StudentProgress.jsx';
 
 /****************************************************************************
  * App Component
@@ -33,6 +34,7 @@ function App() {
   const [showAdminManager, setShowAdminManager] = useState(false);
   const [quizBuilder, setQuizBuilder] = useState(false);
   const [studentMode, setStudentMode] = useState(false);
+  const [progressMode, setProgressMode] = useState(false);
   const [dashboard, setDashboard] = useState(false);
   const [analytics, setAnalytics] = useState(false);
 
@@ -43,7 +45,7 @@ function App() {
     axios.get(`/.config.json?t=${timestamp}`)
       .then(response => {
         setConfig(response.data);
-        console.log('Config loaded:', response.data);
+        // console.log('Config loaded:', response.data);
         messageApi.success('Welcome to the AI Revision Bot!');
       })
       .catch(error => {
@@ -70,6 +72,7 @@ useEffect(() => {
     if (!currentUser) {
       setQuizBuilder(false);
       setStudentMode(false);
+      setProgressMode(false);
       setDashboard(false);
       return;
     }
@@ -79,6 +82,7 @@ useEffect(() => {
     } else {
       setQuizBuilder(false);
       setStudentMode(false);
+      setProgressMode(false);
       setDashboard(true);
     }
   }, [currentUser]);
@@ -121,6 +125,7 @@ useEffect(() => {
                     
               <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
                     studentMode={studentMode} setStudentMode={setStudentMode}
+                  progressMode={progressMode} setProgressMode={setProgressMode}
                     dashboard={dashboard} setDashboard={setDashboard}
                     analytics={analytics} setAnalytics={setAnalytics}
                     currentUser={currentUser} />
@@ -192,6 +197,15 @@ useEffect(() => {
           setSendSuccessMessage={setSendSuccessMessage}
         />
         </>
+      )}
+
+      {progressMode && !dashboard && !analytics && !studentMode && currentUser.admin !== 1 && (
+        <StudentProgress
+          userId={currentUser.id}
+          config={config}
+          currentUser={currentUser}
+          setSendErrorMessage={setSendErrorMessage}
+        />
       )}
 
       {!quizBuilder && !studentMode && !dashboard && currentUser.admin === 1 && (
