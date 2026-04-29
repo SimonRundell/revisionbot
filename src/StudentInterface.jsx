@@ -13,6 +13,7 @@ import './App.css';
  * StudentInterface Component
  * Main component for students to practice questions, submit answers, and receive AI feedback.
  * Supports subject/topic filtering and user access control with randomized question display.
+ * Previously answered questions are highlighted with a green ✓ badge; they remain retryable.
  * 
  * @param {Object} props - Component props
  * @param {string|number} props.userId - The current user's ID

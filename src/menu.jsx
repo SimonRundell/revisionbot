@@ -1,8 +1,9 @@
 /****************************************************************************
  * Menu Component
  * Renders the navigation menu for the application.
- * Includes buttons for different modes (quiz builder, student, dashboard, analytics).
+ * Includes buttons for different modes (quiz builder, student, dashboard, analytics, progress).
  * Admin users see additional Quiz Builder and Analytics options.
+ * Students see a My Progress button that opens their badge and stats page.
  * 
  * @param {Object} props - Component props
  * @param {boolean} props.quizBuilder - Current state of quiz builder mode
@@ -14,6 +15,8 @@
  * @param {Function} props.setDashboard - Function to set dashboard mode state
  * @param {boolean} props.analytics - Current state of analytics mode
  * @param {Function} props.setAnalytics - Function to set analytics mode state
+ * @param {boolean} props.progressMode - Current state of student progress page mode
+ * @param {Function} props.setProgressMode - Function to set student progress mode state
  * @returns {JSX.Element} The Menu component
 ****************************************************************************/
 

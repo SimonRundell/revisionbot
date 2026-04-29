@@ -10,6 +10,8 @@ import { parseApiResponse } from './utils/apiHelpers'
  * AccountManager Component
  * Renders the account information and management options for the current user.
  * Provides functionality for password reset, profile updates, avatar management, and locale settings.
+ * For student accounts (admin === 0), name, email, and department fields are read-only;
+ * only password and avatar may be changed by the student themselves.
  * 
  * @param {Object} props - Component props
  * @param {Object} props.config - Configuration object containing API endpoints

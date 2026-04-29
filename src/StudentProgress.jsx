@@ -4,6 +4,20 @@ import { Spin } from 'antd';
 import { parseApiResponse } from './utils/apiHelpers';
 import './App.css';
 
+
+/****************************************************************************
+ * StudentProgress Component
+ * Student-facing "My Progress" page showing personalised stats tiles and all
+ * earned badge tracks based on RAG-rated responses.
+ * Calls getStudentRewards.php to retrieve stats and badge data.
+ * Four badge tracks: Green %, Amber/Green %, No-Red streak, Green streak.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Configuration object containing API endpoints
+ * @param {Object} props.currentUser - Current user object with id and authentication token
+ * @returns {JSX.Element} The StudentProgress component
+****************************************************************************/
+
 function StatTile({ label, value }) {
   return (
     <div className="student-progress-tile">

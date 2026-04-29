@@ -5,8 +5,10 @@ import { parseApiResponse } from './utils/apiHelpers';
 /****************************************************************************
  * AccountBlock Component
  * Renders the account information and management options for the logged-in user.
- * Displays username, avatar, badges, logout button, account management button, and admin button for admin users.
- * Controls visibility of account and admin management interfaces.
+ * Displays username, avatar, earned badge strip (students only), logout button,
+ * account management button, and admin button for admin users.
+ * Student badges are fetched from getStudentRewards.php and auto-refreshed every 30 seconds.
+ * Each badge icon shows a rich tooltip with the exact metric value that earned it.
  * 
  * @param {Object} props - Component props
  * @param {Object} props.currentUser - Current user object with username, avatar, and admin status

@@ -10,8 +10,10 @@ import './App.css';
 
 /****************************************************************************
  * AdminDashboard Component
- * Renders the admin dashboard for managing student responses.
+ * Renders the admin dashboard for managing and RAG-rating student responses.
  * Includes filtering, viewing, and providing feedback on student answers.
+ * Supports auto-refresh (configurable 30 s / 60 s interval) and a manual
+ * Refresh Now button so new unrated responses appear without a page reload.
  * 
  * @param {Object} props - Component props
  * @param {Object} props.config - Configuration object containing API endpoints

@@ -219,8 +219,10 @@ const StudentProgressChart = ({ data }) => {
 /****************************************************************************
  * AnalyticsModule Component
  * Renders the analytics dashboard for monitoring user activity.
- * Includes filtering and viewing feedback on student answers with statistical analysis.
  * Provides department, student, and question-level analytics with progress tracking.
+ * Per-student badge achievements are fetched from getStudentRewards.php and shown
+ * as a badge strip in the department breakdown table and a full Earned Badges section
+ * in the individual student view.
  * 
  * @param {Object} props - Component props
  * @param {Object} props.config - Configuration object containing API endpoints
@@ -727,6 +729,11 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     </div>
                 )}
 
+                 * Provides comprehensive analytics views for admin users including department statistics,
+                 * student performance tracking, and question analysis with interactive progress graphs.
+                 * Per-student badge achievements are fetched from getStudentRewards.php and displayed
+                 * alongside RAG stats — as a badge strip in the department table and a full Earned Badges
+                 * section in the individual student view.
                 {(() => {
                     const rewards = studentRewardsCache[selectedStudent];
                     const badges = rewards ? getHighestBadges(rewards) : null;
