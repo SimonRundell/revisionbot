@@ -47,12 +47,12 @@ switch ($requestType) {
 function getDepartments() {
     global $mysqli;
     
-    $query = "SELECT DISTINCT userLocation as department 
+    $query = "SELECT DISTINCT userClass as department 
               FROM tbluser 
-              WHERE userLocation IS NOT NULL 
-              AND userLocation != '' 
+              WHERE userClass IS NOT NULL 
+              AND userClass != '' 
               AND admin != 1 
-              ORDER BY userLocation";
+              ORDER BY userClass";
     
     $result = $mysqli->query($query);
     
@@ -108,7 +108,7 @@ function getDepartmentStats($department) {
             ROUND(AVG(r.attempt_number), 2) as avgAttempts
         FROM tblresponse r
         JOIN tbluser u ON r.user_id = u.id
-        WHERE u.userLocation = ? AND u.admin != 1
+        WHERE u.userClass = ? AND u.admin != 1
     ";
     
     $stmt = $mysqli->prepare($statsQuery);
@@ -151,7 +151,7 @@ function getDepartmentStats($department) {
              )) as improvementCount
         FROM tbluser u
         LEFT JOIN tblresponse r ON u.id = r.user_id
-        WHERE u.userLocation = ? AND u.admin != 1
+        WHERE u.userClass = ? AND u.admin != 1
         GROUP BY u.id, u.userName
         ORDER BY u.userName
     ";
@@ -469,7 +469,7 @@ function getStudentStats($studentId) {
         SELECT 
             COUNT(*) as totalAttempts,
             COUNT(DISTINCT r.user_id) as uniqueStudents,
-            COUNT(DISTINCT u.userLocation) as classesAttempted,
+            COUNT(DISTINCT u.userClass) as classesAttempted,
             ROUND(AVG(
                 CASE 
                     WHEN r.teacher_rating = 'R' THEN 1
@@ -492,7 +492,7 @@ function getStudentStats($studentId) {
     // Get department breakdown
     $deptQuery = "
         SELECT 
-            u.userLocation as department,
+            u.userClass as department,
             COUNT(DISTINCT r.user_id) as studentCount,
             COUNT(*) as attempts,
             SUM(CASE WHEN r.teacher_rating = 'R' THEN 1 ELSE 0 END) as redCount,
@@ -501,9 +501,9 @@ function getStudentStats($studentId) {
             ROUND((SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as successRate
         FROM tblresponse r
         JOIN tbluser u ON r.user_id = u.id
-        WHERE r.question_id = ? AND u.admin != 1 AND u.userLocation IS NOT NULL
-        GROUP BY u.userLocation
-        ORDER BY u.userLocation
+        WHERE r.question_id = ? AND u.admin != 1 AND u.userClass IS NOT NULL
+        GROUP BY u.userClass
+        ORDER BY u.userClass
     ";
     
     $stmt = $mysqli->prepare($deptQuery);

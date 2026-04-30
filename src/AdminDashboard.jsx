@@ -51,7 +51,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
     const uniqueStudents = [...new Set(allResponses.map(r => r.studentName))].sort();
     const uniqueSubjects = [...new Set(allResponses.map(r => r.subjectName))].sort();
     const uniqueTopics = [...new Set(allResponses.map(r => r.topicName))].sort();
-    const uniqueLocations = [...new Set(allResponses.map(r => r.userLocation).filter(Boolean))].sort();
+    const uniqueLocations = [...new Set(allResponses.map(r => r.userClass).filter(Boolean))].sort();
 
     const fetchResponses = useCallback(async (showLoader = true, notifySuccess = false) => {
         if (showLoader) {
@@ -129,7 +129,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
             filtered = filtered.filter(r => r.topicName === filters.topic);
         }
         if (filters.location) {
-            filtered = filtered.filter(r => r.userLocation === filters.location);
+            filtered = filtered.filter(r => r.userClass === filters.location);
         }
         if (filters.dateFrom) {
             filtered = filtered.filter(r => new Date(r.createdAt) >= new Date(filters.dateFrom));
@@ -501,7 +501,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                 <div className="response-student">
                                     <div className="student-name">{response.studentName}</div>
                                     <div className="student-email">{response.studentEmail}</div>
-                                    <div className="student-email">{response.userLocation}</div>
+                                    <div className="student-email">{response.userClass}</div>
                                 </div>
                                 <div className="response-content">
                                     <div className="response-subject-topic">

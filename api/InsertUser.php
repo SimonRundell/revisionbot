@@ -24,7 +24,7 @@
  * @input receivedData['email'] - User email address
  * @input receivedData['passwordHash'] - SHA-256 hashed password
  * @input receivedData['userName'] - Full name
- * @input receivedData['userLocation'] - Location/department
+ * @input receivedData['userClass'] - Class/department
  * @input receivedData['userStatus'] - Account status
  * @input receivedData['userLocale'] - Language preference
  * @input receivedData['avatar'] - Avatar identifier
@@ -40,7 +40,7 @@ include 'setup.php';
 // Block direct browser access to registration
 blockDirectAccess();
 
-    $query = "INSERT INTO tbluser (email, passwordHash, userName, userLocation, userStatus, userLocale, avatar, admin)
+    $query = "INSERT INTO tbluser (email, passwordHash, userName, userClass, userStatus, userLocale, avatar, admin)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $mysqli->prepare($query);
@@ -50,10 +50,12 @@ blockDirectAccess();
         send_response("User create prepare failed: " . $mysqli->error, 500);
     } else {
         $emailLower = strtolower($receivedData['email']);
+        $resolvedUserClass = (string) ($receivedData['userClass'] ?? $receivedData['userLocation'] ?? '');
+
         $stmt->bind_param("sssssssi", $emailLower, 
                                  $receivedData['passwordHash'], 
                                  $receivedData['userName'],
-                                 $receivedData['userLocation'],
+                     $resolvedUserClass,
                                  $receivedData['userStatus'],
                                  $receivedData['userLocale'],
                                  $receivedData['avatar'],

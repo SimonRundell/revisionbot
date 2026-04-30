@@ -14,6 +14,8 @@ import AdminDashboard from './AdminDashboard.jsx';
 import PastAnswersViewer from './PastAnswersViewer.jsx';
 import AnalyticsModule from './AnalyticsModule.jsx';
 import StudentProgress from './StudentProgress.jsx';
+import ResetPassword from './ResetPassword.jsx';
+import ForcePasswordChange from './ForcePasswordChange.jsx';
 
 /****************************************************************************
  * App Component
@@ -25,6 +27,7 @@ import StudentProgress from './StudentProgress.jsx';
 ****************************************************************************/
 
 function App() {
+  const currentPath = window.location.pathname;
   const [config, setConfig] = useState(null);
   const [messageApi, contextHolder] = message.useMessage();
   const [currentUser, setCurrentUser] = useState(null);
@@ -92,14 +95,34 @@ useEffect(() => {
     <>
     {contextHolder}
     { !config && <Spin size="large" /> }
-    { config && !currentUser && (
+    { config && !currentUser && currentPath === '/reset-password' && (
+      <div className="App">
+        <ResetPassword
+          config={config}
+          setSendSuccessMessage={setSendSuccessMessage}
+          setSendErrorMessage={setSendErrorMessage}
+        />
+      </div>
+      )}
+    { config && !currentUser && currentPath !== '/reset-password' && (
       <div className="App">
         <Login config={config} setCurrentUser={setCurrentUser} 
                 setSendSuccessMessage={setSendSuccessMessage} 
                 setSendErrorMessage={setSendErrorMessage} />
       </div>
       )}
-    { currentUser && (
+    { currentUser && currentUser.force_pw_change === 1 && (
+      <div className="App">
+        <ForcePasswordChange
+          config={config}
+          currentUser={currentUser}
+          setCurrentUser={setCurrentUser}
+          setSendSuccessMessage={setSendSuccessMessage}
+          setSendErrorMessage={setSendErrorMessage}
+        />
+      </div>
+      )}
+    { currentUser && currentUser.force_pw_change !== 1 && (
       <div className="App">
 
         <div className="app-header">

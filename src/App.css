@@ -154,6 +154,65 @@ input, select, textarea {
   width: 90vw;
 }
 
+.auth-shell {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.force-change-shell {
+  min-height: 70vh;
+  align-items: center;
+}
+
+.auth-card {
+  width: min(480px, 92vw);
+  padding: 28px;
+  border-radius: 18px;
+  background: rgba(18, 18, 18, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+
+.auth-copy {
+  color: rgba(255, 255, 255, 0.74);
+  margin-bottom: 18px;
+}
+
+.auth-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondary-button {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.login-link-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.link-button {
+  border: none;
+  background: transparent;
+  color: #d5d7dc;
+  padding: 0;
+}
+
+.link-button:hover {
+  border-color: transparent;
+  color: #ffffff;
+}
+
 .account-block {
     display: flex;
     flex-direction: row;
@@ -3795,8 +3854,67 @@ BULK UPLOAD MODAL AND BUTTON STYLES
   border-color: #bd2130;
 }
 
+.admin-action-btn {
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.admin-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+
+.admin-action-edit:hover:not(:disabled) {
+  background-color: #1677ff;
+  border-color: #69b1ff;
+}
+
+.admin-action-require:hover:not(:disabled) {
+  background-color: #722ed1;
+  border-color: #b37feb;
+}
+
+.admin-action-deactivate:hover:not(:disabled) {
+  background-color: #d48806;
+  border-color: #ffd666;
+}
+
+.admin-action-reactivate:hover:not(:disabled) {
+  background-color: #389e0d;
+  border-color: #95de64;
+}
+
+.admin-action-delete:hover:not(:disabled) {
+  background-color: #cf1322;
+  border-color: #ff7875;
+}
+
+.admin-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .edit-modal-large {
   max-width: 700px;
+}
+
+.class-modal-large {
+  max-width: 820px;
+}
+
+.class-manager-description {
+  margin-bottom: 15px;
+  color: #666;
+}
+
+.class-manager-form-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.class-manager-form-row .full-width-input {
+  flex: 1;
 }
 
 .bulk-upload-modal {

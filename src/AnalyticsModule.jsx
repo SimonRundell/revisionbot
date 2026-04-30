@@ -528,7 +528,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
 
     const filteredStudents = students.filter(student => 
         student.userName.toLowerCase().includes(studentFilter.toLowerCase()) ||
-        (student.userLocation && student.userLocation.toLowerCase().includes(studentFilter.toLowerCase()))
+        (student.userClass && student.userClass.toLowerCase().includes(studentFilter.toLowerCase()))
     );
 
     const filteredQuestions = questions.filter(question => 
@@ -919,7 +919,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         onClick={() => setSelectedStudent(student.id.toString())}
                                     >
                                         <div className="student-name">{student.userName}</div>
-                                        <div className="student-location">{student.userLocation}</div>
+                                        <div className="student-location">{student.userClass}</div>
                                     </div>
                                 ))}
                                 {filteredStudents.length === 0 && (

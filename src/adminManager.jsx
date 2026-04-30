@@ -1,17 +1,19 @@
 import {useState, useEffect} from 'react'
 import axios from 'axios'
 import {Drawer, Spin} from 'antd'
-import CryptoJS from 'crypto-js'
 import SelectLocale from './SelectLocale'
 import AvatarManager from './AvatarManager'
 import AccessControlTree from './AccessControlTree'
-import { handleApiCall } from './utils/apiHelpers'
+import { handleApiCall, parseApiResponse } from './utils/apiHelpers'
+import { createJsonHeaders } from './utils/apiHeaders'
 
 /****************************************************************************
  * AdminManager Component
- * Admin management interface for managing user accounts, including
- * creating, editing, deleting, and bulk uploading users.
- * Provides comprehensive user management with access control and filtering.
+ * Admin management interface for managing user accounts and class records,
+ * including creating, editing, deleting, reactivating, deactivating,
+ * requiring password changes, bulk uploading users, and maintaining tblClass.
+ * Provides comprehensive user management with access control, filtering,
+ * and confirmed destructive actions.
  * 
  * @param {Object} props - Component props
  * @param {Object} props.config - Configuration object containing API endpoints
@@ -30,6 +32,10 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
     const [users, setUsers] = useState([]);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
+    const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
+    const [userToDeactivate, setUserToDeactivate] = useState(null);
+    const [reactivateModalVisible, setReactivateModalVisible] = useState(false);
+    const [userToReactivate, setUserToReactivate] = useState(null);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [userToEdit, setUserToEdit] = useState(null);
     const [editForm, setEditForm] = useState({
@@ -48,22 +54,34 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
     const [bulkUploadProgress, setBulkUploadProgress] = useState('');
     const [defaultPassword, setDefaultPassword] = useState('student123');
     const [bulkUploadUserAccess, setBulkUploadUserAccess] = useState({"1": "all"}); // Default access to subject 1
+    const [classes, setClasses] = useState([]);
+    const [classModalVisible, setClassModalVisible] = useState(false);
+    const [classFormName, setClassFormName] = useState('');
+    const [editingClass, setEditingClass] = useState(null);
+    const [classToDelete, setClassToDelete] = useState(null);
+    const [deleteClassModalVisible, setDeleteClassModalVisible] = useState(false);
     
     // Filter states
     const [userFilter, setUserFilter] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
     const [selectedFilterType, setSelectedFilterType] = useState('all'); // all, students, admins
+    const [selectedStatusFilter, setSelectedStatusFilter] = useState('all'); // all, active, inactive
     
     // Filter users function
     const filteredUsers = users.filter(user => {
         const matchesName = user.userName?.toLowerCase().includes(userFilter.toLowerCase()) || 
                            user.email?.toLowerCase().includes(userFilter.toLowerCase());
-        const matchesDepartment = user.userLocation?.toLowerCase().includes(departmentFilter.toLowerCase());
+        const userClassValue = (user.userClass ?? user.userLocation ?? '').toLowerCase();
+        const matchesDepartment = userClassValue.includes(departmentFilter.toLowerCase());
         const matchesType = selectedFilterType === 'all' || 
                            (selectedFilterType === 'admins' && user.admin) ||
                            (selectedFilterType === 'students' && !user.admin);
+        const isActive = Number(user.is_active) !== 0;
+        const matchesStatus = selectedStatusFilter === 'all' ||
+                              (selectedStatusFilter === 'active' && isActive) ||
+                              (selectedStatusFilter === 'inactive' && !isActive);
         
-        return matchesName && matchesDepartment && matchesType;
+        return matchesName && matchesDepartment && matchesType && matchesStatus;
     });
 
   useEffect(() => {
@@ -71,9 +89,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
       config.api + '/getUsers.php',
       {},
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+                headers: createJsonHeaders(currentUser),
       }
     );
 
@@ -88,9 +104,196 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
     );
   }, []);
 
+  useEffect(() => {
+    const loadClasses = async () => {
+        try {
+            const response = await axios.post(
+                config.api + '/getClasses.php',
+                {},
+                {
+                    headers: createJsonHeaders(currentUser),
+                }
+            );
+
+            const parsedData = parseApiResponse(
+                response.data,
+                null,
+                null,
+                '',
+                'Failed to load classes.'
+            );
+
+            if (parsedData !== null) {
+                setClasses(parsedData);
+            }
+        } catch (error) {
+            console.warn('Class lookup unavailable:', error);
+            setClasses([]);
+        }
+    };
+
+    loadClasses();
+  }, [config.api, currentUser]);
+
     const onClose = () => {
         setShowAdminManager(false);
     }
+
+    const resetClassForm = () => {
+        setClassFormName('');
+        setEditingClass(null);
+    };
+
+    const openClassModal = () => {
+        setClassModalVisible(true);
+        resetClassForm();
+    };
+
+    const closeClassModal = () => {
+        setClassModalVisible(false);
+        resetClassForm();
+    };
+
+    const refreshClasses = async () => {
+        try {
+            const response = await axios.post(
+                config.api + '/getClasses.php',
+                {},
+                {
+                    headers: createJsonHeaders(currentUser),
+                }
+            );
+
+            const parsedData = parseApiResponse(response.data, null, null, '', 'Failed to load classes.');
+            if (parsedData !== null) {
+                setClasses(parsedData);
+            }
+        } catch (error) {
+            console.error('Error refreshing classes:', error);
+            setSendErrorMessage('Unable to refresh classes.');
+        }
+    };
+
+    const handleSaveClass = async () => {
+        const trimmedClassName = classFormName.trim();
+        if (!trimmedClassName) {
+            setSendErrorMessage('Class name is required.');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const endpoint = editingClass ? '/updateClass.php' : '/createClass.php';
+            const payload = editingClass
+                ? { id: editingClass.id, className: trimmedClassName }
+                : { className: trimmedClassName };
+
+            const response = await axios.post(
+                config.api + endpoint,
+                payload,
+                {
+                    headers: createJsonHeaders(currentUser),
+                }
+            );
+
+            if (response.data.status_code === 200) {
+                setSendSuccessMessage(response.data.message || (editingClass ? 'Class updated.' : 'Class created.'));
+
+                if (editingClass && editForm.department === editingClass.className) {
+                    setEditForm(prev => ({ ...prev, department: trimmedClassName }));
+                }
+
+                await refreshClasses();
+                resetClassForm();
+            } else {
+                setSendErrorMessage(response.data.message || 'Unable to save class.');
+            }
+        } catch (error) {
+            console.error('Error saving class:', error);
+            setSendErrorMessage(error.response?.data?.message || 'Unable to save class.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleEditClass = (classRecord) => {
+        setEditingClass(classRecord);
+        setClassFormName(classRecord.className);
+    };
+
+    /**
+     * Show delete confirmation modal for a managed class.
+     *
+     * @param {Object} classRecord - Class row selected for deletion
+     */
+    const showDeleteClassConfirmation = (classRecord) => {
+        setClassToDelete(classRecord);
+        setDeleteClassModalVisible(true);
+    };
+
+    /**
+     * Close the class delete confirmation modal without deleting.
+     */
+    const handleDeleteClassCancel = () => {
+        setDeleteClassModalVisible(false);
+        setClassToDelete(null);
+    };
+
+    /**
+     * Delete a managed class after explicit confirmation.
+     * Assigned classes are blocked until users are reassigned.
+     *
+     * @returns {Promise<void>}
+     */
+    const handleDeleteClass = async () => {
+        if (!classToDelete) return;
+
+        setDeleteClassModalVisible(false);
+
+        const classRecord = classToDelete;
+
+        if (Number(classRecord.assignedUsers) > 0) {
+            setSendErrorMessage('This class is assigned to one or more users. Reassign them before deleting the class.');
+            setClassToDelete(null);
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const response = await axios.post(
+                config.api + '/deleteClass.php',
+                { id: classRecord.id },
+                {
+                    headers: createJsonHeaders(currentUser),
+                }
+            );
+
+            if (response.data.status_code === 200) {
+                setSendSuccessMessage(response.data.message || 'Class deleted.');
+                await refreshClasses();
+
+                if (editingClass?.id === classRecord.id) {
+                    resetClassForm();
+                }
+            } else {
+                setSendErrorMessage(response.data.message || 'Unable to delete class.');
+            }
+        } catch (error) {
+            console.error('Error deleting class:', error);
+            setSendErrorMessage(error.response?.data?.message || 'Unable to delete class.');
+        } finally {
+            setIsLoading(false);
+            setClassToDelete(null);
+        }
+    };
+
+    const availableClassOptions = classes.some(classRecord => classRecord.className === editForm.department)
+        ? classes
+        : (editForm.department
+            ? [{ id: 'legacy-current-class', className: editForm.department, assignedUsers: 0 }, ...classes]
+            : classes);
 
     /**
      * Show delete confirmation modal for selected user
@@ -154,6 +357,26 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         setUserToDelete(null);
     };
 
+    const showDeactivateConfirmation = (user) => {
+        setUserToDeactivate(user);
+        setDeactivateModalVisible(true);
+    };
+
+    const handleDeactivateCancel = () => {
+        setDeactivateModalVisible(false);
+        setUserToDeactivate(null);
+    };
+
+    const showReactivateConfirmation = (user) => {
+        setUserToReactivate(user);
+        setReactivateModalVisible(true);
+    };
+
+    const handleReactivateCancel = () => {
+        setReactivateModalVisible(false);
+        setUserToReactivate(null);
+    };
+
     const showEditModal = (user) => {
         setUserToEdit(user);
         
@@ -172,7 +395,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             name: user.userName,
             email: user.email,
             password: '',
-            department: user.userLocation,
+            department: user.userClass ?? user.userLocation ?? '',
             locale: user.userLocale,
             avatar: user.avatar,
             avatarPreview: user.avatar || '/default_avatar.png',
@@ -196,6 +419,121 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             admin: false,
             userAccess: {}
         });
+    };
+
+    /**
+     * Require a password change on the selected user's next login.
+     *
+     * @param {Object} user
+     * @returns {Promise<void>}
+     */
+    const handleForcePasswordChange = async (user) => {
+        setIsLoading(true);
+
+        try {
+            const response = await axios.post(
+                config.api + '/forcePasswordChange.php',
+                { id: user.id },
+                {
+                    headers: createJsonHeaders(currentUser),
+                }
+            );
+
+            if (response.data.status_code === 200) {
+                setUsers(prevUsers => prevUsers.map(existingUser => (
+                    existingUser.id === user.id
+                        ? { ...existingUser, force_pw_change: 1 }
+                        : existingUser
+                )));
+                setSendSuccessMessage(response.data.message || 'Password change will be required on next login.');
+            } else {
+                setSendErrorMessage(response.data.message || 'Unable to require a password change for this account.');
+            }
+        } catch (error) {
+            console.error('Force password change failed:', error);
+            setSendErrorMessage(error.response?.data?.message || 'Unable to require a password change for this account.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Deactivate a user account without deleting their data.
+     *
+     * @param {Object} user
+     * @returns {Promise<void>}
+     */
+    const handleDeactivateConfirm = async () => {
+        if (!userToDeactivate) return;
+
+        setDeactivateModalVisible(false);
+        setIsLoading(true);
+
+        try {
+            const response = await axios.post(
+                config.api + '/deactivateUser.php',
+                { id: userToDeactivate.id },
+                {
+                    headers: createJsonHeaders(currentUser),
+                }
+            );
+
+            if (response.data.status_code === 200) {
+                setUsers(prevUsers => prevUsers.map(existingUser => (
+                    existingUser.id === userToDeactivate.id
+                        ? { ...existingUser, is_active: 0 }
+                        : existingUser
+                )));
+                setSendSuccessMessage(response.data.message || 'Account deactivated.');
+            } else {
+                setSendErrorMessage(response.data.message || 'Unable to deactivate this account.');
+            }
+        } catch (error) {
+            console.error('Deactivate user failed:', error);
+            setSendErrorMessage(error.response?.data?.message || 'Unable to deactivate this account.');
+        } finally {
+            setIsLoading(false);
+            setUserToDeactivate(null);
+        }
+    };
+
+    /**
+     * Reactivate a previously deactivated user account.
+     *
+     * @returns {Promise<void>}
+     */
+    const handleReactivateConfirm = async () => {
+        if (!userToReactivate) return;
+
+        setReactivateModalVisible(false);
+        setIsLoading(true);
+
+        try {
+            const response = await axios.post(
+                config.api + '/reactivateUser.php',
+                { id: userToReactivate.id },
+                {
+                    headers: createJsonHeaders(currentUser),
+                }
+            );
+
+            if (response.data.status_code === 200) {
+                setUsers(prevUsers => prevUsers.map(existingUser => (
+                    existingUser.id === userToReactivate.id
+                        ? { ...existingUser, is_active: 1 }
+                        : existingUser
+                )));
+                setSendSuccessMessage(response.data.message || 'Account reactivated.');
+            } else {
+                setSendErrorMessage(response.data.message || 'Unable to reactivate this account.');
+            }
+        } catch (error) {
+            console.error('Reactivate user failed:', error);
+            setSendErrorMessage(error.response?.data?.message || 'Unable to reactivate this account.');
+        } finally {
+            setIsLoading(false);
+            setUserToReactivate(null);
+        }
     };
 
     /**
@@ -227,7 +565,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
 
     /**
      * Handle user update submission
-     * Validates form data, hashes password if changed, and submits to API
+    * Validates form data, optionally includes a new plaintext password, and submits to API
      * Updates local user list on success
      * 
      * @async
@@ -238,32 +576,27 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
 
         setIsLoading(true);
 
-        // Hash new password if provided
-        let new_password = '';
-        if (editForm.password.trim() !== '') {
-            new_password = CryptoJS.MD5(editForm.password).toString();
-        } else {
-            new_password = userToEdit.passwordHash; // Keep existing hash if no new password
-        }
-
         const jsonData = {
             id: userToEdit.id,
             userName: editForm.name,
-            passwordHash: new_password,
             email: editForm.email,
-            userLocation: editForm.department,
+            userClass: editForm.department,
             userLocale: editForm.locale,
             avatar: editForm.avatar,
             admin: editForm.admin ? 1 : 0,
             userAccess: JSON.stringify(editForm.userAccess)
         };
+
+        if (editForm.password.trim() !== '') {
+            jsonData.password = editForm.password;
+        }
         // console.log("updating user with ", jsonData);
         // console.log("editForm.admin type:", typeof editForm.admin, "value:", editForm.admin);
         // console.log("admin conversion result:", editForm.admin ? 1 : 0);
 
         try {
             const response = await axios.post(config.api + '/updateUser.php', jsonData, {
-                headers: { 'Content-Type': 'application/json' }
+                headers: createJsonHeaders(currentUser)
             });
 
             if (response.data.status_code === 200) {
@@ -294,7 +627,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                 ...user,
                                 userName: editForm.name,
                                 email: editForm.email,
-                                userLocation: editForm.department,
+                                userClass: editForm.department,
                                 userLocale: editForm.locale,
                                 avatar: editForm.avatar,
                                 admin: editForm.admin,
@@ -461,8 +794,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                     >
                         📤 Bulk Upload Students
                     </button>
+                    <button
+                        onClick={openClassModal}
+                        className="bulk-upload-button leftgap"
+                    >
+                        🏫 Manage Classes
+                    </button>
                     <span className="admin-actions-description">
-                        Upload multiple student accounts from CSV file
+                        Upload multiple student accounts from CSV file or manage class options for manual assignment
                     </span>
                 </div>
 
@@ -501,19 +840,33 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                 <option value="admins">Admins Only</option>
                             </select>
                         </div>
+                        <div className="filter-group">
+                            <label>Status:</label>
+                            <select
+                                className="filter-select"
+                                value={selectedStatusFilter}
+                                onChange={(e) => setSelectedStatusFilter(e.target.value)}
+                            >
+                                <option value="all">All Statuses</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                            </select>
+                        </div>
                     </div>
-                    {(userFilter || departmentFilter || selectedFilterType !== 'all') && (
+                    {(userFilter || departmentFilter || selectedFilterType !== 'all' || selectedStatusFilter !== 'all') && (
                         <div className="filter-summary">
                             Showing {filteredUsers.length} of {users.length} users
                             {userFilter && <span className="filter-tag"> Name/Email: &quot;{userFilter}&quot;</span>}
                             {departmentFilter && <span className="filter-tag"> Department: &quot;{departmentFilter}&quot;</span>}
                             {selectedFilterType !== 'all' && <span className="filter-tag"> of type: {selectedFilterType}</span>}
+                            {selectedStatusFilter !== 'all' && <span className="filter-tag"> status: {selectedStatusFilter}</span>}
                             <button 
                                 className="clear-filters leftgap"
                                 onClick={() => {
                                     setUserFilter('');
                                     setDepartmentFilter('');
                                     setSelectedFilterType('all');
+                                    setSelectedStatusFilter('all');
                                 }}
                             >
                                 Clear All Filters
@@ -532,6 +885,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             <th>Locale</th>
                             <th>Avatar</th>
                             <th>Level</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -541,14 +895,34 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                 <td>{user.id}</td>
                                 <td>{user.userName}</td>
                                 <td>{user.email}</td>
-                                <td>{user.userLocation}</td>
+                                <td>{user.userClass ?? user.userLocation ?? ''}</td>
                                 <td>{user.userLocale}</td>
                                 <td><img className="user-avatar" src={user.avatar || '/default_avatar.png'} alt={user.userName} /></td>
                                 <td>{user.admin ? 'Admin' : 'User'}</td>
                                 <td>
+                                    {Number(user.is_active) === 0 ? 'Inactive' : 'Active'}
+                                    {Number(user.is_active) !== 0 && Number(user.force_pw_change) === 1 && (
+                                        <>
+                                            <br />
+                                            Password change requested
+                                        </>
+                                    )}
+                                </td>
+                                <td>
                                     {/* Add action buttons here, e.g., Edit, Delete */}
-                                    <button onClick={() => showEditModal(user)}>Edit</button>
-                                    <button className="leftgap" onClick={() => showDeleteConfirmation(user)}>Delete</button>
+                                    <button className="admin-action-btn admin-action-edit" onClick={() => showEditModal(user)}>Edit</button>
+                                    {Number(user.is_active) !== 0 && (
+                                        <button
+                                            className="leftgap admin-action-btn admin-action-require"
+                                            onClick={() => handleForcePasswordChange(user)}
+                                            disabled={Number(user.force_pw_change) === 1}
+                                        >
+                                            {Number(user.force_pw_change) === 1 ? 'Password Change Requested' : 'Require Password Change'}
+                                        </button>
+                                    )}
+                                    {Number(user.is_active) !== 0 && <button className="leftgap admin-action-btn admin-action-deactivate" onClick={() => showDeactivateConfirmation(user)}>Deactivate</button>}
+                                    {Number(user.is_active) === 0 && <button className="leftgap admin-action-btn admin-action-reactivate" onClick={() => showReactivateConfirmation(user)}>Reactivate</button>}
+                                    <button className="leftgap admin-action-btn admin-action-delete" onClick={() => showDeleteConfirmation(user)}>Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -580,6 +954,72 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             </button>
                             <button 
                                 onClick={handleDeleteCancel}
+                                className="topgap"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Deactivate Confirmation Modal */}
+            {deactivateModalVisible && (
+                <div className="modal">
+                    <div className="modal-content">
+                        <span
+                            className="close"
+                            onClick={handleDeactivateCancel}
+                        >
+                            &times;
+                        </span>
+                        <h2>Confirm Deactivation</h2>
+                        <p>
+                            Are you sure you want to deactivate user <strong>{userToDeactivate?.userName}</strong>?
+                        </p>
+                        <p>The user can no longer log in until reactivated.</p>
+                        <div className="form-group-button">
+                            <button
+                                onClick={handleDeactivateConfirm}
+                                className="delete-button-danger"
+                            >
+                                Deactivate
+                            </button>
+                            <button
+                                onClick={handleDeactivateCancel}
+                                className="topgap"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reactivate Confirmation Modal */}
+            {reactivateModalVisible && (
+                <div className="modal">
+                    <div className="modal-content">
+                        <span
+                            className="close"
+                            onClick={handleReactivateCancel}
+                        >
+                            &times;
+                        </span>
+                        <h2>Confirm Reactivation</h2>
+                        <p>
+                            Are you sure you want to reactivate user <strong>{userToReactivate?.userName}</strong>?
+                        </p>
+                        <p>The user will be able to log in again.</p>
+                        <div className="form-group-button">
+                            <button
+                                onClick={handleReactivateConfirm}
+                                className="admin-action-btn admin-action-reactivate"
+                            >
+                                Reactivate
+                            </button>
+                            <button
+                                onClick={handleReactivateCancel}
                                 className="topgap"
                             >
                                 Cancel
@@ -637,14 +1077,27 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Department</td>
+                                    <td>Class</td>
                                     <td>
-                                        <input 
-                                            type="text" 
-                                            value={editForm.department} 
-                                            onChange={e => setEditForm(prev => ({ ...prev, department: e.target.value }))}
-                                            className="full-width-input"
-                                        />
+                                        {classes.length > 0 ? (
+                                            <select
+                                                value={editForm.department}
+                                                onChange={e => setEditForm(prev => ({ ...prev, department: e.target.value }))}
+                                                className="full-width-input"
+                                            >
+                                                <option value="">Unassigned</option>
+                                                {availableClassOptions.map(classRecord => (
+                                                    <option key={classRecord.id} value={classRecord.className}>{classRecord.className}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input 
+                                                type="text" 
+                                                value={editForm.department} 
+                                                onChange={e => setEditForm(prev => ({ ...prev, department: e.target.value }))}
+                                                className="full-width-input"
+                                            />
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -703,6 +1156,114 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             </button>
                             <button 
                                 onClick={handleEditCancel}
+                                className="topgap"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Class Management Modal */}
+            {classModalVisible && (
+                <div className="modal">
+                    <div className="modal-content class-modal-large">
+                        <span
+                            className="close"
+                            onClick={closeClassModal}
+                        >
+                            &times;
+                        </span>
+                        <h2>Manage Classes</h2>
+                        <p className="class-manager-description">
+                            Create and maintain the class list used for manual student class assignment.
+                        </p>
+
+                        <div className="class-manager-form-row">
+                            <input
+                                type="text"
+                                value={classFormName}
+                                onChange={(event) => setClassFormName(event.target.value)}
+                                placeholder="Enter class name"
+                                className="full-width-input"
+                            />
+                            <button onClick={handleSaveClass} className="leftgap">
+                                {editingClass ? 'Update Class' : 'Create Class'}
+                            </button>
+                            {editingClass && (
+                                <button onClick={resetClassForm} className="leftgap">
+                                    Cancel Edit
+                                </button>
+                            )}
+                        </div>
+
+                        <table border="1" className="edit-modal-table topgap">
+                            <thead>
+                                <tr>
+                                    <th>Class</th>
+                                    <th>Assigned Users</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {classes.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={3}>No classes configured yet.</td>
+                                    </tr>
+                                ) : classes.map(classRecord => (
+                                    <tr key={classRecord.id}>
+                                        <td>{classRecord.className}</td>
+                                        <td>{classRecord.assignedUsers}</td>
+                                        <td>
+                                            <button className="admin-action-btn admin-action-edit" onClick={() => handleEditClass(classRecord)}>
+                                                Edit
+                                            </button>
+                                            <button
+                                                className="leftgap admin-action-btn admin-action-delete"
+                                                onClick={() => showDeleteClassConfirmation(classRecord)}
+                                                title={Number(classRecord.assignedUsers) > 0
+                                                    ? 'Reassign users before deleting this class.'
+                                                    : 'Delete this class'}
+                                            >
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Upload Modal */}
+            {deleteClassModalVisible && (
+                <div className="modal">
+                    <div className="modal-content">
+                        <span
+                            className="close"
+                            onClick={handleDeleteClassCancel}
+                        >
+                            &times;
+                        </span>
+                        <h2>Confirm Class Deletion</h2>
+                        <p>
+                            Are you sure you want to delete class <strong>{classToDelete?.className}</strong>?
+                        </p>
+                        <p>This action cannot be undone.</p>
+                        {Number(classToDelete?.assignedUsers) > 0 && (
+                            <p>This class still has assigned users and cannot be deleted until they are reassigned.</p>
+                        )}
+                        <div className="form-group-button">
+                            <button
+                                onClick={handleDeleteClass}
+                                className="delete-button-danger"
+                            >
+                                Delete
+                            </button>
+                            <button
+                                onClick={handleDeleteClassCancel}
                                 className="topgap"
                             >
                                 Cancel

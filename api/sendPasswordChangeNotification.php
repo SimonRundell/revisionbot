@@ -2,7 +2,7 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 require_once 'simple_security.php';
 include 'setup.php';
 
@@ -68,8 +68,18 @@ function sendPasswordChangeNotification($email, $userName, $changedBy) {
         $mail->Encoding = 'base64';
         $mail->Subject = 'Password Changed - AI Revision Bot';
         
+        $publicConfigPath = dirname(__DIR__) . '/public/.config.json';
+        $publicConfig = file_exists($publicConfigPath)
+            ? json_decode(file_get_contents($publicConfigPath), true)
+            : [];
+
+        $logoBaseUrl = rtrim((string) ($publicConfig['appBaseUrl'] ?? ''), '/');
+        $logoUrl = $logoBaseUrl !== ''
+            ? $logoBaseUrl . '/title_bw.png'
+            : 'https://exe-coll.ac.uk/wp-content/themes/exeter-college/assets/images/logo.png';
+
         // Load HTML email template
-        $templatePath = '../public/templates/password_change_notification.html';
+        $templatePath = dirname(__DIR__) . '/public/templates/password_change_notification.html';
         if (file_exists($templatePath)) {
             $htmlBody = file_get_contents($templatePath);
             
@@ -82,6 +92,7 @@ function sendPasswordChangeNotification($email, $userName, $changedBy) {
             $htmlBody = str_replace('{{EMAIL}}', htmlspecialchars($email), $htmlBody);
             $htmlBody = str_replace('{{DATETIME}}', htmlspecialchars($datetime), $htmlBody);
             $htmlBody = str_replace('{{CHANGED_BY}}', htmlspecialchars($changedByText), $htmlBody);
+            $htmlBody = str_replace('{{logoUrl}}', htmlspecialchars($logoUrl), $htmlBody);
         } else {
             error_log("Password change email template not found: $templatePath");
             throw new Exception("Email template file not found");
@@ -90,7 +101,7 @@ function sendPasswordChangeNotification($email, $userName, $changedBy) {
         $mail->Body = $htmlBody;
         
         // Plain text version
-        $textTemplatePath = '../public/templates/password_change_notification.txt';
+        $textTemplatePath = dirname(__DIR__) . '/public/templates/password_change_notification.txt';
         if (file_exists($textTemplatePath)) {
             $textBody = file_get_contents($textTemplatePath);
             

@@ -7,7 +7,7 @@ import { Spin } from 'antd';
  * Fetches country data from a JSON file and displays it in the dropdown.
 *****************************************************************/
 
-function SelectCountry({ config, userLocation, setUserLocation, setSendErrorMessage }) {
+function SelectCountry({ config, userClass, setUserClass, setSendErrorMessage }) {
     const [countries, setCountries] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -31,7 +31,7 @@ function SelectCountry({ config, userLocation, setUserLocation, setSendErrorMess
     }, [config.api, setSendErrorMessage]);
 
     const handleCountrySelect = (abbreviation) => {
-        setUserLocation(abbreviation);
+        setUserClass(abbreviation);
         // console.log("Selected country:", abbreviation);
         // setSendSuccessMessage(`Selected country: ${abbreviation}`);
     };
@@ -43,7 +43,7 @@ function SelectCountry({ config, userLocation, setUserLocation, setSendErrorMess
             ) : (
                 <select
                     className="country-dropdown"
-                    value={userLocation || ''}
+                    value={userClass || ''}
                     onChange={(e) => handleCountrySelect(e.target.value)}
                 >
                     <option value="" disabled>Select a country</option>

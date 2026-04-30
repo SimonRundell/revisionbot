@@ -1,10 +1,10 @@
 import {useState} from 'react'
 import axios from 'axios'
 import {Drawer, Spin} from 'antd'
-import CryptoJS from 'crypto-js'
 import SelectLocale from './SelectLocale'
 import AvatarManager from './AvatarManager'
 import { parseApiResponse } from './utils/apiHelpers'
+import { createJsonHeaders } from './utils/apiHeaders'
 
 /****************************************************************************
  * AccountManager Component
@@ -30,7 +30,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
     const [name, setName] = useState(currentUser.userName)
     const [eMail, setEmail] = useState(currentUser.email)
     const [password, setPassword] = useState('')
-    const [department, setDepartment] = useState(currentUser.userLocation)
+    const [department, setDepartment] = useState(currentUser.userClass)
     const [locale, setLocale] = useState(currentUser.userLocale)
     const [avatar, setAvatar] = useState(currentUser.avatar)
     const [admin] = useState(currentUser.admin)
@@ -56,7 +56,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
 
     /**
      * Update user account information
-     * Hashes password if changed and submits updated profile to API
+    * Submits updated profile data and optionally a new plaintext password to API
      * Updates current user context on successful update
      * 
      * @async
@@ -65,30 +65,25 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
     const updateAccount = async () => {
         setIsLoading(true);
 
-        // Hash new password if provided
-        let new_password = '';
-        if (password.trim() !== '') {
-            new_password = CryptoJS.MD5(password).toString();
-        } else {
-            new_password = currentUser.passwordHash; // Keep existing hash if no new password
-        }
-
         const jsonData = {
             id: currentUser.id,
             userName: name,
-            passwordHash: new_password,
             email: eMail,
-            userLocation: department,
+            userClass: department,
             userLocale: locale,
             avatar: avatar,
             admin: admin,
             userAccess: currentUser.userAccess || '' // Preserve existing access permissions, default to empty string
         };
+
+        if (password.trim() !== '') {
+            jsonData.password = password;
+        }
         // console.log("updating user with ", jsonData)
 
         try {
             const response = await axios.post(config.api + '/updateUser.php', jsonData, {
-                headers: { 'Content-Type': 'application/json' }
+                headers: createJsonHeaders(currentUser)
             });
 
             const parsedData = parseApiResponse(
@@ -124,10 +119,11 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                     ...prevUser,
                     userName: name,
                     email: eMail,
-                    userLocation: department,
+                    userClass: department,
                     userLocale: locale,
                     avatar: avatar,
-                    admin: admin
+                    admin: admin,
+                    force_pw_change: 0
                 }));
             }
         } catch (error) {

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import CryptoJS from 'crypto-js';
 import { Spin } from 'antd';
 import axios from 'axios';
 import Register from './register';
+import ForgotPassword from './ForgotPassword.jsx';
 
 /****************************************************************************
  * Login Component
  * Renders the login form for user authentication with email and password.
  * Displays a message of the day (MOTD) loaded from an external file.
- * Handles password hashing and authentication with the API.
+ * Handles authentication with the API.
  * Registration function currently disabled, bulk upload used instead.
  * 
  * @param {Object} props - Component props
@@ -24,6 +24,7 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [motdContent, setMotdContent] = useState('Beta Test'); // Default fallback
 
   // Fetch MOTD content on component mount
@@ -47,7 +48,7 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
 
   /**
    * Handle login form submission
-   * Hashes password with MD5, converts email to lowercase, and authenticates with API
+  * Sends the plaintext password to the API, which verifies either bcrypt or legacy MD5 hashes.
    * Sets current user on successful login or displays error message
    * 
    * @async
@@ -57,10 +58,8 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Hash the password with MD5
-    const hashedPassword = CryptoJS.MD5(password).toString();
     // Convert email to lowercase for case-insensitive login
-    const JSONData = { email: email.toLowerCase(), passwordHash: hashedPassword };
+    const JSONData = { email: email.toLowerCase(), password };
 
     // console.log("JSONData:", JSONData);
     // console.log("API Endpoint:", config.api + '/getLogin.php');
@@ -79,10 +78,8 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
       if (data.status_code === 200) {
         const user = JSON.parse(data.message)[0]; // Parse the JSON string and get the first user object
         if (user) {
-          // Add a dummy token since APIs don't actually require authentication
-          user.token = 'dummy-token';
           setCurrentUser(user);
-          setSendSuccessMessage('Login successful');
+          setSendSuccessMessage(user.force_pw_change ? 'Login successful. Password change required.' : 'Login successful');
           setIsLoading(false);
         } else {
           setSendErrorMessage('User not found');
@@ -90,14 +87,13 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
         }
       } else {
         // Login failed
-
-        setSendErrorMessage('Login failed');
+        setSendErrorMessage(data.message || 'Login failed');
         setIsLoading(false);
       }
     } catch (error) {
       console.error('Error:', error);
       setIsLoading(false);
-      setSendErrorMessage('Network error. Please try again.');
+      setSendErrorMessage(error.response?.data?.message || 'Network error. Please try again.');
   }
   };
   
@@ -110,7 +106,14 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
             </div> 
           </div>}
     
-      {showRegister ? (
+      {showForgotPassword ? (
+        <ForgotPassword
+          config={config}
+          onBack={() => setShowForgotPassword(false)}
+          setSendSuccessMessage={setSendSuccessMessage}
+          setSendErrorMessage={setSendErrorMessage}
+        />
+      ) : showRegister ? (
         <Register config={config} setShowRegister={setShowRegister}
         setSendErrorMessage={setSendErrorMessage} setSendSuccessMessage={setSendSuccessMessage} />
       ) : (
@@ -152,6 +155,11 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
                 <button type="submit">Login</button>
               </div>
             </form>
+              <div className="login-link-row">
+                <button type="button" className="link-button" onClick={() => setShowForgotPassword(true)}>
+                  Forgot password?
+                </button>
+              </div>
               {/* <div className="topgap">
                 <button onClick={() => setShowRegister(true)}>Register</button>
               </div> */}

@@ -206,7 +206,7 @@ try {
     // Prepare statements
     $checkUserStmt = $mysqli->prepare("SELECT id FROM tbluser WHERE email = ?");
     $insertUserStmt = $mysqli->prepare("
-        INSERT INTO tbluser (email, passwordHash, userName, userLocation, userLocale, admin, userEmailValidated, userAccess) 
+        INSERT INTO tbluser (email, passwordHash, userName, userClass, userLocale, admin, userEmailValidated, userAccess) 
         VALUES (?, ?, ?, ?, ?, 0, 0, ?)
     ");
     

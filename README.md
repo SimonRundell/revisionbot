@@ -1,7 +1,7 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.4.0** — April 2026
+**Version 0.4.1** — April 2026
 
 A comprehensive web-based educational assessment platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
@@ -15,7 +15,12 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
 - **Admin Dashboard**: Teachers can review all student responses including uploaded graphics and add ratings/comments; auto-refreshes every 30 or 60 seconds with a manual Refresh Now button
 - **RAG Rating System**: Teachers can rate responses with Red/Amber/Green
 - **Student Reward System**: Badge achievements earned from RAG-rated performance across four tracks (Green %, Amber/Green %, No-Red streak, Green streak); displayed in the nav bar and on a dedicated My Progress page
-- **User Management**: Registration, login, and role-based access control; students cannot edit their own name/email/department (admin only)
+- **User Management**: Registration, login, role-based access control, admin-only account-state management, and class assignment; students cannot edit their own name/email/class (admin only)
+- **Password Recovery**: Self-service password reset with one-time tokens, expiry enforcement, reset email templates, and bcrypt password storage
+- **Forced Password Change**: Admins can require a password reset on the next login and the app blocks access until the user sets a new password
+- **Account Deactivation**: Admins can deactivate accounts without deleting student data; inactive accounts are blocked at login
+- **Account Reactivation**: Admins can restore inactive accounts from the same management interface
+- **Class Management**: Admins can maintain a central `tblClass` list for manual class allocation, with safe delete checks and confirmation prompts
 - **Bulk Student Upload**: Import multiple student accounts from CSV files with automatic email notifications
 - **Email Notifications**: Automated welcome emails and password change notifications with professional templates
 - **Advanced Analytics**: Time-based progress tracking, improvement analysis, comprehensive student statistics, and per-student badge display
@@ -91,8 +96,18 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
 
 ### API Endpoints
 
-- `getLogin.php` - User authentication
+- `getLogin.php` - User authentication with signed bearer tokens and legacy-hash upgrade
 - `register.php` - User registration
+- `requestPasswordReset.php` - Start a password reset flow
+- `validateResetToken.php` - Validate a password reset token
+- `resetPassword.php` - Complete a password reset
+- `forcePasswordChange.php` - Admin: Require password change on next login
+- `deactivateUser.php` - Admin: Deactivate an account without deleting it
+- `reactivateUser.php` - Admin: Reactivate an inactive account
+- `getClasses.php` - Admin: List managed classes with assigned-user counts
+- `createClass.php` - Admin: Create a managed class entry
+- `updateClass.php` - Admin: Rename a managed class and cascade assignments
+- `deleteClass.php` - Admin: Delete an unused class after confirmation and assignment checks
 - `getUserResponses.php` - Get user's past responses
 - `getAllStudentResponses.php` - Admin: Get all student responses
 - `saveTeacherFeedback.php` - Admin: Save teacher feedback and ratings
@@ -144,6 +159,16 @@ All API endpoints are now protected against direct browser access while maintain
 - `bulkUploadQuestions.php` - Bulk question import
 - `bulkUploadUsers.php` - Bulk user import
 - `sendPasswordChangeNotification.php` - Password change notifications
+- `requestPasswordReset.php` - Self-service password reset request
+- `validateResetToken.php` - Password reset token validation
+- `resetPassword.php` - Password reset completion
+- `forcePasswordChange.php` - Admin: require password change on next login
+- `deactivateUser.php` - Admin: deactivate accounts without deleting work
+- `reactivateUser.php` - Admin: reactivate inactive accounts
+- `getClasses.php` - Admin: retrieve managed classes for assignment workflows
+- `createClass.php` - Admin: create class records in `tblClass`
+- `updateClass.php` - Admin: rename classes and migrate assigned users
+- `deleteClass.php` - Admin: delete unassigned classes from `tblClass`
 
 #### 🟡 **BASIC SECURITY (blockDirectAccess)**
 *Blocks casual browsing but allows legitimate API calls*
@@ -178,8 +203,16 @@ All API endpoints are now protected against direct browser access while maintain
 
 **Simple Security Helper:** `simple_security.php`
 - `blockDirectAccess()` - Basic protection
-- `requireAuth()` - Enhanced protection  
+- `requireAuth()` - Signed bearer-token validation
+- `requireAdmin()` - Admin-only signed bearer-token validation
 - `isLegitimateApiCall()` - Validation logic
+
+### Password and Account-State Notes
+
+- Password reset tokens are stored in `tblpasswordreset`, expire after 60 minutes, and are marked single-use once redeemed.
+- New passwords are stored with `password_hash(..., PASSWORD_BCRYPT)` in `tbluser.passwordHash`.
+- Legacy MD5 hashes are still accepted at login for backwards compatibility and are automatically upgraded to bcrypt after a successful plaintext login.
+- `force_pw_change`, `last_pw_change`, and `is_active` are now part of the live user-account workflow.
 
 **Directory Protection:** `api/index.php`
 - Returns 403 Forbidden for directory browsing
@@ -207,12 +240,14 @@ john.doe@school.edu,John Doe,Mathematics,en-US
 jane.smith@school.edu,Jane Smith,Science,en-US
 ```
 
+The CSV header remains `department` for backwards compatibility, but imported values are stored in `tbluser.userClass` and can be aligned to managed classes in `tblClass`.
+
 **Required columns:**
 - `email`: Student's email address (used for login)
 - `name`: Full name of the student
 
 **Optional columns:**
-- `department`: Department, class, or grade level
+- `department`: Class, tutor group, department, or grade level; saved to `userClass`
 - `locale`: Language preference (defaults to en-US)
 
 ### How it works:
@@ -220,10 +255,47 @@ jane.smith@school.edu,Jane Smith,Science,en-US
 1. **Admin Access**: Only admin users can perform bulk uploads
 2. **CSV Processing**: Upload your CSV file through the Admin Manager
 3. **Account Creation**: System creates user accounts with a default password
-4. **Email Notifications**: Automatic welcome emails sent to all new students with login credentials
-5. **Security**: Students are prompted to change their password on first login
+4. **Class Storage**: The uploaded `department` value is stored in `userClass` for admin filtering and manual class management
+5. **Email Notifications**: Automatic welcome emails sent to all new students with login credentials
+6. **Security**: Students are prompted to change their password on first login
 
 **Sample file**: Use `data/sample_students.csv` as a template
+
+## Admin Manager Workflows
+
+The Admin Manager is the main operational screen for staff who maintain users and classes.
+
+### Account-State Actions
+
+Admins can manage account status directly from the user table:
+
+1. Use `Edit` to update user details, assigned class, locale, avatar, admin level, and access permissions.
+2. Use `Require Password Change` to force a password reset on the user’s next login.
+3. Use `Deactivate` to block login without deleting the user’s work.
+4. Use `Reactivate` to restore access for previously inactive accounts.
+5. Use `Delete` only when the account should be permanently removed.
+
+Destructive or security-sensitive actions use confirmation prompts before changes are applied.
+
+### Managed Classes
+
+Use `Manage Classes` from the Admin Manager toolbar to maintain the shared class list stored in `tblClass`.
+
+1. Create a class by entering a class name and selecting `Create Class`.
+2. Rename a class by selecting `Edit`, changing the name, and selecting `Update Class`.
+3. Delete a class by selecting `Delete` and confirming the deletion in the follow-up modal.
+
+Class deletion is intentionally protected:
+
+- Classes with assigned users cannot be deleted until those users are reassigned.
+- The UI shows the assigned user count for each class.
+- Delete always requires a second confirmation step.
+
+### Class Assignment Notes
+
+- User records now store class values in `tbluser.userClass`.
+- The legacy CSV column name `department` is still accepted during bulk upload for compatibility.
+- When managed classes exist, the user edit form offers them as a dropdown for consistent allocation.
 
 ## Getting Your Gemini API Key
 
@@ -612,6 +684,20 @@ const chartData = progressData.map(entry => ({
 
 ## Recent Enhancements
 
+### v0.4.1 — Password, Auth and Account-State Update (April 2026)
+
+- Self-service password reset flow with one-time, expiring reset tokens (`requestPasswordReset.php`, `validateResetToken.php`, `resetPassword.php`)
+- New reset email templates and notification updates for password-change events
+- Signed bearer token login/session support via shared auth helper (`simple_security.php`)
+- Plaintext login compatibility for bcrypt hashes with automatic legacy MD5-to-bcrypt hash upgrade
+- Forced password change support (`force_pw_change`) with admin action and in-app forced change screen
+- Non-destructive account deactivation support (`is_active`) with admin action and login enforcement
+- Account reactivation support with dedicated admin action and confirmation workflow
+- `userLocation` to `userClass` migration for clearer class allocation semantics, with compatibility handling during transition
+- Managed class CRUD via `tblClass`, including admin modal workflows, assignment counts, and protected deletion rules
+- SPA reset-link routing support for direct `/reset-password?token=...` access
+- CORS/preflight handling for new password and account-state endpoints
+
 ### v0.4.0 — Student Rewards, Dashboard UX & Analytics Badges (April 2026)
 
 #### Student Reward & Badge System
@@ -632,7 +718,7 @@ const chartData = progressData.map(entry => ({
 
 #### Student Interface
 - **Answered question markers** — questions the student has previously submitted are highlighted with a darker background and a green ✓ badge; they remain fully retryable
-- **Profile field locking** — name, email, and department fields are read-only for students; only password and avatar remain editable
+- **Profile field locking** — name, email, and class fields are read-only for students; only password and avatar remain editable
 
 #### Rich Text Editor
 - **Tab-key indentation** — pressing Tab in the TipTap editor inserts a tab character in both blockPaste and standard modes

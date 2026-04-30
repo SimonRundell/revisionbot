@@ -18,9 +18,12 @@ test2@example.com,Test Student Two,Science,en-US
 test3@example.com,Test Student Three,History,fr-FR
 ```
 
+Note: the CSV header remains `department` for compatibility, but successful imports now populate `tbluser.userClass`.
+
 **Expected Results**:
 - 3 users created in `tbluser` table
 - All users have `admin = 0` and `userEmailValidated = 0`
+- Imported class values are stored in `userClass`
 - Welcome emails sent to all 3 addresses
 - Success message shows "3 users created, 3 emails sent"
 
@@ -72,11 +75,16 @@ valid@test.com,,Department Without Name,
 ### Database Verification
 ```sql
 -- Check created users
-SELECT id, email, userName, userLocation, userLocale, admin 
+SELECT id, email, userName, userClass, userLocale, admin 
 FROM tbluser 
 WHERE admin = 0 
 ORDER BY id DESC 
 LIMIT 10;
+
+-- Check managed classes seeded or used by uploaded users
+SELECT id, className
+FROM tblClass
+ORDER BY className;
 
 -- Verify password hashing
 SELECT id, email, passwordHash 

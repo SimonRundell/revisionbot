@@ -22,7 +22,7 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [userName, setUserName] = useState('');
-    const [userLocation, setUserLocation] = useState('');
+    const [userClass, setUserClass] = useState('');
     const [userLocale, setUserLocale] = useState('en-GB');
     
     // Constants for registration defaults (not user-configurable in this form)
@@ -53,7 +53,7 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
             email: email.toLowerCase(), 
             passwordHash: passwordHash, 
             userName: userName, 
-            userLocation: userLocation,
+            userClass: userClass,
             userLocale: userLocale, // Use state variable for locale
             avatar: avatar,
             admin: admin ? 1 : 0
@@ -164,8 +164,8 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
                             <label>Class</label>
                             <input
                                 type="text"
-                                value={userLocation}
-                                onChange={(e) => setUserLocation(e.target.value)}
+                                value={userClass}
+                                onChange={(e) => setUserClass(e.target.value)}
                                 placeholder="Class"
                             />
                         </div>
