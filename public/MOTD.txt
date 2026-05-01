@@ -1,8 +1,10 @@
-  <h2>Beta Test Version 0.4.1</h2>
+  <h2>Beta Test Version 0.4.2</h2>
   <div class="motd-notice">
   <p>Please report any issues to the development team: <a class="little-button" href="https://forms.microsoft.com/e/H10SRY6eRx">Report an issue</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Welcome emails to new users</li>
+  <li>Achievement awards in 'My Profile'</li>
   <li>Classes now handled as separate table, renamed throughout db</li>
   <li>System-led password reset, forced password change on login</li>
   <li>Automatic refresh of admin list of work as completed</li>

@@ -12,6 +12,9 @@ Your Login Credentials:
 Email: {{EMAIL}}
 Temporary Password: {{PASSWORD}}
 
+Access the Application:
+{{APP_URL}}
+
 ⚠️ Important Security Notice:
 Please change your password immediately after your first login for security purposes.
 

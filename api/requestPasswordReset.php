@@ -90,14 +90,33 @@ function renderTemplate($templatePath, $variables) {
  */
 function sendPasswordResetEmail($config, $user, $resetLink, $logoUrl) {
     try {
+        logEndpointError('SMTP: Starting password reset email for: ' . $user['email']);
+        
         $mail = new PHPMailer(true);
+        
+        // Enable SMTP debug output (0=off, 1=client, 2=client+server, 3=verbose)
+        $mail->SMTPDebug = 2;
+        $mail->Debugoutput = function($str, $level) {
+            logEndpointError("SMTP Debug (Level $level): " . trim($str));
+        };
+        
         $mail->isSMTP();
         $mail->Host = $config['smtpServer'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $config['smtpUser'];
-        $mail->Password = $config['smtpPass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        
+        // Conditionally enable SMTP auth and encryption (disable for local Mailpit)
+        if (!empty($config['smtpSecure'])) {
+            $mail->SMTPAuth = true;
+            $mail->Username = $config['smtpUser'];
+            $mail->Password = $config['smtpPass'];
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPAuth = false;
+        }
+        
         $mail->Port = (int) $config['smtpPort'];
+        
+        logEndpointError('SMTP: Attempting connection to ' . $config['smtpServer'] . ':' . $config['smtpPort']);
+        logEndpointError('SMTP: Auth User: ' . $config['smtpUser']);
         $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
         $mail->addAddress($user['email'], $user['userName']);
         $mail->isHTML(true);
@@ -120,11 +139,19 @@ function sendPasswordResetEmail($config, $user, $resetLink, $logoUrl) {
             'expiryMinutes' => '60'
         ];
         $mail->AltBody = renderTemplate(dirname(__DIR__) . '/public/templates/password_reset.txt', $textVariables);
+        
+        logEndpointError('SMTP: Attempting to send email to: ' . $user['email']);
         $mail->send();
+        logEndpointError('SMTP: Email sent successfully to: ' . $user['email']);
 
         return true;
     } catch (Exception $exception) {
-        logEndpointError('Password reset email failed: ' . $exception->getMessage());
+        logEndpointError('SMTP ERROR: Password reset email failed for ' . $user['email']);
+        logEndpointError('SMTP ERROR: Exception: ' . $exception->getMessage());
+        logEndpointError('SMTP ERROR: Code: ' . $exception->getCode());
+        if (method_exists($mail, 'getLastMessageID')) {
+            logEndpointError('SMTP ERROR: Last Message ID: ' . $mail->getLastMessageID());
+        }
         return false;
     }
 }

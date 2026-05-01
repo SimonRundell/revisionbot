@@ -94,10 +94,17 @@ function sendPasswordChangeNotificationEmail($config, $user, $changedBy, $logoUr
         $mail = new PHPMailer(true);
         $mail->isSMTP();
         $mail->Host = $config['smtpServer'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $config['smtpUser'];
-        $mail->Password = $config['smtpPass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        
+        // Conditionally enable SMTP auth and encryption (disable for local Mailpit)
+        if (!empty($config['smtpSecure'])) {
+            $mail->SMTPAuth = true;
+            $mail->Username = $config['smtpUser'];
+            $mail->Password = $config['smtpPass'];
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPAuth = false;
+        }
+        
         $mail->Port = (int) $config['smtpPort'];
         $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
         $mail->addAddress($user['email'], $user['userName']);

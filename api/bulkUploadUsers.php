@@ -285,23 +285,34 @@ function sendWelcomeEmail($email, $name, $password) {
     global $config;
     
     try {
-        error_log("Attempting to send welcome email to: $email");
+        error_log("SMTP: Attempting to send welcome email to: $email");
         
         $mail = new PHPMailer(true);
         
-        // Enable verbose debug output (disable in production)
-        // $mail->SMTPDebug = 2;
+        // Enable SMTP debug output (0=off, 1=client, 2=client+server, 3=verbose)
+        $mail->SMTPDebug = 2;
+        $mail->Debugoutput = function($str, $level) {
+            error_log("SMTP Debug (Level $level): " . trim($str));
+        };
         
         // Server settings
         $mail->isSMTP();
         $mail->Host = $config['smtpServer'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $config['smtpUser'];
-        $mail->Password = $config['smtpPass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Use STARTTLS for port 587
+        
+        // Conditionally enable SMTP auth and encryption (disable for local Mailpit)
+        if (!empty($config['smtpSecure'])) {
+            $mail->SMTPAuth = true;
+            $mail->Username = $config['smtpUser'];
+            $mail->Password = $config['smtpPass'];
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPAuth = false;
+        }
+        
         $mail->Port = $config['smtpPort'];
         
-        error_log("SMTP Config - Host: {$config['smtpServer']}, Port: {$config['smtpPort']}, User: {$config['smtpUser']}");
+        error_log("SMTP: Attempting connection to " . $config['smtpServer'] . ":" . $config['smtpPort']);
+        error_log("SMTP: Auth User: " . $config['smtpUser']);
         
         // Recipients
         $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
@@ -313,6 +324,17 @@ function sendWelcomeEmail($email, $name, $password) {
         $mail->Encoding = 'base64';
         $mail->Subject = 'Welcome to the AI Revision Bot Revision Application';
         
+        // Get logo URL from public config
+        $publicConfigPath = dirname(__DIR__) . '/public/.config.json';
+        $publicConfig = file_exists($publicConfigPath)
+            ? json_decode(file_get_contents($publicConfigPath), true)
+            : [];
+
+        $logoBaseUrl = rtrim((string) ($publicConfig['appBaseUrl'] ?? ''), '/');
+        $logoUrl = $logoBaseUrl !== ''
+            ? $logoBaseUrl . '/title_bw.png'
+            : 'https://exe-coll.ac.uk/wp-content/themes/exeter-college/assets/images/logo.png';
+        
         // Load email template
         $templatePath = '../public/templates/welcome_email.html';
         if (file_exists($templatePath)) {
@@ -322,6 +344,8 @@ function sendWelcomeEmail($email, $name, $password) {
             $htmlBody = str_replace('{{NAME}}', htmlspecialchars($name), $htmlBody);
             $htmlBody = str_replace('{{EMAIL}}', htmlspecialchars($email), $htmlBody);
             $htmlBody = str_replace('{{PASSWORD}}', htmlspecialchars($password), $htmlBody);
+            $htmlBody = str_replace('{{APP_URL}}', htmlspecialchars($config['appUrl'] ?? 'http://localhost/'), $htmlBody);
+            $htmlBody = str_replace('{{logoUrl}}', htmlspecialchars($logoUrl), $htmlBody);
         } else {
             error_log("Email template not found: $templatePath");
             throw new Exception("Email template file not found");
@@ -338,6 +362,7 @@ function sendWelcomeEmail($email, $name, $password) {
             $textBody = str_replace('{{NAME}}', $name, $textBody);
             $textBody = str_replace('{{EMAIL}}', $email, $textBody);
             $textBody = str_replace('{{PASSWORD}}', $password, $textBody);
+            $textBody = str_replace('{{APP_URL}}', $config['appUrl'] ?? 'http://localhost/', $textBody);
             
             $mail->AltBody = $textBody;
         } else {
@@ -345,12 +370,18 @@ function sendWelcomeEmail($email, $name, $password) {
             $mail->AltBody = "Welcome to the AI Revision Bot!\n\nDear $name,\n\nYour account has been created.\n\nLogin: $email\nPassword: $password\n\nBest regards,\nAI Revision Bot";
         }
         
+        error_log("SMTP: Attempting to send email to: $email");
         $mail->send();
-        error_log("Successfully sent welcome email to: $email");
+        error_log("SMTP: Successfully sent welcome email to: $email");
         return true;
         
     } catch (Exception $e) {
-        error_log("Email failed for $email: " . $e->getMessage());
+        error_log("SMTP ERROR: Email failed for $email");
+        error_log("SMTP ERROR: " . $e->getMessage());
+        error_log("SMTP ERROR: Code: " . $e->getCode());
+        if (isset($mail) && method_exists($mail, 'ErrorInfo')) {
+            error_log("SMTP ERROR: ErrorInfo: " . $mail->ErrorInfo);
+        }
         return false;
     }
 }

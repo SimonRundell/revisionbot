@@ -29,6 +29,7 @@
  * @input receivedData['userLocale'] - Language preference
  * @input receivedData['avatar'] - Avatar identifier
  * @input receivedData['admin'] - Admin flag (0 or 1)
+ * @input receivedData['userAccess'] - JSON string of access control settings (optional, defaults to {"1":"all"})
  * @output Success or error message
  * 
  * @version 1.0
@@ -40,8 +41,8 @@ include 'setup.php';
 // Block direct browser access to registration
 blockDirectAccess();
 
-    $query = "INSERT INTO tbluser (email, passwordHash, userName, userClass, userStatus, userLocale, avatar, admin)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    $query = "INSERT INTO tbluser (email, passwordHash, userName, userClass, userStatus, userLocale, avatar, admin, userAccess)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $mysqli->prepare($query);
 
@@ -51,15 +52,22 @@ blockDirectAccess();
     } else {
         $emailLower = strtolower($receivedData['email']);
         $resolvedUserClass = (string) ($receivedData['userClass'] ?? $receivedData['userLocation'] ?? '');
+        
+        // Handle userAccess - convert array to JSON string if needed
+        $userAccess = $receivedData['userAccess'] ?? '{"1":"all"}';
+        if (is_array($userAccess)) {
+            $userAccess = json_encode($userAccess);
+        }
 
-        $stmt->bind_param("sssssssi", $emailLower, 
+        $stmt->bind_param("sssssssis", $emailLower, 
                                  $receivedData['passwordHash'], 
                                  $receivedData['userName'],
                      $resolvedUserClass,
                                  $receivedData['userStatus'],
                                  $receivedData['userLocale'],
                                  $receivedData['avatar'],
-                                 $receivedData['admin']);
+                                 $receivedData['admin'],
+                                 $userAccess);
         if (!$stmt->execute()) {
             log_info("User creation failed: " . $stmt->error);
             send_response("User creation failed: " . $stmt->error, 500);

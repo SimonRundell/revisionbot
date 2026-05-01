@@ -45,18 +45,34 @@ function sendPasswordChangeNotification($email, $userName, $changedBy) {
     global $config;
     
     try {
-        error_log("Sending password change notification to: $email");
+        error_log("SMTP: Sending password change notification to: $email");
         
         $mail = new PHPMailer(true);
+        
+        // Enable SMTP debug output (0=off, 1=client, 2=client+server, 3=verbose)
+        $mail->SMTPDebug = 2;
+        $mail->Debugoutput = function($str, $level) {
+            error_log("SMTP Debug (Level $level): " . trim($str));
+        };
         
         // Server settings
         $mail->isSMTP();
         $mail->Host = $config['smtpServer'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $config['smtpUser'];
-        $mail->Password = $config['smtpPass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        
+        // Conditionally enable SMTP auth and encryption (disable for local Mailpit)
+        if (!empty($config['smtpSecure'])) {
+            $mail->SMTPAuth = true;
+            $mail->Username = $config['smtpUser'];
+            $mail->Password = $config['smtpPass'];
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPAuth = false;
+        }
+        
         $mail->Port = $config['smtpPort'];
+        
+        error_log("SMTP: Attempting connection to " . $config['smtpServer'] . ":" . $config['smtpPort']);
+        error_log("SMTP: Auth User: " . $config['smtpUser']);
         
         // Recipients
         $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
@@ -121,12 +137,18 @@ function sendPasswordChangeNotification($email, $userName, $changedBy) {
             $mail->AltBody = "Your password has been changed. If you did not make this change, please contact your administrator immediately.";
         }
         
+        error_log("SMTP: Attempting to send email to: $email");
         $mail->send();
-        error_log("Successfully sent password change notification to: $email");
+        error_log("SMTP: Successfully sent password change notification to: $email");
         return true;
         
     } catch (Exception $e) {
-        error_log("Password change notification failed for $email: " . $e->getMessage());
+        error_log("SMTP ERROR: Password change notification failed for $email");
+        error_log("SMTP ERROR: " . $e->getMessage());
+        error_log("SMTP ERROR: Code: " . $e->getCode());
+        if (isset($mail) && method_exists($mail, 'ErrorInfo')) {
+            error_log("SMTP ERROR: ErrorInfo: " . $mail->ErrorInfo);
+        }
         return false;
     }
 }

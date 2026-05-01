@@ -1,6 +1,7 @@
 import {useState, useEffect} from 'react'
 import axios from 'axios'
 import {Drawer, Spin} from 'antd'
+import CryptoJS from 'crypto-js'
 import SelectLocale from './SelectLocale'
 import AvatarManager from './AvatarManager'
 import AccessControlTree from './AccessControlTree'
@@ -47,7 +48,20 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         avatar: '',
         avatarPreview: '',
         admin: false,
-        userAccess: {} // For storing access control permissions
+        userAccess: {}, // For storing access control permissions
+        sendCredentials: false // Whether to email new credentials to user
+    });
+    const [addModalVisible, setAddModalVisible] = useState(false);
+    const [addForm, setAddForm] = useState({
+        name: '',
+        email: '',
+        password: '',
+        department: '',
+        locale: 'en-GB',
+        avatar: '',
+        avatarPreview: '',
+        admin: false,
+        userAccess: {"1": "all"} // Default access to subject 1
     });
     const [bulkUploadModalVisible, setBulkUploadModalVisible] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -400,7 +414,8 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             avatar: user.avatar,
             avatarPreview: user.avatar || '/default_avatar.png',
             admin: Boolean(user.admin), // Convert to proper boolean (handles 0, 1, null, undefined)
-            userAccess: userAccess
+            userAccess: userAccess,
+            sendCredentials: false
         });
         setEditModalVisible(true);
     };
@@ -417,8 +432,163 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             avatar: '',
             avatarPreview: '',
             admin: false,
-            userAccess: {}
+            userAccess: {},
+            sendCredentials: false
         });
+    };
+
+    /**
+     * Show add user modal with empty form
+     */
+    const showAddUserModal = () => {
+        setAddForm({
+            name: '',
+            email: '',
+            password: '',
+            department: '',
+            locale: 'en-GB',
+            avatar: '',
+            avatarPreview: '',
+            admin: false,
+            userAccess: {"1": "all"}
+        });
+        setAddModalVisible(true);
+    };
+
+    /**
+     * Cancel add user modal
+     */
+    const handleAddCancel = () => {
+        setAddModalVisible(false);
+        setAddForm({
+            name: '',
+            email: '',
+            password: '',
+            department: '',
+            locale: 'en-GB',
+            avatar: '',
+            avatarPreview: '',
+            admin: false,
+            userAccess: {"1": "all"}
+        });
+    };
+
+    /**
+     * Handle add new user submission
+     * Validates form data, hashes password, and submits to API
+     * 
+     * @async
+     * @returns {Promise<void>} Promise that resolves when user is created
+     */
+    const handleAddUser = async () => {
+        // Validate required fields
+        if (!addForm.name || !addForm.email || !addForm.password) {
+            setSendErrorMessage('Please fill in all required fields (Name, Email, Password)');
+            return;
+        }
+
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(addForm.email)) {
+            setSendErrorMessage('Please enter a valid email address');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // Hash password using MD5 (matching register.jsx behavior)
+            const passwordHash = CryptoJS.MD5(addForm.password).toString();
+
+            const jsonData = {
+                email: addForm.email,
+                passwordHash: passwordHash,
+                userName: addForm.name,
+                userClass: addForm.department,
+                userStatus: 1, // Active by default
+                userLocale: addForm.locale,
+                avatar: addForm.avatar || '',
+                admin: addForm.admin ? 1 : 0,
+                userAccess: JSON.stringify(addForm.userAccess)
+            };
+
+            const response = await axios.post(config.api + '/InsertUser.php', jsonData, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.data.status_code === 200) {
+                setSendSuccessMessage('User successfully created');
+                
+                // Send welcome email with login credentials
+                try {
+                    await axios.post(config.api + '/sendWelcomeEmail.php', {
+                        email: addForm.email,
+                        userName: addForm.name,
+                        password: addForm.password
+                    }, {
+                        headers: createJsonHeaders(currentUser)
+                    });
+                    console.log('Welcome email sent successfully');
+                } catch (emailError) {
+                    console.error('Failed to send welcome email:', emailError);
+                    setSendErrorMessage('User created but failed to send welcome email');
+                }
+                
+                // Refresh the users list
+                const apiCall = () => axios.post(
+                    config.api + '/getUsers.php',
+                    {},
+                    {
+                        headers: createJsonHeaders(currentUser),
+                    }
+                );
+
+                handleApiCall(
+                    apiCall,
+                    setUsers,
+                    () => {},
+                    setSendSuccessMessage,
+                    setSendErrorMessage,
+                    'Users refreshed',
+                    'Failed to refresh users'
+                );
+                
+                setAddModalVisible(false);
+                handleAddCancel();
+            } else {
+                setSendErrorMessage(response.data.message || 'Failed to create user');
+            }
+        } catch (error) {
+            console.error('Error creating user:', error);
+            setSendErrorMessage(error.response?.data?.message || 'Network error. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Handle avatar change for add user form
+     * 
+     * @param {string} newAvatar - Base64 encoded avatar data or avatar path
+     */
+    const handleAddAvatarChange = (newAvatar) => {
+        setAddForm(prev => ({
+            ...prev,
+            avatar: newAvatar,
+            avatarPreview: newAvatar || '/default_avatar.png'
+        }));
+    };
+
+    /**
+     * Handle access control change for add user form
+     * 
+     * @param {Object} newUserAccess - Access control object with subject/topic permissions
+     */
+    const handleAddAccessControlChange = (newUserAccess) => {
+        setAddForm(prev => ({
+            ...prev,
+            userAccess: newUserAccess
+        }));
     };
 
     /**
@@ -602,8 +772,24 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             if (response.data.status_code === 200) {
                 setSendSuccessMessage('User details updated.');
                 
-                // Send password change notification if password was changed
-                if (editForm.password.trim() !== '') {
+                // Send welcome email with new credentials if requested and password was changed
+                if (editForm.password.trim() !== '' && editForm.sendCredentials) {
+                    try {
+                        await axios.post(config.api + '/sendWelcomeEmail.php', {
+                            email: editForm.email,
+                            userName: editForm.name,
+                            password: editForm.password
+                        }, {
+                            headers: createJsonHeaders(currentUser)
+                        });
+                        console.log('Welcome email with credentials sent successfully');
+                    } catch (emailError) {
+                        console.error('Failed to send welcome email:', emailError);
+                        setSendErrorMessage('User updated but failed to send credentials email');
+                    }
+                }
+                // Send password change notification if password was changed but credentials not sent
+                else if (editForm.password.trim() !== '') {
                     try {
                         await axios.post(config.api + '/sendPasswordChangeNotification.php', {
                             email: editForm.email,
@@ -789,8 +975,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 
                 <div className="admin-actions-bar">
                     <button 
-                        onClick={showBulkUploadModal}
+                        onClick={showAddUserModal}
                         className="bulk-upload-button"
+                    >
+                        ➕ Add User
+                    </button>
+                    <button 
+                        onClick={showBulkUploadModal}
+                        className="bulk-upload-button leftgap"
                     >
                         📤 Bulk Upload Students
                     </button>
@@ -801,7 +993,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                         🏫 Manage Classes
                     </button>
                     <span className="admin-actions-description">
-                        Upload multiple student accounts from CSV file or manage class options for manual assignment
+                        Add individual users manually, upload multiple student accounts from CSV file, or manage class options
                     </span>
                 </div>
 
@@ -1029,6 +1221,145 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 </div>
             )}
 
+            {/* Add User Modal */}
+            {addModalVisible && (
+                <div className="modal">
+                    <div className="modal-content edit-modal-large">
+                        <span 
+                            className="close" 
+                            onClick={handleAddCancel}
+                        >
+                            &times;
+                        </span>
+                        <h2>Add New User</h2>
+                        <table border="1" className="edit-modal-table">
+                            <tbody>
+                                <tr>
+                                    <td>Name *</td>
+                                    <td>
+                                        <input 
+                                            type="text" 
+                                            value={addForm.name} 
+                                            onChange={e => setAddForm(prev => ({ ...prev, name: e.target.value }))}
+                                            className="full-width-input"
+                                            placeholder="Enter full name"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Email/Login *</td>
+                                    <td>
+                                        <input 
+                                            type="email" 
+                                            value={addForm.email} 
+                                            onChange={e => setAddForm(prev => ({ ...prev, email: e.target.value }))}
+                                            className="full-width-input"
+                                            placeholder="Enter email address"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Password *</td>
+                                    <td>
+                                        <input 
+                                            type="password" 
+                                            value={addForm.password} 
+                                            onChange={e => setAddForm(prev => ({ ...prev, password: e.target.value }))}
+                                            className="full-width-input"
+                                            placeholder="Enter password"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Class</td>
+                                    <td>
+                                        {classes.length > 0 ? (
+                                            <select
+                                                value={addForm.department}
+                                                onChange={e => setAddForm(prev => ({ ...prev, department: e.target.value }))}
+                                                className="full-width-input"
+                                            >
+                                                <option value="">Unassigned</option>
+                                                {classes.map(classRecord => (
+                                                    <option key={classRecord.id} value={classRecord.className}>{classRecord.className}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input 
+                                                type="text" 
+                                                value={addForm.department} 
+                                                onChange={e => setAddForm(prev => ({ ...prev, department: e.target.value }))}
+                                                className="full-width-input"
+                                                placeholder="Enter class/department"
+                                            />
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Admin Level</td>
+                                    <td>
+                                        <label className="admin-checkbox-container">
+                                            <span className="leftgap"><input 
+                                                type="checkbox" 
+                                                checked={addForm.admin}
+                                                onChange={e => setAddForm(prev => ({ ...prev, admin: e.target.checked }))}
+                                            /></span>
+                                            <span className="leftgap">{addForm.admin ? 'Administrator' : 'Regular User'}</span>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Locale</td>
+                                    <td>
+                                        <SelectLocale 
+                                            config={config} 
+                                            userLocale={addForm.locale} 
+                                            setUserLocale={(locale) => setAddForm(prev => ({ ...prev, locale }))}
+                                            setSendErrorMessage={setSendErrorMessage}
+                                            setSendSuccessMessage={setSendSuccessMessage}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Avatar</td>
+                                    <td>
+                                        <AvatarManager 
+                                            currentAvatar={addForm.avatar}
+                                            onAvatarChange={handleAddAvatarChange}
+                                            setSendErrorMessage={setSendErrorMessage}
+                                            size={60}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Access Control</td>
+                                    <td>
+                                        <AccessControlTree 
+                                            config={config}
+                                            currentUser={currentUser}
+                                            userAccess={addForm.userAccess}
+                                            onAccessChange={handleAddAccessControlChange}
+                                            setSendErrorMessage={setSendErrorMessage}
+                                        />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div className="form-group-button">
+                            <button onClick={handleAddUser}>
+                                Create User
+                            </button>
+                            <button 
+                                onClick={handleAddCancel}
+                                className="topgap"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Edit User Modal */}
             {editModalVisible && (
                 <div className="modal">
@@ -1074,6 +1405,16 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                             placeholder="Leave blank to keep current password"
                                             className="full-width-input"
                                         />
+                                        {editForm.password.trim() !== '' && (
+                                            <label className="admin-checkbox-container" style={{marginTop: '10px'}}>
+                                                <span className="leftgap"><input 
+                                                    type="checkbox" 
+                                                    checked={editForm.sendCredentials}
+                                                    onChange={e => setEditForm(prev => ({ ...prev, sendCredentials: e.target.checked }))}
+                                                /></span>
+                                                <span className="leftgap">Email new password to user (sends welcome email with login credentials)</span>
+                                            </label>
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>

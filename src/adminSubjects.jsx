@@ -1239,6 +1239,24 @@ const handleImportFile = async (event) => {
                             )}
                         </div>
                     </div>
+                    
+                    <div className="question-action-buttons">
+                        <button 
+                            onClick={() => {
+                                setNewQuestionTopic(selectedTopic);
+                                setShowQuestionModal(true);
+                            }}
+                        >
+                            + Add New Question
+                        </button>
+                        <button 
+                            onClick={openBulkQuestionModal}
+                            className="bulk-upload-questions-button"
+                        >
+                            📥 Bulk Upload Questions
+                        </button>
+                    </div>
+                    <div>&nbsp;</div>
                     <ul>
                         {questions.map((question, index) => {
                             // console.log('Rendering question:', question);
