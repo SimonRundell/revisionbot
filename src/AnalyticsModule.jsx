@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Spin, Modal } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
-import { formatChartDate, formatDateRange } from './utils/dateHelpers';
+import { formatDateRange } from './utils/dateHelpers';
 import './App.css';
 
 /****************************************************************************
@@ -17,61 +17,67 @@ import './App.css';
 ****************************************************************************/
 const StudentProgressChart = ({ data }) => {
     const canvasRef = useRef(null);
-    
+
+    const buildWeeklyCounts = useCallback(() => {
+        const source = data?.weeklyAverages || [];
+        if (source.length > 0 && source[0].red !== undefined) {
+            return source;
+        }
+
+        const weekMap = new Map();
+        (data?.progressData || []).forEach((entry) => {
+            const d = new Date(entry.date);
+            const year = d.getUTCFullYear();
+            const oneJan = new Date(Date.UTC(year, 0, 1));
+            const day = oneJan.getUTCDay() || 7;
+            const week = Math.ceil((((d - oneJan) / 86400000) + day) / 7);
+            const weekKey = `${year}-${String(week).padStart(2, '0')}`;
+
+            if (!weekMap.has(weekKey)) {
+                weekMap.set(weekKey, { week: weekKey, red: 0, amber: 0, green: 0 });
+            }
+            const row = weekMap.get(weekKey);
+            if (entry.rating === 'R') row.red += 1;
+            if (entry.rating === 'A') row.amber += 1;
+            if (entry.rating === 'G') row.green += 1;
+        });
+
+        return Array.from(weekMap.values()).sort((a, b) => a.week.localeCompare(b.week));
+    }, [data]);
+
     useEffect(() => {
-        if (!data || !data.progressData || data.progressData.length === 0) return;
-        
+        const weekly = buildWeeklyCounts();
+        if (weekly.length === 0) return;
+
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        
-        // Set responsive canvas size
+
         const containerWidth = canvas.parentElement.clientWidth;
-        const maxWidth = Math.min(containerWidth - 40, 700); // Leave room for padding
+        const maxWidth = Math.min(containerWidth - 40, 900);
         canvas.width = maxWidth;
-        canvas.height = Math.max(300, maxWidth * 0.6); // Maintain aspect ratio with minimum height
-        
-        // Clear canvas
+        canvas.height = Math.max(320, maxWidth * 0.55);
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Chart dimensions
-        const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+
+        const margin = { top: 35, right: 20, bottom: 72, left: 56 };
         const chartWidth = canvas.width - margin.left - margin.right;
         const chartHeight = canvas.height - margin.top - margin.bottom;
-        
-        // Prepare data
-        const progressData = data.progressData;
-        const dates = progressData.map(d => new Date(d.date));
-        const minDate = Math.min(...dates);
-        const maxDate = Math.max(...dates);
-        const dateRange = maxDate - minDate || 1; // Prevent division by zero
-        
-        // Draw background
+
+        const maxCount = Math.max(1, ...weekly.flatMap((w) => [w.red, w.amber, w.green]));
+
         ctx.fillStyle = '#f8f9fa';
         ctx.fillRect(margin.left, margin.top, chartWidth, chartHeight);
-        
-        // Draw grid lines
+
         ctx.strokeStyle = '#e1e5e9';
         ctx.lineWidth = 1;
-        
-        // Horizontal grid lines (RAG levels)
-        for (let i = 1; i <= 3; i++) {
-            const y = margin.top + chartHeight - (i / 3 * chartHeight);
+        for (let i = 0; i <= 5; i++) {
+            const y = margin.top + chartHeight - (i / 5) * chartHeight;
             ctx.beginPath();
             ctx.moveTo(margin.left, y);
             ctx.lineTo(margin.left + chartWidth, y);
             ctx.stroke();
         }
-        
-        // Vertical grid lines (time)
-        for (let i = 0; i <= 5; i++) {
-            const x = margin.left + (i / 5 * chartWidth);
-            ctx.beginPath();
-            ctx.moveTo(x, margin.top);
-            ctx.lineTo(x, margin.top + chartHeight);
-            ctx.stroke();
-        }
-        
-        // Draw axes
+
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -79,98 +85,49 @@ const StudentProgressChart = ({ data }) => {
         ctx.lineTo(margin.left, margin.top + chartHeight);
         ctx.lineTo(margin.left + chartWidth, margin.top + chartHeight);
         ctx.stroke();
-        
-        // Draw data points and trend line
-        if (progressData.length > 1) {
-            // Trend line
-            ctx.strokeStyle = '#1890ff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            progressData.forEach((point, index) => {
-                const date = new Date(point.date);
-                const x = margin.left + ((date - minDate) / dateRange) * chartWidth;
-                const y = margin.top + chartHeight - (point.cumulativeAverage / 3 * chartHeight);
-                
-                if (index === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
+
+        const groupWidth = chartWidth / weekly.length;
+        const gap = Math.min(8, groupWidth * 0.15);
+        const barWidth = Math.max(6, (groupWidth - gap * 4) / 3);
+
+        const colors = [
+            { key: 'red', color: '#ff4d4f' },
+            { key: 'amber', color: '#faad14' },
+            { key: 'green', color: '#52c41a' }
+        ];
+
+        weekly.forEach((row, i) => {
+            const startX = margin.left + i * groupWidth;
+            colors.forEach((c, index) => {
+                const value = row[c.key] || 0;
+                const h = (value / maxCount) * chartHeight;
+                const x = startX + gap + index * (barWidth + gap);
+                const y = margin.top + chartHeight - h;
+                ctx.fillStyle = c.color;
+                ctx.fillRect(x, y, barWidth, h);
             });
-            ctx.stroke();
-        }
-        
-        // Draw individual points with labels
-        progressData.forEach((point) => {
-            const date = new Date(point.date);
-            const x = margin.left + ((date - minDate) / dateRange) * chartWidth;
-            const y = margin.top + chartHeight - (point.ragValue / 3 * chartHeight);
-            
-            // Color based on RAG rating
-            let fillColor, ratingText;
-            switch (point.rating) {
-                case 'R':
-                    fillColor = '#ff4d4f';
-                    ratingText = 'R';
-                    break;
-                case 'A':
-                    fillColor = '#faad14';
-                    ratingText = 'A';
-                    break;
-                case 'G':
-                    fillColor = '#52c41a';
-                    ratingText = 'G';
-                    break;
-                default:
-                    fillColor = '#d9d9d9';
-                    ratingText = '?';
-            }
-            
-            // Draw data point circle
-            ctx.fillStyle = fillColor;
-            ctx.beginPath();
-            ctx.arc(x, y, 6, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Add white border
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Add rating label on the point
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(ratingText, x, y + 3);
         });
-        
-        // Draw labels
+
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        
-        // Y-axis labels
         ctx.textAlign = 'right';
-        ctx.fillText('Red (1)', margin.left - 10, margin.top + chartHeight - (1/3 * chartHeight) + 5);
-        ctx.fillText('Amber (2)', margin.left - 10, margin.top + chartHeight - (2/3 * chartHeight) + 5);
-        ctx.fillText('Green (3)', margin.left - 10, margin.top + chartHeight - (3/3 * chartHeight) + 5);
-        
-        // X-axis labels (dates)
-        ctx.textAlign = 'center';
-        for (let i = 0; i <= 4; i++) {
-            const datePos = minDate + (dateRange * i / 4);
-            const x = margin.left + (i / 4 * chartWidth);
-            const dateStr = formatChartDate(new Date(datePos));
-            ctx.fillText(dateStr, x, margin.top + chartHeight + 20);
+        for (let i = 0; i <= 5; i++) {
+            const value = Math.round((i / 5) * maxCount);
+            const y = margin.top + chartHeight - (i / 5) * chartHeight;
+            ctx.fillText(`${value}`, margin.left - 8, y + 4);
         }
-        
-        // Chart title
-        ctx.font = 'bold 14px Arial';
+
         ctx.textAlign = 'center';
-        ctx.fillText('RAG Progress Over Time', canvas.width / 2, 15);
-        
-    }, [data]);
+        ctx.font = '11px Arial';
+        weekly.forEach((row, i) => {
+            const x = margin.left + i * groupWidth + groupWidth / 2;
+            const [, week] = row.week.split('-');
+            ctx.fillText(`W${week}`, x, margin.top + chartHeight + 18);
+        });
+
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('Weekly RAG Distribution', canvas.width / 2, 18);
+    }, [buildWeeklyCounts]);
     
     if (!data || !data.progressData || data.progressData.length === 0) {
         return (
@@ -186,25 +143,14 @@ const StudentProgressChart = ({ data }) => {
             <canvas ref={canvasRef} style={{ display: 'block', margin: '0 auto' }} />
             <div className="chart-legend">
                 <div className="legend-items">
-                    <span className="legend-item">
-                        <span style={{ color: '#ff4d4f', fontSize: '16px', fontWeight: 'bold' }}>● R</span> Red (Needs Improvement)
-                    </span>
-                    <span className="legend-item">
-                        <span style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold' }}>● A</span> Amber (Approaching Target)
-                    </span>
-                    <span className="legend-item">
-                        <span style={{ color: '#52c41a', fontSize: '16px', fontWeight: 'bold' }}>● G</span> Green (Meets Target)
-                    </span>
-                    <span className="legend-item">
-                        <span style={{ color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>─</span> Cumulative Trend
-                    </span>
+                    <span className="legend-item"><span style={{ color: '#ff4d4f', fontSize: '16px', fontWeight: 'bold' }}>■</span> Red</span>
+                    <span className="legend-item"><span style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold' }}>■</span> Amber</span>
+                    <span className="legend-item"><span style={{ color: '#52c41a', fontSize: '16px', fontWeight: 'bold' }}>■</span> Green</span>
                 </div>
                 <div className="chart-stats">
                     <div><strong>Total Responses:</strong> {data.totalResponses}</div>
                     <div><strong>Overall Average:</strong> {data.overallAverage}/3</div>
-                    {data.weeklyAverages && data.weeklyAverages.length > 0 && (
-                        <div><strong>Recent Week Avg:</strong> {data.weeklyAverages[data.weeklyAverages.length - 1].averageRag}/3</div>
-                    )}
+                    <div><strong>Weeks Tracked:</strong> {data.weeklyAverages?.length || 0}</div>
                 </div>
                 {data.progressData && data.progressData.length > 1 && (
                     <p style={{ marginTop: '10px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
@@ -575,7 +521,6 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     <th>Red</th>
                                     <th>Amber</th>
                                     <th>Green</th>
-                                    <th>Improvement</th>
                                     <th>Badges</th>
                                 </tr>
                             </thead>
@@ -612,7 +557,6 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                             <td className="red-stat">{student.redCount} ({student.redPercent}%)</td>
                                             <td className="amber-stat">{student.amberCount} ({student.amberPercent}%)</td>
                                             <td className="green-stat">{student.greenCount} ({student.greenPercent}%)</td>
-                                            <td className="improvement-stat">{student.improvementCount}</td>
                                             <td>
                                                 {!studentId ? null : !rewards ? (
                                                     <span className="analytics-badges-loading-small">…</span>
@@ -666,8 +610,8 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                         <div className="stat-label">Total Attempts</div>
                     </div>
                     <div className="stat-card">
-                        <div className="stat-number">{data.improvementCount || 0}</div>
-                        <div className="stat-label">Improvements</div>
+                        <div className="stat-number">{data.unratedCount || 0}</div>
+                        <div className="stat-label">Unrated</div>
                     </div>
                 </div>
 
@@ -709,7 +653,6 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     <th>Topic</th>
                                     <th>Attempts</th>
                                     <th>Latest RAG</th>
-                                    <th>Improved</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -721,7 +664,6 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         <td className={`rag-${attempt.latestRag === 'R' ? 'red' : attempt.latestRag === 'A' ? 'amber' : attempt.latestRag === 'G' ? 'green' : 'unrated'}`}>
                                             {attempt.latestRag === 'R' ? 'Red' : attempt.latestRag === 'A' ? 'Amber' : attempt.latestRag === 'G' ? 'Green' : 'Unrated'}
                                         </td>
-                                        <td>{attempt.improved ? '✓' : ''}</td>
                                     </tr>
                                 ))}
                             </tbody>

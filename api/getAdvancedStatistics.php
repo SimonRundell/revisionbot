@@ -3,7 +3,7 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 // Block direct browser access to analytics data
-requireAuth();
+$authenticatedUser = requireAuth($mysqli);
 
 /**
  * Advanced Analytics API for Teaching Dashboard
@@ -35,9 +35,6 @@ switch ($requestType) {
         break;
     case 'studentProgress':
         getStudentProgressOverTime($receivedData['studentId']);
-        break;
-    case 'improvementAnalysis':
-        getImprovementAnalysis($receivedData['studentId']);
         break;
     default:
         log_info("Invalid request type: " . $requestType);
@@ -127,28 +124,7 @@ function getDepartmentStats($department) {
             SUM(CASE WHEN r.teacher_rating = 'R' THEN 1 ELSE 0 END) as redCount,
             SUM(CASE WHEN r.teacher_rating = 'A' THEN 1 ELSE 0 END) as amberCount,
             SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) as greenCount,
-            COUNT(*) as totalResponses,
-            (SELECT COUNT(*) FROM tblresponse r2 
-             WHERE r2.user_id = u.id AND r2.attempt_number > 1 
-             AND (
-                 CASE 
-                     WHEN r2.teacher_rating = 'G' THEN 3
-                     WHEN r2.teacher_rating = 'A' THEN 2
-                     WHEN r2.teacher_rating = 'R' THEN 1
-                     ELSE 0
-                 END
-             ) > (
-                 SELECT CASE 
-                     WHEN r3.teacher_rating = 'G' THEN 3
-                     WHEN r3.teacher_rating = 'A' THEN 2
-                     WHEN r3.teacher_rating = 'R' THEN 1
-                     ELSE 0
-                 END
-                 FROM tblresponse r3 
-                 WHERE r3.user_id = r2.user_id 
-                 AND r3.question_id = r2.question_id 
-                 AND r3.attempt_number = r2.attempt_number - 1
-             )) as improvementCount
+            COUNT(*) as totalResponses
         FROM tbluser u
         LEFT JOIN tblresponse r ON u.id = r.user_id
         WHERE u.userClass = ? AND u.admin != 1
@@ -244,21 +220,6 @@ function getStudentStats($studentId) {
         
         $stats['questionAttempts'] = $questionAttempts;
         
-        // Calculate improvements (simple count of questions with multiple attempts)
-        $improvementQuery = "
-            SELECT COUNT(DISTINCT r.question_id) as improvements
-            FROM tblresponse r
-            WHERE r.user_id = ? AND r.attempt_number > 1
-        ";
-        
-        $stmt = $mysqli->prepare($improvementQuery);
-        $stmt->bind_param("i", $studentId);
-        $stmt->execute();
-        $improvementResult = $stmt->get_result();
-        $improvementData = $improvementResult->fetch_assoc();
-        
-        $stats['improvementCount'] = (int)$improvementData['improvements'];
-        
         log_info("Final stats to send: " . json_encode($stats));
         send_response(json_encode($stats), 200);
     
@@ -331,30 +292,7 @@ function getStudentStats($studentId) {
             SUM(CASE WHEN r.teacher_rating = 'R' THEN 1 ELSE 0 END) as redCount,
             SUM(CASE WHEN r.teacher_rating = 'A' THEN 1 ELSE 0 END) as amberCount,
             SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) as greenCount,
-            SUM(CASE WHEN r.teacher_rating IS NULL THEN 1 ELSE 0 END) as unratedCount,
-            (SELECT COUNT(*) FROM tblresponse r2 
-             WHERE r2.user_id = ? AND r2.attempt_number > 1 
-             AND r2.teacher_rating IS NOT NULL
-             AND (
-                 CASE 
-                     WHEN r2.teacher_rating = 'G' THEN 3
-                     WHEN r2.teacher_rating = 'A' THEN 2
-                     WHEN r2.teacher_rating = 'R' THEN 1
-                     ELSE 0
-                 END
-             ) > (
-                 SELECT CASE 
-                     WHEN r3.teacher_rating = 'G' THEN 3
-                     WHEN r3.teacher_rating = 'A' THEN 2
-                     WHEN r3.teacher_rating = 'R' THEN 1
-                     ELSE 0
-                 END
-                 FROM tblresponse r3 
-                 WHERE r3.user_id = r2.user_id 
-                 AND r3.question_id = r2.question_id 
-                 AND r3.attempt_number = r2.attempt_number - 1
-                 AND r3.teacher_rating IS NOT NULL
-             )) as improvementCount
+            SUM(CASE WHEN r.teacher_rating IS NULL THEN 1 ELSE 0 END) as unratedCount
         FROM tblresponse r
         WHERE r.user_id = ?
     ";
@@ -367,7 +305,7 @@ function getStudentStats($studentId) {
     }
     
     log_info("Executing student stats query for studentId: " . $studentId);
-    $stmt->bind_param("ii", $studentId, $studentId);
+    $stmt->bind_param("i", $studentId);
     if (!$stmt->execute()) {
         log_info("Error executing student stats query: " . $stmt->error);
         send_response("Database error: " . $stmt->error, 500);
@@ -388,7 +326,7 @@ function getStudentStats($studentId) {
             'redCount' => 0,
             'amberCount' => 0,
             'greenCount' => 0,
-            'improvementCount' => 0
+            'unratedCount' => 0
         ];
     }
     
@@ -410,31 +348,7 @@ function getStudentStats($studentId) {
             MAX(r.attempt_number) as attemptCount,
             (SELECT r2.teacher_rating FROM tblresponse r2 
              WHERE r2.user_id = r.user_id AND r2.question_id = r.question_id 
-             ORDER BY r2.attempt_number DESC LIMIT 1) as latestRag,
-            (CASE WHEN MAX(r.attempt_number) > 1 THEN 
-                (SELECT COUNT(*) > 0 FROM tblresponse r3 
-                 WHERE r3.user_id = r.user_id AND r3.question_id = r.question_id 
-                 AND r3.attempt_number > 1 
-                 AND (
-                     CASE 
-                         WHEN r3.teacher_rating = 'G' THEN 3
-                         WHEN r3.teacher_rating = 'A' THEN 2
-                         WHEN r3.teacher_rating = 'R' THEN 1
-                         ELSE 0
-                     END
-                 ) > (
-                     SELECT CASE 
-                         WHEN r4.teacher_rating = 'G' THEN 3
-                         WHEN r4.teacher_rating = 'A' THEN 2
-                         WHEN r4.teacher_rating = 'R' THEN 1
-                         ELSE 0
-                     END
-                     FROM tblresponse r4 
-                     WHERE r4.user_id = r3.user_id 
-                     AND r4.question_id = r3.question_id 
-                     AND r4.attempt_number = r3.attempt_number - 1
-                 ))
-             ELSE 0 END) as improved
+             ORDER BY r2.attempt_number DESC LIMIT 1) as latestRag
         FROM tblresponse r
         JOIN tblquestion q ON r.question_id = q.id
         JOIN tbltopic t ON q.topicid = t.id
@@ -535,10 +449,19 @@ function getRagValue($rating) {
  * Returns RAG ratings with timestamps for visualization
  */
 function getStudentProgressOverTime($studentId) {
-    global $mysqli;
+    global $mysqli, $authenticatedUser;
     
     if (empty($studentId)) {
         send_response("Student ID parameter required", 400);
+        return;
+    }
+
+    // Students can only view their own progress graph; admins can view any student.
+    $requestedStudentId = (int) $studentId;
+    $callerIsAdmin = (int) ($authenticatedUser['admin'] ?? 0) === 1;
+    $callerId = (int) ($authenticatedUser['id'] ?? 0);
+    if (!$callerIsAdmin && $requestedStudentId !== $callerId) {
+        send_response("Forbidden", 403);
         return;
     }
     
@@ -566,7 +489,7 @@ function getStudentProgressOverTime($studentId) {
     ";
     
     $stmt = $mysqli->prepare($progressQuery);
-    $stmt->bind_param("i", $studentId);
+    $stmt->bind_param("i", $requestedStudentId);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -629,169 +552,6 @@ function getStudentProgressOverTime($studentId) {
         'weeklyAverages' => $weeklyAverages,
         'totalResponses' => count($progressData),
         'overallAverage' => $count > 0 ? round($totalRagValue / $count, 2) : 0
-    ];
-    
-    send_response(json_encode($response), 200);
-}
-
-/**
- * Analyze different types of improvement for a student
- */
-function getImprovementAnalysis($studentId) {
-    global $mysqli;
-    
-    if (empty($studentId)) {
-        send_response("Student ID parameter required", 400);
-        return;
-    }
-    
-    // Type 1: Same question retry improvements
-    $retryImprovementQuery = "
-        SELECT 
-            COUNT(*) as retryImprovements,
-            GROUP_CONCAT(DISTINCT q.question SEPARATOR '; ') as improvedQuestions
-        FROM tblresponse r1
-        JOIN tblresponse r2 ON r1.user_id = r2.user_id AND r1.question_id = r2.question_id
-        JOIN tblquestion q ON r1.question_id = q.id
-        WHERE r1.user_id = ? 
-        AND r1.attempt_number < r2.attempt_number
-        AND r1.teacher_rating IS NOT NULL 
-        AND r2.teacher_rating IS NOT NULL
-        AND (
-            CASE 
-                WHEN r2.teacher_rating = 'G' THEN 3
-                WHEN r2.teacher_rating = 'A' THEN 2
-                WHEN r2.teacher_rating = 'R' THEN 1
-                ELSE 0
-            END
-        ) > (
-            CASE 
-                WHEN r1.teacher_rating = 'G' THEN 3
-                WHEN r1.teacher_rating = 'A' THEN 2
-                WHEN r1.teacher_rating = 'R' THEN 1
-                ELSE 0
-            END
-        )
-    ";
-    
-    $stmt = $mysqli->prepare($retryImprovementQuery);
-    $stmt->bind_param("i", $studentId);
-    $stmt->execute();
-    $retryResult = $stmt->get_result();
-    $retryData = $retryResult->fetch_assoc();
-    
-    // Type 2: Overall performance trend (comparing first half vs second half of responses)
-    $trendQuery = "
-        SELECT 
-            AVG(CASE 
-                WHEN r.teacher_rating = 'G' THEN 3
-                WHEN r.teacher_rating = 'A' THEN 2
-                WHEN r.teacher_rating = 'R' THEN 1
-                ELSE 0
-            END) as overallAverage,
-            COUNT(*) as totalRated
-        FROM tblresponse r
-        WHERE r.user_id = ? AND r.teacher_rating IS NOT NULL
-    ";
-    
-    $stmt = $mysqli->prepare($trendQuery);
-    $stmt->bind_param("i", $studentId);
-    $stmt->execute();
-    $trendResult = $stmt->get_result();
-    $trendData = $trendResult->fetch_assoc();
-    
-    // Get first half vs second half performance - using simpler approach
-    $countQuery = "SELECT COUNT(*) as total FROM tblresponse WHERE user_id = ? AND teacher_rating IS NOT NULL";
-    $countStmt = $mysqli->prepare($countQuery);
-    $countStmt->bind_param("i", $studentId);
-    $countStmt->execute();
-    $countResult = $countStmt->get_result();
-    $totalCount = $countResult->fetch_assoc()['total'];
-    $halfPoint = ceil($totalCount / 2);
-    
-    // Simplified approach - get all responses and calculate in PHP
-    $allResponsesQuery = "
-        SELECT 
-            CASE 
-                WHEN teacher_rating = 'G' THEN 3
-                WHEN teacher_rating = 'A' THEN 2
-                WHEN teacher_rating = 'R' THEN 1
-                ELSE 0
-            END as rag_value
-        FROM tblresponse
-        WHERE user_id = ? AND teacher_rating IS NOT NULL
-        ORDER BY created_at
-    ";
-    
-    $stmt = $mysqli->prepare($allResponsesQuery);
-    $stmt->bind_param("i", $studentId);
-    $stmt->execute();
-    $allResult = $stmt->get_result();
-    
-    $allResponses = [];
-    while ($row = $allResult->fetch_assoc()) {
-        $allResponses[] = (int)$row['rag_value'];
-    }
-    
-    $firstHalfAvg = 0;
-    $secondHalfAvg = 0;
-    
-    if (count($allResponses) > 0) {
-        $firstHalf = array_slice($allResponses, 0, $halfPoint);
-        $secondHalf = array_slice($allResponses, $halfPoint);
-        
-        $firstHalfAvg = count($firstHalf) > 0 ? array_sum($firstHalf) / count($firstHalf) : 0;
-        $secondHalfAvg = count($secondHalf) > 0 ? array_sum($secondHalf) / count($secondHalf) : 0;
-    }
-    
-    // Calculate improvement trend
-    $improvementTrend = $secondHalfAvg - $firstHalfAvg;
-    
-    // Type 3: Subject-specific improvements
-    $subjectQuery = "
-        SELECT 
-            s.subject,
-            AVG(CASE 
-                WHEN r.teacher_rating = 'G' THEN 3
-                WHEN r.teacher_rating = 'A' THEN 2
-                WHEN r.teacher_rating = 'R' THEN 1
-                ELSE 0
-            END) as subject_average,
-            COUNT(*) as attempts
-        FROM tblresponse r
-        JOIN tblquestion q ON r.question_id = q.id
-        JOIN tbltopic t ON q.topicid = t.id
-        JOIN tblsubject s ON t.subjectid = s.id
-        WHERE r.user_id = ? AND r.teacher_rating IS NOT NULL
-        GROUP BY s.subject
-        ORDER BY subject_average DESC
-    ";
-    
-    $stmt = $mysqli->prepare($subjectQuery);
-    $stmt->bind_param("i", $studentId);
-    $stmt->execute();
-    $subjectResult = $stmt->get_result();
-    
-    $subjectPerformance = [];
-    while ($row = $subjectResult->fetch_assoc()) {
-        $subjectPerformance[] = [
-            'subject' => $row['subject'],
-            'average' => round($row['subject_average'], 2),
-            'attempts' => (int)$row['attempts']
-        ];
-    }
-    
-    $response = [
-        'retryImprovements' => (int)$retryData['retryImprovements'],
-        'improvedQuestions' => $retryData['improvedQuestions'] ?? '',
-        'overallTrend' => round($improvementTrend, 2),
-        'firstHalfAverage' => round($firstHalfAvg, 2),
-        'secondHalfAverage' => round($secondHalfAvg, 2),
-        'subjectPerformance' => $subjectPerformance,
-        'totalRatedResponses' => (int)($trendData['totalRated'] ?? 0),
-        'overallAverage' => round($trendData['overallAverage'] ?? 0, 2),
-        'totalCount' => $totalCount,
-        'halfPoint' => $halfPoint
     ];
     
     send_response(json_encode($response), 200);
