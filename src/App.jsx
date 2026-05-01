@@ -17,6 +17,11 @@ import StudentProgress from './StudentProgress.jsx';
 import ResetPassword from './ResetPassword.jsx';
 import ForcePasswordChange from './ForcePasswordChange.jsx';
 
+const AUTH_STORAGE_KEY = 'revisionbot_auth_session';
+const AUTH_TTL_MS = 120 * 60 * 1000;
+const AUTH_WARNING_MS = 5 * 60 * 1000;
+const AUTH_TICK_MS = 15000;
+
 /****************************************************************************
  * App Component
  * Main application component that manages global state and routing.
@@ -31,6 +36,9 @@ function App() {
   const [config, setConfig] = useState(null);
   const [messageApi, contextHolder] = message.useMessage();
   const [currentUser, setCurrentUser] = useState(null);
+  const [authHydrated, setAuthHydrated] = useState(false);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState(null);
+  const [sessionTimeLeftMs, setSessionTimeLeftMs] = useState(null);
   const [sendSuccessMessage, setSendSuccessMessage] = useState(false);
   const [sendErrorMessage, setSendErrorMessage] = useState(false);
   const [showAccountManager, setShowAccountManager] = useState(false);
@@ -40,6 +48,108 @@ function App() {
   const [progressMode, setProgressMode] = useState(false);
   const [dashboard, setDashboard] = useState(false);
   const [analytics, setAnalytics] = useState(false);
+
+  useEffect(() => {
+    // Restore persisted login if the session has not expired.
+    try {
+      const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (!raw) {
+        setAuthHydrated(true);
+        return;
+      }
+
+      const session = JSON.parse(raw);
+      const expiresAt = Number(session?.expiresAt || 0);
+      const user = session?.user || null;
+
+      if (!user || !expiresAt || Date.now() >= expiresAt) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        setSessionExpiresAt(null);
+        setSessionTimeLeftMs(null);
+        setAuthHydrated(true);
+        return;
+      }
+
+      setCurrentUser(user);
+      setSessionExpiresAt(expiresAt);
+      setSessionTimeLeftMs(expiresAt - Date.now());
+    } catch (error) {
+      console.error('Error restoring auth session:', error);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      setSessionExpiresAt(null);
+      setSessionTimeLeftMs(null);
+    } finally {
+      setAuthHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Persist or clear auth session after initial hydration.
+    if (!authHydrated) {
+      return;
+    }
+
+    if (!currentUser) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      setSessionExpiresAt(null);
+      setSessionTimeLeftMs(null);
+      return;
+    }
+
+    const expiresAt = Date.now() + AUTH_TTL_MS;
+    const session = {
+      user: currentUser,
+      expiresAt,
+    };
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+    setSessionExpiresAt(expiresAt);
+    setSessionTimeLeftMs(expiresAt - Date.now());
+  }, [currentUser, authHydrated]);
+
+  useEffect(() => {
+    if (!currentUser || !sessionExpiresAt) {
+      return;
+    }
+
+    const updateTimeLeft = () => {
+      const remaining = sessionExpiresAt - Date.now();
+      if (remaining <= 0) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        setSessionExpiresAt(null);
+        setSessionTimeLeftMs(0);
+        setCurrentUser(null);
+        setSendErrorMessage('Your session has expired. Please log in again.');
+        return;
+      }
+
+      setSessionTimeLeftMs(remaining);
+    };
+
+    updateTimeLeft();
+    const intervalId = window.setInterval(updateTimeLeft, AUTH_TICK_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [currentUser, sessionExpiresAt]);
+
+  const formatSessionTime = (timeMs) => {
+    if (!timeMs || timeMs <= 0) {
+      return '00:00';
+    }
+
+    const totalSeconds = Math.ceil(timeMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const showSessionWarning = !!(
+    currentUser &&
+    sessionTimeLeftMs !== null &&
+    sessionTimeLeftMs > 0 &&
+    sessionTimeLeftMs <= AUTH_WARNING_MS
+  );
 
 
   useEffect(() => {
@@ -94,7 +204,7 @@ useEffect(() => {
   return (
     <>
     {contextHolder}
-    { !config && <Spin size="large" /> }
+    { (!config || !authHydrated) && <Spin size="large" /> }
     { config && !currentUser && currentPath === '/reset-password' && (
       <div className="App">
         <ResetPassword
@@ -154,6 +264,12 @@ useEffect(() => {
                     currentUser={currentUser} />
         </div>
         </div>
+
+        {showSessionWarning && (
+          <div className="session-expiry-banner" role="status" aria-live="polite">
+            Session expires in {formatSessionTime(sessionTimeLeftMs)}. Save your work to avoid losing progress.
+          </div>
+        )}
 
         {showAccountManager && (
 
