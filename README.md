@@ -1,9 +1,9 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.4.1** — April 2026
+**Version 0.4.4** — May 2026
 
-A comprehensive web-based educational assessment platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
+A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
 ## Features
 
@@ -16,6 +16,7 @@ A comprehensive web-based educational assessment platform featuring AI-powered f
 - **RAG Rating System**: Teachers can rate responses with Red/Amber/Green
 - **Student Reward System**: Badge achievements earned from RAG-rated performance across four tracks (Green %, Amber/Green %, No-Red streak, Green streak); displayed in the nav bar and on a dedicated My Progress page
 - **User Management**: Registration, login, role-based access control, admin-only account-state management, and class assignment; students cannot edit their own name/email/class (admin only)
+- **Session Persistence**: Login sessions survive page refreshes and tab restores for up to 2 hours via `localStorage`; a countdown banner appears in the final 5 minutes
 - **Password Recovery**: Self-service password reset with one-time tokens, expiry enforcement, reset email templates, and bcrypt password storage
 - **Forced Password Change**: Admins can require a password reset on the next login and the app blocks access until the user sets a new password
 - **Account Deactivation**: Admins can deactivate accounts without deleting student data; inactive accounts are blocked at login
@@ -683,6 +684,30 @@ const chartData = progressData.map(entry => ({
    - Foreign key constraints for data integrity
 
 ## Recent Enhancements
+
+### v0.4.4 — Session Persistence (May 2026)
+
+- Login sessions survive page refreshes and browser restores for up to 2 hours via `localStorage`
+- A session-expiry countdown banner appears in the final 5 minutes to prompt users to save work
+- Sessions are validated on page load; expired or malformed sessions are discarded silently without a crash
+- Session lifetime is controlled by `AUTH_TTL_MS` in `src/App.jsx` (default: 120 minutes); `AUTH_WARNING_MS` sets the warning threshold (default: 5 minutes)
+
+### v0.4.3 — Improved Analytics for Students and Teachers (May 2026)
+
+- **Student Progress chart**: The `My Progress` page now shows a canvas-rendered **Weekly RAG Distribution** bar chart grouping Red/Amber/Green response counts by ISO calendar week; the chart builds the week map client-side when the server does not return pre-aggregated `weeklyAverages`
+- **Analytics Module rework**: The teacher-facing analytics view has been simplified and restructured for clarity; `getAdvancedStatistics.php` has been slimmed down with redundant or overlapping endpoints removed
+- **Badge image optimisation**: All badge PNG assets have been recompressed at lower file sizes without visible quality loss
+
+### v0.4.2 — Welcome Emails and Achievement Awards in My Profile (May 2026)
+
+- **Welcome email on account creation**: New `sendWelcomeEmail.php` sends an HTML/plain-text email with login credentials when an account is created, whether by manual admin creation or bulk CSV upload; triggered from `InsertUser.php` and `bulkUploadUsers.php`
+- **Student achievement badges in My Profile**: The Account Manager now shows the student's highest earned badge per track with hover tooltips describing the achievement (e.g. `Green %: 72.5% → G-70 badge`); admin users see no badge section
+- **Class management in Admin Manager**: Full CRUD modal for `tblClass`; admins can create, rename, and delete managed classes; deletion is blocked when users are still assigned and always requires a second confirmation step
+- **User status filter**: The Admin Manager user table has an All / Active / Inactive toggle for quick filtering of account states
+- **Add user modal**: Admins can create individual user accounts directly from the Admin Manager without using the bulk-upload flow
+- **Deactivate/Reactivate confirmation modals**: Dedicated two-step confirmation dialogs for both deactivate and reactivate account-state changes
+- **Client-side MD5 hashing removed**: Passwords are now sent as plaintext over HTTPS and hashed server-side with bcrypt; the CryptoJS MD5 call in `accountManager.jsx` has been removed
+- **`sendValidateEmail.php` updated**: Validation emails now use the shared template infrastructure and consistent branding
 
 ### v0.4.1 — Password, Auth and Account-State Update (April 2026)
 

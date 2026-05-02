@@ -18,9 +18,37 @@ import ResetPassword from './ResetPassword.jsx';
 import ForcePasswordChange from './ForcePasswordChange.jsx';
 
 const AUTH_STORAGE_KEY = 'revisionbot_auth_session';
-const AUTH_TTL_MS = 120 * 60 * 1000;
-const AUTH_WARNING_MS = 5 * 60 * 1000;
-const AUTH_TICK_MS = 15000;
+const AUTH_TTL_MS = 120 * 60 * 1000;   // 2-hour session lifetime
+const AUTH_WARNING_MS = 5 * 60 * 1000; // show banner when ≤5 minutes remain
+const AUTH_TICK_MS = 15000;             // countdown refreshes every 15 s
+
+const getStoredSession = () => {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.error('Unable to read auth session from localStorage:', error);
+    return null;
+  }
+};
+
+const setStoredSession = (session) => {
+  try {
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+    return true;
+  } catch (error) {
+    console.error('Unable to write auth session to localStorage:', error);
+    return false;
+  }
+};
+
+const clearStoredSession = () => {
+  try {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (error) {
+    console.error('Unable to clear auth session from localStorage:', error);
+  }
+};
 
 /****************************************************************************
  * App Component
@@ -52,18 +80,18 @@ function App() {
   useEffect(() => {
     // Restore persisted login if the session has not expired.
     try {
-      const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (!raw) {
+      const session = getStoredSession();
+      if (!session) {
         setAuthHydrated(true);
         return;
       }
 
-      const session = JSON.parse(raw);
       const expiresAt = Number(session?.expiresAt || 0);
       const user = session?.user || null;
+      const hasRequiredUserFields = !!(user && user.id && user.token);
 
-      if (!user || !expiresAt || Date.now() >= expiresAt) {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+      if (!hasRequiredUserFields || !expiresAt || Date.now() >= expiresAt) {
+        clearStoredSession();
         setSessionExpiresAt(null);
         setSessionTimeLeftMs(null);
         setAuthHydrated(true);
@@ -75,7 +103,7 @@ function App() {
       setSessionTimeLeftMs(expiresAt - Date.now());
     } catch (error) {
       console.error('Error restoring auth session:', error);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      clearStoredSession();
       setSessionExpiresAt(null);
       setSessionTimeLeftMs(null);
     } finally {
@@ -90,7 +118,7 @@ function App() {
     }
 
     if (!currentUser) {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      clearStoredSession();
       setSessionExpiresAt(null);
       setSessionTimeLeftMs(null);
       return;
@@ -101,7 +129,13 @@ function App() {
       user: currentUser,
       expiresAt,
     };
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+    if (!setStoredSession(session)) {
+      // If persistence fails, fall back to non-persistent session without crashing.
+      setSessionExpiresAt(null);
+      setSessionTimeLeftMs(null);
+      return;
+    }
+
     setSessionExpiresAt(expiresAt);
     setSessionTimeLeftMs(expiresAt - Date.now());
   }, [currentUser, authHydrated]);
@@ -114,7 +148,7 @@ function App() {
     const updateTimeLeft = () => {
       const remaining = sessionExpiresAt - Date.now();
       if (remaining <= 0) {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+        clearStoredSession();
         setSessionExpiresAt(null);
         setSessionTimeLeftMs(0);
         setCurrentUser(null);
@@ -200,12 +234,21 @@ useEffect(() => {
     }
   }, [currentUser]);
 
+  // Prevent child modules from mounting until config and auth hydration are ready.
+  if (!config || !authHydrated) {
+    return (
+      <>
+        {contextHolder}
+        <Spin size="large" />
+      </>
+    );
+  }
+
 
   return (
     <>
     {contextHolder}
-    { (!config || !authHydrated) && <Spin size="large" /> }
-    { config && !currentUser && currentPath === '/reset-password' && (
+    { !currentUser && currentPath === '/reset-password' && (
       <div className="App">
         <ResetPassword
           config={config}
@@ -214,7 +257,7 @@ useEffect(() => {
         />
       </div>
       )}
-    { config && !currentUser && currentPath !== '/reset-password' && (
+    { !currentUser && currentPath !== '/reset-password' && (
       <div className="App">
         <Login config={config} setCurrentUser={setCurrentUser} 
                 setSendSuccessMessage={setSendSuccessMessage} 

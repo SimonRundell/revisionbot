@@ -62,7 +62,7 @@ function StudentProgressChart({ data }) {
       const d = new Date(entry.date);
       const year = d.getUTCFullYear();
       const oneJan = new Date(Date.UTC(year, 0, 1));
-      const day = oneJan.getUTCDay() || 7;
+      const day = oneJan.getUTCDay() || 7; // ISO-8601: Sunday is 0 in JS but 7 in the standard
       const week = Math.ceil((((d - oneJan) / 86400000) + day) / 7);
       const weekKey = `${year}-${String(week).padStart(2, '0')}`;
 
