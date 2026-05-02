@@ -1,8 +1,9 @@
-  <h2>Beta Test Version 0.4.4</h2>
+  <h2>Beta Test Version 0.4.5</h2>
   <div class="motd-notice">
   <p>Please report any issues to the development team: <a class="little-button" href="https://forms.microsoft.com/e/H10SRY6eRx">Report an issue</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Responsive design for tablets, desktops and phones</li>
   <li>2 Hour Session persistance</li>
   <li>Improved analytics for teachers and students</li>
   <li>Welcome emails to new users</li>

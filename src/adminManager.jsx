@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useMemo} from 'react'
 import axios from 'axios'
 import {Drawer, Spin} from 'antd'
 import CryptoJS from 'crypto-js'
@@ -74,7 +74,17 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
     const [editingClass, setEditingClass] = useState(null);
     const [classToDelete, setClassToDelete] = useState(null);
     const [deleteClassModalVisible, setDeleteClassModalVisible] = useState(false);
-    
+
+    // Message Users state
+    const [messageModalVisible, setMessageModalVisible] = useState(false);
+    const [messageTargetType, setMessageTargetType] = useState('active-students');
+    const [messageTargetClass, setMessageTargetClass] = useState('');
+    const [messageSelectedIds, setMessageSelectedIds] = useState([]);
+    const [messageSubject, setMessageSubject] = useState('');
+    const [messageBody, setMessageBody] = useState('');
+    const [messageSending, setMessageSending] = useState(false);
+    const [messageResult, setMessageResult] = useState(null);
+
     // Filter states
     const [userFilter, setUserFilter] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
@@ -97,6 +107,24 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         
         return matchesName && matchesDepartment && matchesType && matchesStatus;
     });
+
+    // Compute message recipients based on the current target selection
+    const messageRecipients = useMemo(() => {
+        const active = users.filter(u => Number(u.is_active) !== 0);
+        switch (messageTargetType) {
+            case 'all-active':
+                return active;
+            case 'active-students':
+                return active.filter(u => !u.admin);
+            case 'by-class':
+                if (!messageTargetClass) return [];
+                return active.filter(u => (u.userClass ?? u.userLocation ?? '') === messageTargetClass);
+            case 'individuals':
+                return users.filter(u => messageSelectedIds.includes(u.id));
+            default:
+                return [];
+        }
+    }, [users, messageTargetType, messageTargetClass, messageSelectedIds]);
 
   useEffect(() => {
     const apiCall = () => axios.post(
@@ -958,6 +986,48 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         }
     };
 
+    const closeMessageModal = () => {
+        setMessageModalVisible(false);
+        setMessageSubject('');
+        setMessageBody('');
+        setMessageTargetType('active-students');
+        setMessageTargetClass('');
+        setMessageSelectedIds([]);
+        setMessageResult(null);
+    };
+
+    const handleSendMessage = async () => {
+        if (!messageSubject.trim()) { setSendErrorMessage('Please enter a subject.'); return; }
+        if (!messageBody.trim()) { setSendErrorMessage('Please enter a message body.'); return; }
+        if (messageRecipients.length === 0) { setSendErrorMessage('No recipients selected.'); return; }
+
+        setMessageSending(true);
+        setMessageResult(null);
+        try {
+            const response = await axios.post(
+                config.api + '/sendAdminMessage.php',
+                {
+                    userIds: messageRecipients.map(u => u.id),
+                    subject: messageSubject,
+                    body: messageBody,
+                },
+                { headers: createJsonHeaders(currentUser) }
+            );
+            const result = parseApiResponse(response.data, null, null, '', 'Failed to send messages.');
+            if (result) {
+                setMessageResult(result);
+                if (result.sent > 0) {
+                    setSendSuccessMessage(`${result.sent} message(s) sent successfully.`);
+                }
+            }
+        } catch (error) {
+            console.error('Error sending admin message:', error);
+            setSendErrorMessage('Failed to send messages.');
+        } finally {
+            setMessageSending(false);
+        }
+    };
+
     return (
         <>
             {isLoading && <div className="central-overlay-spinner">
@@ -976,24 +1046,30 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 <div className="admin-actions-bar">
                     <button 
                         onClick={showAddUserModal}
-                        className="bulk-upload-button"
+                        className="bulk-upload-button rightgap"
                     >
                         ➕ Add User
                     </button>
                     <button 
                         onClick={showBulkUploadModal}
-                        className="bulk-upload-button leftgap"
+                        className="bulk-upload-button rightgap"
                     >
                         📤 Bulk Upload Students
                     </button>
                     <button
                         onClick={openClassModal}
-                        className="bulk-upload-button leftgap"
+                        className="bulk-upload-button rightgap"
                     >
                         🏫 Manage Classes
                     </button>
+                    <button
+                        onClick={() => setMessageModalVisible(true)}
+                        className="bulk-upload-button rightgap"
+                    >
+                        📧 Message Users
+                    </button>
                     <span className="admin-actions-description">
-                        Add individual users manually, upload multiple student accounts from CSV file, or manage class options
+                        Add individual users manually, upload multiple student accounts from CSV file, manage class options, or send messages to groups and individuals
                     </span>
                 </div>
 
@@ -1067,15 +1143,16 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                     )}
                 </div>
 
-                <table border="1">
+                <div className="admin-table-wrapper">
+                <table border="1" className="admin-user-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th className="col-id">ID</th>
                             <th>User Name</th>
                             <th>Email</th>
                             <th>Class</th>
-                            <th>Locale</th>
-                            <th>Avatar</th>
+                            <th className="col-locale">Locale</th>
+                            <th className="col-avatar">Avatar</th>
                             <th>Level</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -1084,12 +1161,12 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                     <tbody>
                         {filteredUsers.map(user => (
                             <tr key={user.id}>
-                                <td>{user.id}</td>
+                                <td className="col-id">{user.id}</td>
                                 <td>{user.userName}</td>
                                 <td>{user.email}</td>
                                 <td>{user.userClass ?? user.userLocation ?? ''}</td>
-                                <td>{user.userLocale}</td>
-                                <td><img className="user-avatar" src={user.avatar || '/default_avatar.png'} alt={user.userName} /></td>
+                                <td className="col-locale">{user.userLocale}</td>
+                                <td className="col-avatar"><img className="user-avatar" src={user.avatar || '/default_avatar.png'} alt={user.userName} /></td>
                                 <td>{user.admin ? 'Admin' : 'User'}</td>
                                 <td>
                                     {Number(user.is_active) === 0 ? 'Inactive' : 'Active'}
@@ -1101,25 +1178,25 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     )}
                                 </td>
                                 <td>
-                                    {/* Add action buttons here, e.g., Edit, Delete */}
-                                    <button className="admin-action-btn admin-action-edit" onClick={() => showEditModal(user)}>Edit</button>
+                                    <button className="admin-action-btn rightgap bottomgap admin-action-edit" onClick={() => showEditModal(user)}>Edit</button>
                                     {Number(user.is_active) !== 0 && (
                                         <button
-                                            className="leftgap admin-action-btn admin-action-require"
+                                            className="rightgap bottomgap admin-password-change-width admin-action-btn admin-action-require"
                                             onClick={() => handleForcePasswordChange(user)}
                                             disabled={Number(user.force_pw_change) === 1}
                                         >
                                             {Number(user.force_pw_change) === 1 ? 'Password Change Requested' : 'Require Password Change'}
                                         </button>
                                     )}
-                                    {Number(user.is_active) !== 0 && <button className="leftgap admin-action-btn admin-action-deactivate" onClick={() => showDeactivateConfirmation(user)}>Deactivate</button>}
-                                    {Number(user.is_active) === 0 && <button className="leftgap admin-action-btn admin-action-reactivate" onClick={() => showReactivateConfirmation(user)}>Reactivate</button>}
-                                    <button className="leftgap admin-action-btn admin-action-delete" onClick={() => showDeleteConfirmation(user)}>Delete</button>
+                                    {Number(user.is_active) !== 0 && <button className="rightgap bottomgap admin-action-btn admin-action-deactivate" onClick={() => showDeactivateConfirmation(user)}>Deactivate</button>}
+                                    {Number(user.is_active) === 0 && <button className="rightgap bottomgap admin-action-btn admin-action-reactivate" onClick={() => showReactivateConfirmation(user)}>Reactivate</button>}
+                                    <button className="rightgap bottomgap admin-action-btn admin-action-delete" onClick={() => showDeleteConfirmation(user)}>Delete</button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
-                </table>    
+                </table>
+                </div>
             </Drawer>
             
             {/* Delete Confirmation Modal */}
@@ -1707,18 +1784,132 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                         )}
 
                         <div className="form-group-button">
-                            <button 
+                            <button
                                 onClick={handleBulkUpload}
                                 disabled={!selectedFile || isLoading}
                                 className="bulk-upload-submit-button"
                             >
                                 {isLoading ? 'Processing...' : 'Upload Students'}
                             </button>
-                            <button 
+                            <button
                                 onClick={closeBulkUploadModal}
                                 className="topgap"
                                 disabled={isLoading}
                             >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Message Users Modal */}
+            {messageModalVisible && (
+                <div className="modal">
+                    <div className="modal-content message-modal">
+                        <span className="close" onClick={closeMessageModal}>&times;</span>
+                        <h2>📧 Message Users</h2>
+
+                        <div className="form-group">
+                            <label><strong>Send to:</strong></label>
+                            <select
+                                className="filter-select"
+                                value={messageTargetType}
+                                onChange={(e) => {
+                                    setMessageTargetType(e.target.value);
+                                    setMessageSelectedIds([]);
+                                    setMessageTargetClass('');
+                                }}
+                            >
+                                <option value="active-students">All active students</option>
+                                <option value="all-active">All active users (students + admins)</option>
+                                <option value="by-class">A specific class</option>
+                                <option value="individuals">Select individuals</option>
+                            </select>
+                        </div>
+
+                        {messageTargetType === 'by-class' && (
+                            <div className="form-group">
+                                <label><strong>Class:</strong></label>
+                                <select
+                                    className="filter-select"
+                                    value={messageTargetClass}
+                                    onChange={(e) => setMessageTargetClass(e.target.value)}
+                                >
+                                    <option value="">-- Select a class --</option>
+                                    {classes.map(c => (
+                                        <option key={c.id} value={c.className}>{c.className}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {messageTargetType === 'individuals' && (
+                            <div className="form-group">
+                                <label><strong>Select recipients:</strong></label>
+                                <div className="message-individual-list">
+                                    {users.filter(u => Number(u.is_active) !== 0).map(u => (
+                                        <label key={u.id} className="message-individual-item">
+                                            <input
+                                                type="checkbox"
+                                                checked={messageSelectedIds.includes(u.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setMessageSelectedIds(prev => [...prev, u.id]);
+                                                    } else {
+                                                        setMessageSelectedIds(prev => prev.filter(id => id !== u.id));
+                                                    }
+                                                }}
+                                            />
+                                            {u.userName} — {u.email}{u.userClass ? ` (${u.userClass})` : ''}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="message-recipient-count">
+                            Will send to <strong>{messageRecipients.length}</strong> recipient{messageRecipients.length !== 1 ? 's' : ''}
+                        </div>
+
+                        <div className="form-group">
+                            <label><strong>Subject:</strong></label>
+                            <input
+                                type="text"
+                                className="filter-input"
+                                value={messageSubject}
+                                onChange={(e) => setMessageSubject(e.target.value)}
+                                placeholder="Email subject..."
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label><strong>Message:</strong></label>
+                            <p className="message-hint">Use <code>{'{{NAME}}'}</code> to personalise with each recipient&apos;s name.</p>
+                            <textarea
+                                className="message-body-textarea"
+                                rows={8}
+                                value={messageBody}
+                                onChange={(e) => setMessageBody(e.target.value)}
+                                placeholder={'Dear {{NAME}},\n\n...'}
+                            />
+                        </div>
+
+                        {messageResult && (
+                            <div className={`bulk-upload-progress-container ${messageResult.failed > 0 ? 'bulk-upload-progress-error' : 'bulk-upload-progress-success'}`}>
+                                {messageResult.message}
+                            </div>
+                        )}
+
+                        <div className="form-group-button">
+                            <button
+                                onClick={handleSendMessage}
+                                disabled={messageSending || messageRecipients.length === 0}
+                                className="bulk-upload-submit-button"
+                            >
+                                {messageSending ? 'Sending…' : `Send to ${messageRecipients.length} recipient${messageRecipients.length !== 1 ? 's' : ''}`}
+                            </button>
+                            <button onClick={closeMessageModal} className="topgap" disabled={messageSending}>
                                 Cancel
                             </button>
                         </div>

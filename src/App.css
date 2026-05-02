@@ -701,7 +701,6 @@ tbody tr td {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background-color: #282c34;
   padding-top: 1rem; /* Reduced padding for robot overlap */
   z-index: 98; /* Lower than robot */
   position: relative;
@@ -731,6 +730,14 @@ TWEAKS
 
 .leftgap{
   margin-left: 5px;
+}
+
+.bottomgap{
+  margin-bottom: 5px;
+}
+
+.rightgap{
+  margin-right: 5px;
 }
 
 .nogap {
@@ -1701,17 +1708,27 @@ RESPONSIVE STYLES FOR STEAMPUNK LAYOUT
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .quiz-builder-header {
     flex-direction: column;
     gap: 15px;
     align-items: flex-start;
   }
-  
+
+  /* Shrink the header on tablets so content is visible sooner */
+  .app-header {
+    min-height: 220px;
+  }
+
+  /* Allow the account block + menu to wrap onto two rows if needed */
+  .steampunk-menu-bar {
+    flex-wrap: wrap;
+  }
+
   /* Steampunk layout adjustments for tablet */
   .steampunk-menu-bar {
     padding: 20px;
@@ -1765,6 +1782,11 @@ RESPONSIVE STYLES FOR STEAMPUNK LAYOUT
 
 /* Mobile Styles */
 @media (max-width: 480px) {
+  /* Let the header shrink to fit content; robot is already tiny at this width */
+  .app-header {
+    min-height: 0;
+  }
+
   /* Steampunk layout adjustments for mobile */
   .steampunk-menu-bar {
     padding: 15px 10px;
@@ -3633,17 +3655,19 @@ ANSWER MODAL STYLING
   
   .answer-modal-content {
     width: 95%;
-    margin: 10px;
-    font-size: 0.5em;
+    max-width: 95vw;
+    margin: 10px auto;
+    /* font-size intentionally not reduced here — 0.5em made text ~8px which is unreadable */
   }
-  
+
   .answer-modal-body {
-    padding: 20px;
+    padding: 16px;
   }
-  
+
   .answer-modal-footer {
     flex-direction: column;
     gap: 10px;
+    padding: 12px 16px;
   }
 }
 
@@ -3888,6 +3912,10 @@ BULK UPLOAD MODAL AND BUTTON STYLES
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
 
+.admin-password-change-width {
+  width: 190px;
+}
+
 .admin-action-edit:hover:not(:disabled) {
   background-color: #1677ff;
   border-color: #69b1ff;
@@ -3921,6 +3949,62 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 
 .edit-modal-large {
   max-width: 700px;
+}
+
+/* Message Users Modal */
+.message-modal {
+  max-width: 680px;
+}
+
+.message-individual-list {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: #fafafa;
+}
+
+.message-individual-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.message-individual-item input[type="checkbox"] {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.message-recipient-count {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #0050b3;
+}
+
+.message-body-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  color: #333;
+}
+
+.message-hint {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #666;
 }
 
 .class-modal-large {
@@ -4921,4 +5005,214 @@ ANALYTICS MODULE STYLING
   gap: 10px;
   font-size: 14px;
   color: #333;
+}
+
+/************************************************
+
+  MOBILE & TABLET RESPONSIVE — ADMIN USER TABLE
+
+*************************************************/
+
+/* Wrap the table to allow horizontal scrolling on narrow screens */
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.admin-user-table {
+  min-width: 700px; /* Prevent columns squashing below a readable minimum */
+  white-space: nowrap;
+}
+
+/* Action cells should wrap so buttons don't form an endless horizontal line */
+.admin-user-table td:last-child {
+  white-space: normal;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  /* Hide the ID and Locale columns on tablets — they save space without losing key info */
+  .admin-user-table .col-id,
+  .admin-user-table .col-locale {
+    display: none;
+  }
+
+  /* Tighten action buttons so they fit more easily in the cell */
+  .admin-action-btn {
+    padding: 3px 7px;
+    font-size: 11px;
+  }
+
+  /* Show the scroll hint above the table */
+  .admin-table-wrapper::before {
+    content: '← scroll to see all columns and actions →';
+    display: block;
+    text-align: center;
+    font-size: 11px;
+    color: #888;
+    padding: 4px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Also hide the Avatar column on phones — image doesn't add much at this size */
+  .admin-user-table .col-avatar {
+    display: none;
+  }
+
+  /* Stack the action buttons vertically so they're easier to tap */
+  .admin-user-table td:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 4px;
+  }
+}
+
+/************************************************
+
+  MOBILE & TABLET RESPONSIVE — MODALS
+
+*************************************************/
+
+/* Ensure all custom modals stay within the viewport */
+@media (max-width: 600px) {
+  .modal-content {
+    width: 95%;
+    max-width: 95vw;
+    margin: 5% auto;
+    padding: 15px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Wide modals (edit, class, message) should also cap at viewport width */
+  .edit-modal-large,
+  .class-modal-large,
+  .message-modal {
+    max-width: 95vw;
+    margin: 5% auto;
+  }
+
+  /* Ensure modal close button stays accessible */
+  .close {
+    position: sticky;
+    top: 0;
+  }
+}
+
+/************************************************
+
+  MOBILE & TABLET RESPONSIVE — STUDENT PROGRESS
+
+*************************************************/
+
+@media (max-width: 600px) {
+  .student-progress-page {
+    padding: 10px;
+  }
+
+  /* Shrink stat tiles to 2 columns on phones */
+  .student-progress-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .student-progress-value {
+    font-size: 1.3rem;
+  }
+
+  /* Badge grid: 2 columns on phones */
+  .student-badge-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+  }
+
+  .student-badge-item img {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/************************************************
+
+  MOBILE & TABLET RESPONSIVE — ACCOUNT MANAGER
+
+*************************************************/
+
+@media (max-width: 600px) {
+  /* Drawer is 99% wide — just ensure form inputs fill it */
+  .account-manager-form .filter-input,
+  .account-manager-form input[type="text"],
+  .account-manager-form input[type="email"],
+  .account-manager-form input[type="password"],
+  .account-manager-form select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Achievement badges in account: allow them to scroll horizontally */
+  .account-badge-strip {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+/************************************************
+
+  MOBILE & TABLET RESPONSIVE — GENERAL TOUCH TARGETS
+
+*************************************************/
+
+/* Buttons should be at least 44px tall on touch devices for comfortable tapping */
+@media (max-width: 768px) {
+  .bulk-upload-button,
+  .bulk-upload-submit-button,
+  .admin-action-btn,
+  .btn-secondary,
+  .delete-button-danger {
+    min-height: 36px;
+  }
+
+  /* Search/filter inputs: full width on tablets */
+  .search-filters .filter-input,
+  .search-filters .filter-select {
+    width: 100%;
+  }
+
+  /* Prevent the session-expiry banner text overflowing into action area */
+  .session-expiry-banner {
+    word-break: break-word;
+  }
+}
+
+/************************************************
+
+  MOBILE — ANSWER MODAL CONTENT LEGIBILITY
+
+*************************************************/
+
+@media (max-width: 480px) {
+  /* Ensure the modal body is fully scrollable when keyboard is open */
+  .answer-modal-content {
+    max-height: 85vh;
+  }
+
+  .answer-modal-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tiptap / rich-text editor inside the modal: comfortable line height */
+  .answer-modal-body .ProseMirror {
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100px;
+  }
 }

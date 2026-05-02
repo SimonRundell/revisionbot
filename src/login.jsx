@@ -156,12 +156,14 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
               </div>
             </form>
               <div className="login-link-row">
-                <button type="button" className="link-button" onClick={() => setShowForgotPassword(true)}>
+                <button type="button" className="link-button" onClick={() => setShowForgotPassword(true)} className="little-button">
                   Forgot password?
                 </button>
               </div>
               {/* <div className="topgap">
-                <button onClick={() => setShowRegister(true)}>Register</button>
+                <button onClick={() => setShowRegister(true)} className="little-button">
+                  Register
+                </button>
               </div> */}
             </div>
             <div className="motd" dangerouslySetInnerHTML={{ __html: motdContent }} />

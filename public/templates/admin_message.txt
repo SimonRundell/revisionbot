@@ -1,0 +1,14 @@
+{{SUBJECT}}
+
+Dear {{NAME}},
+
+{{MESSAGE_BODY}}
+
+---
+Access the application: {{APP_URL}}
+
+This message was sent by your AI Revision Bot administrator.
+Please do not reply to this email.
+
+Best regards,
+AI Revision Bot

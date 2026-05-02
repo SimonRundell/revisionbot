@@ -114,6 +114,7 @@ A comprehensive web-based educational revision platform featuring AI-powered fee
 - `saveTeacherFeedback.php` - Admin: Save teacher feedback and ratings
 - `bulkUploadUsers.php` - Admin: Bulk upload student accounts from CSV
 - `getStudentRewards.php` - Compute badge achievements and stats for a student
+- `sendAdminMessage.php` - Admin: Send a custom personalised email to one or more users
 
 ### Security Notes
 
@@ -170,6 +171,7 @@ All API endpoints are now protected against direct browser access while maintain
 - `createClass.php` - Admin: create class records in `tblClass`
 - `updateClass.php` - Admin: rename classes and migrate assigned users
 - `deleteClass.php` - Admin: delete unassigned classes from `tblClass`
+- `sendAdminMessage.php` - Admin: send personalised email to selected users
 
 #### 🟡 **BASIC SECURITY (blockDirectAccess)**
 *Blocks casual browsing but allows legitimate API calls*
