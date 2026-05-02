@@ -156,7 +156,7 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
               </div>
             </form>
               <div className="login-link-row">
-                <button type="button" className="link-button" onClick={() => setShowForgotPassword(true)} className="little-button">
+                <button type="button" className="link-button little-button" onClick={() => setShowForgotPassword(true)}>
                   Forgot password?
                 </button>
               </div>
