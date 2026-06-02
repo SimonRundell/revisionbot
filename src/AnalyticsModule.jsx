@@ -178,6 +178,65 @@ const StudentProgressChart = ({ data }) => {
  * @returns {JSX.Element} The AnalyticsModule component
 ****************************************************************************/
 
+/**
+ * Compute a signed RAG score as a percentage (-100 to +100).
+ * Red=-1, Amber=0, Green=+1, normalised by rated questions only.
+ * Returns null when no rated questions exist.
+ * @param {number} red
+ * @param {number} amber
+ * @param {number} green
+ * @returns {number|null}
+ */
+const ragScore = (red, amber, green) => {
+    const total = red + amber + green;
+    if (total === 0) return null;
+    const score = Math.round((green - red) / total * 100);
+    return Number.isNaN(score) ? 0 : score;
+};
+
+/**
+ * Return a sorted copy of arr. getValue(item, key) overrides direct key access.
+ * @param {Array} arr
+ * @param {string|null} key
+ * @param {'asc'|'desc'} dir
+ * @param {Function} [getValue]
+ * @returns {Array}
+ */
+const sortData = (arr, key, dir, getValue) => {
+    if (!key) return arr;
+    return [...arr].sort((a, b) => {
+        const av = getValue ? getValue(a, key) : a[key];
+        const bv = getValue ? getValue(b, key) : b[key];
+        if (av === null || av === undefined) return 1;
+        if (bv === null || bv === undefined) return -1;
+        if (av === bv) return 0;
+        const cmp = av < bv ? -1 : 1;
+        return dir === 'asc' ? cmp : -cmp;
+    });
+};
+
+/**
+ * Clickable <th> that shows a sort indicator and toggles asc/desc.
+ * @param {Object} props
+ * @param {string} props.sortKey
+ * @param {{key: string|null, dir: string}} props.config
+ * @param {Function} props.onSort
+ */
+const SortTh = ({ children, sortKey, config, onSort }) => {
+    const isActive = config.key === sortKey;
+    return (
+        <th
+            onClick={() => onSort(sortKey)}
+            className={`sortable-th${isActive ? ' sort-active' : ''}`}
+        >
+            {children}
+            <span className="sort-indicator">
+                {isActive ? (config.dir === 'asc' ? '▲' : '▼') : '⇅'}
+            </span>
+        </th>
+    );
+};
+
 const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSuccessMessage }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedView, setSelectedView] = useState('department');
@@ -204,6 +263,26 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
 
     // Badge rewards cache: userId (string) -> rewards data from getStudentRewards.php
     const [studentRewardsCache, setStudentRewardsCache] = useState({});
+
+    // Sort state for each analytics table: { key: string|null, dir: 'asc'|'desc' }
+    const [deptStudentSort, setDeptStudentSort] = useState({ key: null, dir: 'asc' });
+    const [studentQSort, setStudentQSort] = useState({ key: null, dir: 'asc' });
+    const [questionDeptSort, setQuestionDeptSort] = useState({ key: null, dir: 'asc' });
+
+    /** Toggle sort key/direction for the department-view student table */
+    const handleDeptStudentSort = useCallback((key) => {
+        setDeptStudentSort(prev => ({ key, dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc' }));
+    }, []);
+
+    /** Toggle sort key/direction for the student-view question-attempts table */
+    const handleStudentQSort = useCallback((key) => {
+        setStudentQSort(prev => ({ key, dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc' }));
+    }, []);
+
+    /** Toggle sort key/direction for the question-view department-breakdown table */
+    const handleQuestionDeptSort = useCallback((key) => {
+        setQuestionDeptSort(prev => ({ key, dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc' }));
+    }, []);
 
     /**
      * Load departments data for analytics filtering
@@ -509,80 +588,100 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     </div>
                 </div>
 
-                {data.studentBreakdown && (
-                    <div className="table-container">
-                        <h4>Student Performance in {selectedDepartment}</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Topics</th>
-                                    <th>Questions</th>
-                                    <th>Red</th>
-                                    <th>Amber</th>
-                                    <th>Green</th>
-                                    <th>Badges</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.studentBreakdown.map((student, index) => {
-                                    // Find the actual student ID from the students array
-                                    const studentData = students.find(s => s.userName === student.name);
-                                    const studentId = studentData ? studentData.id : null;
-                                    const rewards = studentId ? studentRewardsCache[studentId.toString()] : null;
-                                    const badges = rewards ? getHighestBadges(rewards) : null;
+                {data.studentBreakdown && (() => {
+                    const sortedStudents = sortData(
+                        data.studentBreakdown,
+                        deptStudentSort.key,
+                        deptStudentSort.dir,
+                        (student, key) => {
+                            if (key === 'ragScore') return ragScore(student.redCount, student.amberCount, student.greenCount) ?? -Infinity;
+                            if (key === 'badgeCount') {
+                                const sd = students.find(s => s.userName === student.name);
+                                const sid = sd ? sd.id : null;
+                                const rewards = sid ? studentRewardsCache[sid.toString()] : null;
+                                return rewards ? getHighestBadges(rewards).length : -1;
+                            }
+                            return student[key];
+                        }
+                    );
+                    return (
+                        <div className="table-container">
+                            <h4>Student Performance in {selectedDepartment}</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <SortTh sortKey="name" config={deptStudentSort} onSort={handleDeptStudentSort}>Student</SortTh>
+                                        <SortTh sortKey="topicsAnswered" config={deptStudentSort} onSort={handleDeptStudentSort}>Topics</SortTh>
+                                        <SortTh sortKey="questionsAnswered" config={deptStudentSort} onSort={handleDeptStudentSort}>Questions</SortTh>
+                                        <SortTh sortKey="redCount" config={deptStudentSort} onSort={handleDeptStudentSort}>Red</SortTh>
+                                        <SortTh sortKey="amberCount" config={deptStudentSort} onSort={handleDeptStudentSort}>Amber</SortTh>
+                                        <SortTh sortKey="greenCount" config={deptStudentSort} onSort={handleDeptStudentSort}>Green</SortTh>
+                                        <SortTh sortKey="ragScore" config={deptStudentSort} onSort={handleDeptStudentSort}>RAG Score</SortTh>
+                                        <SortTh sortKey="badgeCount" config={deptStudentSort} onSort={handleDeptStudentSort}>Badges</SortTh>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sortedStudents.map((student, index) => {
+                                        const studentData = students.find(s => s.userName === student.name);
+                                        const studentId = studentData ? studentData.id : null;
+                                        const rewards = studentId ? studentRewardsCache[studentId.toString()] : null;
+                                        const badges = rewards ? getHighestBadges(rewards) : null;
 
-                                    return (
-                                        <tr key={index}>
-                                            <td>
-                                                {studentId ? (
-                                                    <span 
-                                                        className="clickable-student-name"
-                                                        onClick={() => loadStudentProgress(studentId, student.name)}
-                                                        style={{ 
-                                                            cursor: 'pointer', 
-                                                            color: '#1890ff', 
-                                                            textDecoration: 'underline' 
-                                                        }}
-                                                        title="Click to view progress graph"
-                                                    >
-                                                        {student.name}
-                                                    </span>
-                                                ) : (
-                                                    student.name
-                                                )}
-                                            </td>
-                                            <td>{student.topicsAnswered}</td>
-                                            <td>{student.questionsAnswered}</td>
-                                            <td className="red-stat">{student.redCount} ({student.redPercent}%)</td>
-                                            <td className="amber-stat">{student.amberCount} ({student.amberPercent}%)</td>
-                                            <td className="green-stat">{student.greenCount} ({student.greenPercent}%)</td>
-                                            <td>
-                                                {!studentId ? null : !rewards ? (
-                                                    <span className="analytics-badges-loading-small">…</span>
-                                                ) : badges.length === 0 ? (
-                                                    <span className="analytics-badges-empty-small">—</span>
-                                                ) : (
-                                                    <div className="analytics-badge-strip">
-                                                        {badges.map((badge) => (
-                                                            <img
-                                                                key={badge.track}
-                                                                src={badge.src}
-                                                                alt={badge.filename.replace('.png', '')}
-                                                                className="analytics-badge-strip-img"
-                                                                title={badgeTooltip(badge, rewards)}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                        return (
+                                            <tr key={index}>
+                                                <td>
+                                                    {studentId ? (
+                                                        <span
+                                                            className="clickable-student-name"
+                                                            onClick={() => loadStudentProgress(studentId, student.name)}
+                                                            style={{
+                                                                cursor: 'pointer',
+                                                                color: '#1890ff',
+                                                                textDecoration: 'underline'
+                                                            }}
+                                                            title="Click to view progress graph"
+                                                        >
+                                                            {student.name}
+                                                        </span>
+                                                    ) : (
+                                                        student.name
+                                                    )}
+                                                </td>
+                                                <td>{student.topicsAnswered}</td>
+                                                <td>{student.questionsAnswered}</td>
+                                                <td className="red-stat">{student.redCount} ({student.redPercent}%)</td>
+                                                <td className="amber-stat">{student.amberCount} ({student.amberPercent}%)</td>
+                                                <td className="green-stat">{student.greenCount} ({student.greenPercent}%)</td>
+                                                <td className={(() => { const s = ragScore(student.redCount, student.amberCount, student.greenCount); return s === null ? '' : s > 0 ? 'green-stat' : s < 0 ? 'red-stat' : 'amber-stat'; })()}>
+                                                    {(() => { const s = ragScore(student.redCount, student.amberCount, student.greenCount); return s === null ? '—' : (s > 0 ? `+${s}%` : `${s}%`); })()}
+                                                </td>
+                                                <td>
+                                                    {!studentId ? null : !rewards ? (
+                                                        <span className="analytics-badges-loading-small">…</span>
+                                                    ) : badges.length === 0 ? (
+                                                        <span className="analytics-badges-empty-small">—</span>
+                                                    ) : (
+                                                        <div className="analytics-badge-strip">
+                                                            {badges.map((badge) => (
+                                                                <img
+                                                                    key={badge.track}
+                                                                    src={badge.src}
+                                                                    alt={badge.filename.replace('.png', '')}
+                                                                    className="analytics-badge-strip-img"
+                                                                    title={badgeTooltip(badge, rewards)}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
             </div>
         );
     };
@@ -643,33 +742,42 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     </div>
                 </div>
 
-                {data.questionAttempts && (
-                    <div className="table-container">
-                        <h4>Question Attempts</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Question</th>
-                                    <th>Topic</th>
-                                    <th>Attempts</th>
-                                    <th>Latest RAG</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.questionAttempts.map((attempt, index) => (
-                                    <tr key={index}>
-                                        <td>{attempt.question.substring(0, 50)}...</td>
-                                        <td>{attempt.topicName}</td>
-                                        <td>{attempt.attemptCount}</td>
-                                        <td className={`rag-${attempt.latestRag === 'R' ? 'red' : attempt.latestRag === 'A' ? 'amber' : attempt.latestRag === 'G' ? 'green' : 'unrated'}`}>
-                                            {attempt.latestRag === 'R' ? 'Red' : attempt.latestRag === 'A' ? 'Amber' : attempt.latestRag === 'G' ? 'Green' : 'Unrated'}
-                                        </td>
+                {data.questionAttempts && (() => {
+                    const ragOrder = { R: 1, A: 2, G: 3 };
+                    const sortedAttempts = sortData(
+                        data.questionAttempts,
+                        studentQSort.key,
+                        studentQSort.dir,
+                        (attempt, key) => key === 'latestRag' ? (ragOrder[attempt.latestRag] ?? 0) : attempt[key]
+                    );
+                    return (
+                        <div className="table-container">
+                            <h4>Question Attempts</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <SortTh sortKey="question" config={studentQSort} onSort={handleStudentQSort}>Question</SortTh>
+                                        <SortTh sortKey="topicName" config={studentQSort} onSort={handleStudentQSort}>Topic</SortTh>
+                                        <SortTh sortKey="attemptCount" config={studentQSort} onSort={handleStudentQSort}>Attempts</SortTh>
+                                        <SortTh sortKey="latestRag" config={studentQSort} onSort={handleStudentQSort}>Latest RAG</SortTh>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                </thead>
+                                <tbody>
+                                    {sortedAttempts.map((attempt, index) => (
+                                        <tr key={index}>
+                                            <td>{attempt.question.substring(0, 50)}...</td>
+                                            <td>{attempt.topicName}</td>
+                                            <td>{attempt.attemptCount}</td>
+                                            <td className={`rag-${attempt.latestRag === 'R' ? 'red' : attempt.latestRag === 'A' ? 'amber' : attempt.latestRag === 'G' ? 'green' : 'unrated'}`}>
+                                                {attempt.latestRag === 'R' ? 'Red' : attempt.latestRag === 'A' ? 'Amber' : attempt.latestRag === 'G' ? 'Green' : 'Unrated'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
 
                  * Provides comprehensive analytics views for admin users including department statistics,
                  * student performance tracking, and question analysis with interactive progress graphs.
@@ -737,37 +845,52 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     </div>
                 </div>
 
-                {data.departmentBreakdown && (
-                    <div className="table-container">
-                        <h4>Performance by Department</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Department</th>
-                                    <th>Students</th>
-                                    <th>Attempts</th>
-                                    <th>Red</th>
-                                    <th>Amber</th>
-                                    <th>Green</th>
-                                    <th>Success Rate</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.departmentBreakdown.map((dept, index) => (
-                                    <tr key={index}>
-                                        <td>{dept.department}</td>
-                                        <td>{dept.studentCount}</td>
-                                        <td>{dept.attempts}</td>
-                                        <td className="red-stat">{dept.redCount}</td>
-                                        <td className="amber-stat">{dept.amberCount}</td>
-                                        <td className="green-stat">{dept.greenCount}</td>
-                                        <td>{dept.successRate}%</td>
+                {data.departmentBreakdown && (() => {
+                    const sortedDepts = sortData(
+                        data.departmentBreakdown,
+                        questionDeptSort.key,
+                        questionDeptSort.dir,
+                        (dept, key) => {
+                            if (key === 'ragScore') return ragScore(dept.redCount, dept.amberCount, dept.greenCount) ?? -Infinity;
+                            return dept[key];
+                        }
+                    );
+                    return (
+                        <div className="table-container">
+                            <h4>Performance by Department</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <SortTh sortKey="department" config={questionDeptSort} onSort={handleQuestionDeptSort}>Department</SortTh>
+                                        <SortTh sortKey="studentCount" config={questionDeptSort} onSort={handleQuestionDeptSort}>Students</SortTh>
+                                        <SortTh sortKey="attempts" config={questionDeptSort} onSort={handleQuestionDeptSort}>Attempts</SortTh>
+                                        <SortTh sortKey="redCount" config={questionDeptSort} onSort={handleQuestionDeptSort}>Red</SortTh>
+                                        <SortTh sortKey="amberCount" config={questionDeptSort} onSort={handleQuestionDeptSort}>Amber</SortTh>
+                                        <SortTh sortKey="greenCount" config={questionDeptSort} onSort={handleQuestionDeptSort}>Green</SortTh>
+                                        <SortTh sortKey="successRate" config={questionDeptSort} onSort={handleQuestionDeptSort}>Success Rate</SortTh>
+                                        <SortTh sortKey="ragScore" config={questionDeptSort} onSort={handleQuestionDeptSort}>RAG Score</SortTh>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                </thead>
+                                <tbody>
+                                    {sortedDepts.map((dept, index) => (
+                                        <tr key={index}>
+                                            <td>{dept.department}</td>
+                                            <td>{dept.studentCount}</td>
+                                            <td>{dept.attempts}</td>
+                                            <td className="red-stat">{dept.redCount}</td>
+                                            <td className="amber-stat">{dept.amberCount}</td>
+                                            <td className="green-stat">{dept.greenCount}</td>
+                                            <td>{dept.successRate}%</td>
+                                            <td className={(() => { const s = ragScore(dept.redCount, dept.amberCount, dept.greenCount); return s === null ? '' : s > 0 ? 'green-stat' : s < 0 ? 'red-stat' : 'amber-stat'; })()}>
+                                                {(() => { const s = ragScore(dept.redCount, dept.amberCount, dept.greenCount); return s === null ? '—' : (s > 0 ? `+${s}%` : `${s}%`); })()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
             </div>
         );
     };
