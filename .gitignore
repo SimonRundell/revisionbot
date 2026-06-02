@@ -48,7 +48,7 @@ api/.config.live.json
 
 # Protect actual database exports (with real data)
 data/*.sql
-!data/newaibot_design.sql
+!data/database_template.sql
 
 # Protect CSV files that might contain real student data
 data/*.csv

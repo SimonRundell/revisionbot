@@ -1,13 +1,14 @@
 {
   "name": "revisionbot",
   "private": true,
-  "version": "0.4.6",
+  "version": "0.4.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
@@ -33,6 +34,11 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "react-doctor": "^0.2.16",
     "vite": "^6.0.5"
+  },
+  "allowScripts": {
+    "@tiptap/extension-superscript@2.27.2": true,
+    "@tiptap/extension-subscript@2.27.2": true
   }
 }

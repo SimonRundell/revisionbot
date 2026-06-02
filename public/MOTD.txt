@@ -3,13 +3,10 @@
   <p>Please report any issues to the development team: <a class="little-button" href="https://forms.microsoft.com/e/H10SRY6eRx">Report an issue</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Improvements to analytics</li>
   <li>Addition of subscript<sub>like this</sub> and superscript<sup>like this</sup></li>
   <li>Improvements to AI model: 6x Cost reduction per million tokens</li>
   <li>Responsive design for tablets, desktops and phones</li>
   <li>2 Hour Session persistance</li>
-  <li>Improved analytics for teachers and students</li>
-  <li>Welcome emails to new users</li>
-  <li>Achievement awards in 'My Profile'</li>
-  <li>Classes now handled as separate table, renamed throughout db</li>
   </ul>
   </div>
