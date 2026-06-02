@@ -1,14 +1,14 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.4.4** — May 2026
+**Version 0.4.6** — June 2026
 
 A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
 ## Features
 
 - **Student Interface**: Interactive question answering with AI feedback and randomized question selection; previously answered questions visually marked with a green ✓ badge while remaining retryable
-- **Rich Text Editing**: Questions, mark schemes, student answers, and teacher feedback support bold, italic, underline, ordered/unordered lists, code, blockquotes, undo, redo, and Tab-key indentation
+- **Rich Text Editing**: Questions, mark schemes, student answers, and teacher feedback support bold, italic, underline, subscript, superscript, ordered/unordered lists, code, blockquotes, undo, redo, and Tab-key indentation
 - **AI Assessment**: Integration with Google's Gemini 2.5 Flash for intelligent immediate feedback
 - **Multimodal Student Responses**: Students can upload graphics (PNG/JPG/GIF/BMP) as part of their answers
 - **Past Answers Review**: Students can review their previous responses, graphics, and feedback
@@ -93,7 +93,7 @@ A comprehensive web-based educational revision platform featuring AI-powered fee
 
 - Rich text content is stored as HTML and rendered in question review, student marking, and past-answer screens.
 - Existing plain-text content still displays correctly; new formatting is available when content is edited through the UI.
-- The supported formatting toolbar includes normal paragraph text, bold, italic, underline, ordered list, unordered list, inline code, blockquote, undo, and redo.
+- The supported formatting toolbar includes normal paragraph text, bold, italic, underline, subscript, superscript, ordered list, unordered list, inline code, blockquote, undo, and redo.
 
 ### API Endpoints
 
@@ -686,6 +686,12 @@ const chartData = progressData.map(entry => ({
    - Foreign key constraints for data integrity
 
 ## Recent Enhancements
+
+### v0.4.6 — Subscript and Superscript (June 2026)
+
+- **Subscript and superscript formatting** added to the TipTap rich text editor; both are available in the toolbar across all editing contexts (questions, mark schemes, student answers, teacher feedback)
+- Supports mathematical and scientific notation such as H₂O, x², E=mc²
+- Implemented via `@tiptap/extension-subscript` and `@tiptap/extension-superscript` (v2.27.2, MIT licensed)
 
 ### v0.4.4 — Session Persistence (May 2026)
 

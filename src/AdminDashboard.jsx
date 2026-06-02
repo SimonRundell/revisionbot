@@ -257,10 +257,10 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
     const getRatingColor = (rating) => {
         switch(rating) {
-            case 'R': return '#dc3545'; // Red
-            case 'A': return '#ffc107'; // Amber
-            case 'G': return '#28a745'; // Green
-            default: return '#6c757d'; // Gray
+            case 'R': return '#dc3545';
+            case 'A': return '#ffc107';
+            case 'G': return '#28a745';
+            default: return '#6c757d';
         }
     };
 
@@ -271,6 +271,28 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
             case 'G': return 'Green - Excellent';
             default: return 'Not Rated';
         }
+    };
+
+    // Extract the AI-suggested RAG rating from the stored feedback HTML.
+    // Returns 'R', 'A', 'G', or null for older responses that pre-date this feature.
+    // Handles both the correct letter format (data-rating="G") and the legacy emoji
+    // format (data-rating="🟢") that some early responses may have stored.
+    const extractAiRagSuggestion = (feedback) => {
+        if (!feedback) return null;
+        const match = feedback.match(/data-rating="([^"]+)"/i);
+        if (!match) return null;
+        const val = match[1];
+        if (val === 'R' || val.includes('🔴')) return 'R';
+        if (val === 'A' || val.includes('🟡')) return 'A';
+        if (val === 'G' || val.includes('🟢')) return 'G';
+        return null;
+    };
+
+    // Return feedback HTML with the ai-rag-suggestion div removed so the raw
+    // marker element is not visible inside the styled feedback panel.
+    const stripAiRagDiv = (feedback) => {
+        if (!feedback) return '';
+        return feedback.replace(/<div[^>]*ai-rag-suggestion[^>]*>[\s\S]*?<\/div>/i, '').trim();
     };
 
     const renderAttachments = (attachments) => {
@@ -605,13 +627,21 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
                                 <div className="feedback-section">
                                     <h3>AI Assessment & Feedback:</h3>
-                                    <div className="ai-feedback-display" dangerouslySetInnerHTML={{__html: selectedResponse.aiFeedback}}>
+                                    <div className="ai-feedback-display" dangerouslySetInnerHTML={{__html: stripAiRagDiv(selectedResponse.aiFeedback)}}>
                                     </div>
+                                    {extractAiRagSuggestion(selectedResponse.aiFeedback) && (
+                                        <div className={`ai-rag-badge ai-rag-${extractAiRagSuggestion(selectedResponse.aiFeedback).toLowerCase()}`}>
+                                            🤖 AI suggested rating:&nbsp;
+                                            {extractAiRagSuggestion(selectedResponse.aiFeedback) === 'R' && '🔴 Red'}
+                                            {extractAiRagSuggestion(selectedResponse.aiFeedback) === 'A' && '🟡 Amber'}
+                                            {extractAiRagSuggestion(selectedResponse.aiFeedback) === 'G' && '🟢 Green'}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="teacher-feedback-section">
                                     <h3>Teacher Feedback:</h3>
-                                    
+
                                     <div className="teacher-feedback-form">
                                         <div className="rating-section">
                                             <label htmlFor="teacher-rating">RAG Rating:</label>

@@ -3,6 +3,8 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
 import { sanitizeRichText } from './utils/richText';
 
 function ToolbarButton({ editor, onClick, label, iconClass, isActive, disabled = false }) {
@@ -71,6 +73,8 @@ function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme =
     extensions: [
       StarterKit,
       Underline,
+      Subscript,
+      Superscript,
       Placeholder.configure({
         placeholder,
         emptyEditorClass: 'is-editor-empty',
@@ -129,6 +133,20 @@ function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme =
           iconClass="fa-solid fa-underline"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           isActive={editor?.isActive('underline')}
+        />
+        <ToolbarButton
+          editor={editor}
+          label="Subscript"
+          iconClass="fa-solid fa-subscript"
+          onClick={() => editor.chain().focus().toggleSubscript().run()}
+          isActive={editor?.isActive('subscript')}
+        />
+        <ToolbarButton
+          editor={editor}
+          label="Superscript"
+          iconClass="fa-solid fa-superscript"
+          onClick={() => editor.chain().focus().toggleSuperscript().run()}
+          isActive={editor?.isActive('superscript')}
         />
         <ToolbarButton
           editor={editor}

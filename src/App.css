@@ -4914,6 +4914,36 @@ ANALYTICS MODULE STYLING
   }
 }
 
+/* AI-suggested RAG rating badge shown to teachers in AdminDashboard */
+.ai-rag-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.ai-rag-r {
+  background: #fff2f0;
+  color: #cf1322;
+  border-color: #ffccc7;
+}
+
+.ai-rag-a {
+  background: #fffbe6;
+  color: #d46b08;
+  border-color: #ffe58f;
+}
+
+.ai-rag-g {
+  background: #f6ffed;
+  color: #389e0d;
+  border-color: #b7eb8f;
+}
+
 /* Clickable Student Names in Analytics */
 .clickable-student-name {
   cursor: pointer !important;

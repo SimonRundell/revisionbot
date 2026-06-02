@@ -472,6 +472,10 @@ function StudentInterface ({ userId,
      * @param {string} feedback - HTML formatted AI feedback content to display
      */
     const showAIFeedback = (feedback) => {
+        // Strip the AI RAG suggestion div — students see feedback only, not the rating.
+        // Teachers see the rating badge separately in the Admin Dashboard.
+        const studentFeedback = feedback.replace(/<div[^>]*ai-rag-suggestion[^>]*>[\s\S]*?<\/div>/i, '').trim();
+
         // Create feedback modal
         const feedbackModal = document.createElement('div');
         feedbackModal.className = 'ai-feedback-modal';
@@ -510,7 +514,7 @@ function StudentInterface ({ userId,
                     ${responseSection}
                     <div class="feedback-section">
                         <h3>AI Feedback:</h3>
-                        ${feedback}
+                        ${studentFeedback}
                     </div>
                 </div>
                 <div class="ai-feedback-footer">

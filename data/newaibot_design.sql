@@ -10,8 +10,25 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `u240325118_aibot`
+-- Database: `u2440325118_aibot`
 --
+-- Schema version: 0.4.6 (June 2026)
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tblpasswordreset`
+--
+
+CREATE TABLE `tblpasswordreset` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `token` varchar(128) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -26,9 +43,9 @@ CREATE TABLE `tblquestion` (
   `markscheme` longtext DEFAULT NULL COMMENT 'Answer, from which the AI should work',
   `attachments` longtext DEFAULT NULL COMMENT 'json list of base64 encoded files (images, etc) for attachment to the question',
   `question_order` int(11) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
-
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `tblresponse`
@@ -58,8 +75,9 @@ CREATE TABLE `tblresponse` (
   `teacher_rating` enum('R','A','G') DEFAULT NULL COMMENT 'R=Red, A=Amber, G=Green',
   `teacher_feedback_timestamp` timestamp NULL DEFAULT NULL,
   `teacher_id` int(11) DEFAULT NULL COMMENT 'ID of teacher who provided feedback'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `tblsubject`
@@ -68,7 +86,9 @@ CREATE TABLE `tblresponse` (
 CREATE TABLE `tblsubject` (
   `id` int(11) NOT NULL,
   `subject` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `tbltopic`
@@ -78,10 +98,9 @@ CREATE TABLE `tbltopic` (
   `id` int(11) NOT NULL,
   `subjectid` int(11) NOT NULL,
   `topic` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
---
------
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `tbluser`
@@ -92,15 +111,19 @@ CREATE TABLE `tbluser` (
   `email` varchar(255) NOT NULL,
   `passwordHash` varchar(255) NOT NULL,
   `userName` varchar(255) DEFAULT NULL,
-  `userLocation` varchar(255) DEFAULT NULL,
+  `userClass` varchar(255) DEFAULT NULL,
   `userAccess` longtext NOT NULL COMMENT '{"1":"all"}',
   `userStatus` varchar(255) DEFAULT NULL,
   `userLocale` varchar(255) DEFAULT NULL,
   `avatar` longtext DEFAULT NULL,
   `admin` tinyint(4) NOT NULL DEFAULT 0 COMMENT '1 = admin',
-  `userEmailValidated` tinyint(4) NOT NULL DEFAULT 0 COMMENT '1 = validated default = 0'
+  `userEmailValidated` tinyint(4) NOT NULL DEFAULT 0 COMMENT '1 = validated, 0 = default',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '0 = deactivated, 1 = active',
+  `force_pw_change` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = user must change password on next login',
+  `last_pw_change` datetime DEFAULT NULL COMMENT 'Timestamp of last successful password change'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `tbluser_stats`
@@ -116,11 +139,19 @@ CREATE TABLE `tbluser_stats` (
   `average_grade` decimal(3,2) DEFAULT NULL,
   `total_time_spent` int(11) DEFAULT 0,
   `last_activity` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `tblpasswordreset`
+--
+ALTER TABLE `tblpasswordreset`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_token` (`token`),
+  ADD KEY `idx_user_id` (`user_id`);
 
 --
 -- Indexes for table `tblquestion`
@@ -173,45 +204,36 @@ ALTER TABLE `tbluser_stats`
 -- AUTO_INCREMENT for dumped tables
 --
 
---
--- AUTO_INCREMENT for table `tblquestion`
---
+ALTER TABLE `tblpasswordreset`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `tblquestion`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1146;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `tblresponse`
---
 ALTER TABLE `tblresponse`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1726;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `tblsubject`
---
 ALTER TABLE `tblsubject`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `tbltopic`
---
 ALTER TABLE `tbltopic`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `tbluser`
---
 ALTER TABLE `tbluser`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=170;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `tbluser_stats`
---
 ALTER TABLE `tbluser_stats`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3450;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `tblpasswordreset`
+--
+ALTER TABLE `tblpasswordreset`
+  ADD CONSTRAINT `fk_pwr_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `tblresponse`
@@ -229,6 +251,7 @@ ALTER TABLE `tbluser_stats`
   ADD CONSTRAINT `fk_stats_subject` FOREIGN KEY (`subject_id`) REFERENCES `tblsubject` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_stats_topic` FOREIGN KEY (`topic_id`,`subject_id`) REFERENCES `tbltopic` (`id`, `subjectid`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_stats_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`) ON DELETE CASCADE;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
