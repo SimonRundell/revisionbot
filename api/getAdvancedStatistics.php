@@ -473,14 +473,14 @@ function getStudentProgressOverTime($studentId) {
     
     // Get all responses with timestamps, ordered by date
     $progressQuery = "
-        SELECT 
-            r.created_at,
+        SELECT
+            r.response_timestamp,
             COALESCE(r.teacher_rating, r.estimated_grade) AS teacher_rating,
             q.question,
             t.topic,
             s.subject,
             r.attempt_number,
-            CASE 
+            CASE
                 WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 3
                 WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 2
                 WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1
@@ -491,7 +491,7 @@ function getStudentProgressOverTime($studentId) {
         JOIN tbltopic t ON q.topicid = t.id
         JOIN tblsubject s ON t.subjectid = s.id
         WHERE r.user_id = ? AND COALESCE(r.teacher_rating, r.estimated_grade) IS NOT NULL
-        ORDER BY r.created_at ASC
+        ORDER BY r.response_timestamp ASC
     ";
     
     $stmt = $mysqli->prepare($progressQuery);
@@ -510,7 +510,7 @@ function getStudentProgressOverTime($studentId) {
         $cumulativeAvg = $totalRagValue / $count;
         
         $progressData[] = [
-            'date' => $row['created_at'],
+            'date' => $row['response_timestamp'],
             'rating' => $row['teacher_rating'],
             'ragValue' => (int)$row['rag_value'],
             'question' => $row['question'],
