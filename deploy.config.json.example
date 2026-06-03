@@ -1,0 +1,7 @@
+{
+  "host": "HOST_ADDR",
+  "port": 22,
+  "username": "USER_NAME",
+  "password": "PASSWORD",
+  "remotePath": "/PATH/TO/ROOT"
+}

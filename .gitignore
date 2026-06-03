@@ -38,8 +38,12 @@ dist-ssr
 config.json
 api/.config.json
 public/.config.json
-upload.ps1
 api/.config.live.json
+
+# Deployment credentials and logs
+deploy.config.json
+deploy.log
+deploy.ps1
 
 # Database files
 *.db
