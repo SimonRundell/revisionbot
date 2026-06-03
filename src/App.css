@@ -1989,6 +1989,84 @@ LARGE DESKTOP STYLES
   margin: 0;
 }
 
+/* RAG summary card — shown above badge tracks on My Progress page */
+.rag-summary-card {
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.rag-summary-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #d8e1ff;
+}
+
+.rag-summary-bar {
+  display: flex;
+  height: 22px;
+  border-radius: 4px;
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.rag-summary-segment {
+  transition: width 0.4s ease;
+  border-radius: 2px;
+}
+
+.rag-summary-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 10px;
+}
+
+.rag-summary-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.rag-summary-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rag-summary-legend-label {
+  color: #cfcfcf;
+}
+
+.rag-summary-legend-count {
+  font-weight: 700;
+  color: #d8e1ff;
+}
+
+.rag-summary-legend-pct {
+  color: #888;
+  font-size: 0.82rem;
+}
+
+.rag-summary-pending .rag-summary-legend-label,
+.rag-summary-pending .rag-summary-legend-count {
+  color: #888;
+}
+
+.rag-summary-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #666;
+  font-style: italic;
+}
+
 /* Analytics badge display */
 .analytics-badges-section {
   margin-top: 24px;

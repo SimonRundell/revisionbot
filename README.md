@@ -1,7 +1,7 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.4.9** — June 2026
+**Version 0.4.10** — June 2026
 
 A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
@@ -25,6 +25,7 @@ A comprehensive web-based educational revision platform featuring AI-powered fee
 - **Bulk Student Upload**: Import multiple student accounts from CSV files with automatic email notifications
 - **Email Notifications**: Automated welcome emails and password change notifications with professional templates
 - **Advanced Analytics**: Time-based progress tracking, improvement analysis, comprehensive student statistics, per-student badge display, class comparison, subject breakdown, CSV export, and AI-assisted RAG fallback for unreviewed responses
+- **Student RAG Summary**: Students see a proportional Red/Amber/Green bar with counts and percentages on their My Progress page, displayed alongside their earned badges
 - **Security**: Protected API endpoints with role-based access control and directory browsing prevention
 
 ## Setup Instructions
@@ -686,6 +687,13 @@ const chartData = progressData.map(entry => ({
    - Foreign key constraints for data integrity
 
 ## Recent Enhancements
+
+### v0.4.10 — Student RAG Summary and Image Folder Reorganisation (June 2026)
+
+- **Student RAG summary**: A proportional segmented colour bar (Red / Amber / Green) now appears at the top of the Earned Badges section on the My Progress page, showing each RAG count, percentage, and a pending count for unreviewed responses; renders nothing if the student has no rated responses; accompanied by a note explaining that AI estimates are used where teachers have not yet reviewed
+- **Image folder reorganisation**: All 50 images previously in `public/` root have been moved to `public/images/`; all references updated across the frontend (`App.jsx`, `login.jsx`, `adminManager.jsx`, `AvatarManager.jsx`, `register.jsx`), the badge API (`getStudentRewards.php`), and all six email PHP files (`bulkUploadUsers.php`, `requestPasswordReset.php`, `resetPassword.php`, `sendAdminMessage.php`, `sendPasswordChangeNotification.php`, `sendWelcomeEmail.php`); `public/` root now contains only data files (`MOTD.txt`, `locales.json`, `country_codes.json`)
+- **Unused images identified**: Nine images in `public/images/` are not referenced by any code and can be safely deleted: `0 percent red.png`, `100 percent green.png`, `Green Achieved.png`, `Amber Green Achieved.png`, `codemonkey.svg`, `exeter-college.png`, `exeter-college.svg`, `exeter-college-black-text.png`, `title_bw_long.svg`
+- **Missing badge noted**: `public/images/100-7.png` (Green streak ×7 badge) does not exist; all other streak badge files are present
 
 ### v0.4.9 — AI-Assisted RAG Analytics (June 2026)
 

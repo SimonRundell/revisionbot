@@ -28,6 +28,62 @@ function StatTile({ label, value }) {
   );
 }
 
+function RagSummary({ stats }) {
+  const rated = (stats.redCount || 0) + (stats.amberCount || 0) + (stats.greenCount || 0);
+  if (rated === 0) return null;
+
+  const redPct   = Math.round((stats.redCount   / rated) * 100);
+  const amberPct = Math.round((stats.amberCount / rated) * 100);
+  const greenPct = 100 - redPct - amberPct; // ensure sums to 100
+
+  const segments = [
+    { label: 'Red',   count: stats.redCount,   pct: redPct,   colour: '#ff4d4f' },
+    { label: 'Amber', count: stats.amberCount, pct: amberPct, colour: '#faad14' },
+    { label: 'Green', count: stats.greenCount, pct: greenPct, colour: '#52c41a' },
+  ];
+
+  return (
+    <div className="rag-summary-card">
+      <h3 className="rag-summary-title">Overall RAG Rating</h3>
+
+      <div className="rag-summary-bar">
+        {segments.map(({ label, pct, colour }) =>
+          pct > 0 ? (
+            <div
+              key={label}
+              className="rag-summary-segment"
+              style={{ width: `${pct}%`, background: colour }}
+              title={`${label}: ${pct}%`}
+            />
+          ) : null
+        )}
+      </div>
+
+      <div className="rag-summary-legend">
+        {segments.map(({ label, count, pct, colour }) => (
+          <div key={label} className="rag-summary-legend-item">
+            <span className="rag-summary-dot" style={{ background: colour }} />
+            <span className="rag-summary-legend-label">{label}</span>
+            <span className="rag-summary-legend-count">{count}</span>
+            <span className="rag-summary-legend-pct">({pct}%)</span>
+          </div>
+        ))}
+        {stats.pendingRag > 0 && (
+          <div className="rag-summary-legend-item rag-summary-pending">
+            <span className="rag-summary-dot" style={{ background: '#555' }} />
+            <span className="rag-summary-legend-label">Pending</span>
+            <span className="rag-summary-legend-count">{stats.pendingRag}</span>
+          </div>
+        )}
+      </div>
+
+      <p className="rag-summary-note">
+        Ratings include your teacher's assessment where available, with AI estimates for responses not yet reviewed.
+      </p>
+    </div>
+  );
+}
+
 function BadgeTrack({ title, badges }) {
   return (
     <div className="student-badge-track">
@@ -318,6 +374,7 @@ function StudentProgress({ userId, config, currentUser, setSendErrorMessage }) {
 
           <div className="student-badges-section">
             <h2>Earned Badges</h2>
+            <RagSummary stats={stats} />
             <BadgeTrack title="Green Percentage Badges" badges={stats.badgeTracks.greenPercent || []} />
             <BadgeTrack title="Amber/Green Percentage Badges" badges={stats.badgeTracks.amberOrGreenPercent || []} />
             <BadgeTrack title="No-Red Streak Badges" badges={stats.badgeTracks.noRedStreak || []} />
