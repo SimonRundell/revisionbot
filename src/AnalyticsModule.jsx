@@ -224,9 +224,14 @@ const sortData = (arr, key, dir, getValue) => {
  */
 const SortTh = ({ children, sortKey, config, onSort }) => {
     const isActive = config.key === sortKey;
+    const handleKey = (e) => { if (e.key === 'Enter' || e.key === ' ') onSort(sortKey); };
     return (
         <th
             onClick={() => onSort(sortKey)}
+            onKeyDown={handleKey}
+            tabIndex={0}
+            role="columnheader"
+            aria-sort={isActive ? (config.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
             className={`sortable-th${isActive ? ' sort-active' : ''}`}
         >
             {children}
