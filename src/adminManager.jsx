@@ -440,7 +440,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             department: user.userClass ?? user.userLocation ?? '',
             locale: user.userLocale,
             avatar: user.avatar,
-            avatarPreview: user.avatar || '/default_avatar.png',
+            avatarPreview: user.avatar || '/images/default_avatar.png',
             admin: Boolean(user.admin), // Convert to proper boolean (handles 0, 1, null, undefined)
             userAccess: userAccess,
             sendCredentials: false
@@ -603,7 +603,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         setAddForm(prev => ({
             ...prev,
             avatar: newAvatar,
-            avatarPreview: newAvatar || '/default_avatar.png'
+            avatarPreview: newAvatar || '/images/default_avatar.png'
         }));
     };
 
@@ -744,7 +744,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
         setEditForm(prev => ({
             ...prev,
             avatar: newAvatar,
-            avatarPreview: newAvatar || '/default_avatar.png'
+            avatarPreview: newAvatar || '/images/default_avatar.png'
         }));
     };
 
@@ -1166,7 +1166,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                 <td>{user.email}</td>
                                 <td>{user.userClass ?? user.userLocation ?? ''}</td>
                                 <td className="col-locale">{user.userLocale}</td>
-                                <td className="col-avatar"><img className="user-avatar" src={user.avatar || '/default_avatar.png'} alt={user.userName} /></td>
+                                <td className="col-avatar"><img className="user-avatar" src={user.avatar || '/images/default_avatar.png'} alt={user.userName} /></td>
                                 <td>{user.admin ? 'Admin' : 'User'}</td>
                                 <td>
                                     {Number(user.is_active) === 0 ? 'Inactive' : 'Active'}

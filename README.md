@@ -1,7 +1,7 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.4.6** — June 2026
+**Version 0.4.9** — June 2026
 
 A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
@@ -24,7 +24,7 @@ A comprehensive web-based educational revision platform featuring AI-powered fee
 - **Class Management**: Admins can maintain a central `tblClass` list for manual class allocation, with safe delete checks and confirmation prompts
 - **Bulk Student Upload**: Import multiple student accounts from CSV files with automatic email notifications
 - **Email Notifications**: Automated welcome emails and password change notifications with professional templates
-- **Advanced Analytics**: Time-based progress tracking, improvement analysis, comprehensive student statistics, and per-student badge display
+- **Advanced Analytics**: Time-based progress tracking, improvement analysis, comprehensive student statistics, per-student badge display, class comparison, subject breakdown, CSV export, and AI-assisted RAG fallback for unreviewed responses
 - **Security**: Protected API endpoints with role-based access control and directory browsing prevention
 
 ## Setup Instructions
@@ -636,7 +636,7 @@ const chartData = progressData.map(entry => ({
 
 **For Graph to Display:**
 - Student must have **completed responses**
-- Responses must have **teacher ratings** (R/A/G)
+- Responses must have **a rating** — teacher rating (R/A/G) or AI-suggested rating (`estimated_grade`)
 - Need **timestamps** for chronological ordering
 
 **Empty State:**
@@ -686,6 +686,23 @@ const chartData = progressData.map(entry => ({
    - Foreign key constraints for data integrity
 
 ## Recent Enhancements
+
+### v0.4.9 — AI-Assisted RAG Analytics (June 2026)
+
+- **AI RAG rating stored on assessment**: `updateResponseWithAI.php` now extracts the AI-suggested RAG rating from the `data-rating` attribute embedded in the Gemini feedback HTML and saves it to `tblresponse.estimated_grade`; previously this value was present in the feedback text but never persisted as a discrete database column
+- **Analytics use AI rating as fallback**: all analytics queries (`getAdvancedStatistics.php`) now use `COALESCE(teacher_rating, estimated_grade)` as the effective rating — teacher ratings take priority unchanged, but AI-suggested ratings fill in for responses teachers have not yet reviewed, making class comparison, subject breakdown, department stats, progress graphs, and question stats significantly more complete
+- **"No Rating" replaces "Unrated"**: the student stats card label updated from "Unrated" to "No Rating" to reflect the new meaning — responses where neither teacher nor AI has provided a rating
+- **Backfill applied to production**: 242 existing responses were backfilled (35 Green, 182 Amber, 25 Red) using `data/backfill_estimated_grade.sql`; the script is retained in `data/` for reference on fresh installs
+- **Database template updated**: `estimated_grade` column now carries a descriptive comment; schema version bumped to 0.4.9
+
+### v0.4.8 — Analytics: Class Comparison, Subject Breakdown, CSV Export (June 2026)
+
+- **Compare All Classes view**: new fourth analytics view loads all classes in a single query, showing students, questions answered, topics covered, Red/Amber/Green counts, total responses, and RAG Score side by side; clicking a class name drills directly into the By Class detail view
+- **Subject breakdown in Student view**: when a student is selected, a "Performance by Subject" table now appears below the question attempts table, showing per-subject topics, questions, attempts, RAG distribution, Green %, and RAG Score; particularly useful for subjects with multiple distinct topic areas such as GCSE Mathematics
+- **CSV export on all analytics tables**: every data table in the analytics dashboard (department student breakdown, student question attempts, student subject breakdown, question department breakdown, class comparison) now has an Export CSV button; files download with UTF-8 BOM for correct Excel rendering
+- All new tables are fully sortable using the existing column-header sort pattern
+- Backend: two new `getAdvancedStatistics.php` request types — `classComparison` and `subjectStats`
+- Frontend: new `src/utils/csvHelpers.js` utility shared across all export buttons
 
 ### v0.4.6 — Subscript and Superscript (June 2026)
 
@@ -814,10 +831,8 @@ const chartData = progressData.map(entry => ({
 
 ### Analytics Extensions
 - Predictive performance modeling
-- Peer comparison analytics
+- Peer comparison analytics (anonymous cohort benchmarking for students)
 - Learning path recommendations
-- Export capabilities for detailed reports
-- Class-wide performance comparisons
 - Time-based cohort analysis
 
 ## ✅ **Implementation Status**

@@ -91,7 +91,7 @@ function sendPasswordChangeNotification($email, $userName, $changedBy) {
 
         $logoBaseUrl = rtrim((string) ($publicConfig['appBaseUrl'] ?? ''), '/');
         $logoUrl = $logoBaseUrl !== ''
-            ? $logoBaseUrl . '/title_bw.png'
+            ? $logoBaseUrl . '/images/title_bw.png'
             : 'https://exe-coll.ac.uk/wp-content/themes/exeter-college/assets/images/logo.png';
 
         // Load HTML email template

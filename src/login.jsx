@@ -120,13 +120,13 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
         <>
           {/* Title image */}
           <div className="login-title">
-            <img src="/title_bw.png" alt="AI Revision Bot" />
+            <img src="/images/title_bw.png" alt="AI Revision Bot" />
           </div>
           
           <div className="login-container">
             {/* Robot image positioned over the login box */}
             <div className="login-robot">
-              <img src="/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
+              <img src="/images/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
             </div>
             
             <div className="login-header">

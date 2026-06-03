@@ -197,7 +197,7 @@ try {
 
     if ($resetBaseUrl !== '') {
         $resetLink = $resetBaseUrl . '/reset-password?token=' . urlencode($token);
-        $logoUrl = $resetBaseUrl . '/title_bw.png';
+        $logoUrl = $resetBaseUrl . '/images/title_bw.png';
         sendPasswordResetEmail($config, $user, $resetLink, $logoUrl);
     } else {
         logEndpointError('Password reset skipped email send because appBaseUrl is missing.');

@@ -19,7 +19,7 @@ import { Modal } from 'antd';
 function AvatarManager  ({ currentAvatar, onAvatarChange, setSendErrorMessage, size = 60, className = "avatar"}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const avatarPreview = currentAvatar || '/default_avatar.png';
+  const avatarPreview = currentAvatar || '/images/default_avatar.png';
 
   /**
    * Handle file selection for avatar upload

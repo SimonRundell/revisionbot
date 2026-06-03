@@ -4,6 +4,7 @@ import { Spin, Modal } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
 import { formatDateRange } from './utils/dateHelpers';
 import './App.css';
+import { downloadCsv } from './utils/csvHelpers';
 
 /****************************************************************************
  * StudentProgressChart Component
@@ -273,6 +274,12 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
     const [deptStudentSort, setDeptStudentSort] = useState({ key: null, dir: 'asc' });
     const [studentQSort, setStudentQSort] = useState({ key: null, dir: 'asc' });
     const [questionDeptSort, setQuestionDeptSort] = useState({ key: null, dir: 'asc' });
+    const [classComparisonSort, setClassComparisonSort] = useState({ key: null, dir: 'asc' });
+    const [subjectStatsSort, setSubjectStatsSort] = useState({ key: null, dir: 'asc' });
+
+    // Class comparison and subject breakdown data
+    const [classComparisonData, setClassComparisonData] = useState(null);
+    const [subjectStatsData, setSubjectStatsData] = useState(null);
 
     /** Toggle sort key/direction for the department-view student table */
     const handleDeptStudentSort = useCallback((key) => {
@@ -287,6 +294,14 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
     /** Toggle sort key/direction for the question-view department-breakdown table */
     const handleQuestionDeptSort = useCallback((key) => {
         setQuestionDeptSort(prev => ({ key, dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc' }));
+    }, []);
+
+    const handleClassComparisonSort = useCallback((key) => {
+        setClassComparisonSort(prev => ({ key, dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc' }));
+    }, []);
+
+    const handleSubjectStatsSort = useCallback((key) => {
+        setSubjectStatsSort(prev => ({ key, dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc' }));
     }, []);
 
     /**
@@ -486,6 +501,38 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
         );
     }, [selectedView, selectedDepartment, selectedStudent, selectedQuestion, config.api, currentUser.token, setSendSuccessMessage, setSendErrorMessage]);
 
+    const loadClassComparison = useCallback(async () => {
+        const apiCall = () => axios.post(`${config.api}/getAdvancedStatistics.php`,
+            { type: 'classComparison' },
+            { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}` } }
+        );
+        await handleApiCall(
+            apiCall,
+            setClassComparisonData,
+            setIsLoading,
+            null,
+            setSendErrorMessage,
+            '',
+            'Failed to load class comparison'
+        );
+    }, [config.api, currentUser.token, setSendErrorMessage]);
+
+    const loadSubjectStats = useCallback(async (studentId) => {
+        const apiCall = () => axios.post(`${config.api}/getAdvancedStatistics.php`,
+            { type: 'subjectStats', studentId },
+            { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}` } }
+        );
+        await handleApiCall(
+            apiCall,
+            setSubjectStatsData,
+            setIsLoading,
+            null,
+            setSendErrorMessage,
+            '',
+            'Failed to load subject breakdown'
+        );
+    }, [config.api, currentUser.token, setSendErrorMessage]);
+
     // Load initial data
     useEffect(() => {
         loadDepartments();
@@ -540,9 +587,25 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
         }
     }, [selectedQuestion, selectedView, loadAnalytics]);
 
+    // Auto-load class comparison when that view is selected
+    useEffect(() => {
+        if (selectedView === 'classComparison') {
+            loadClassComparison();
+        }
+    }, [selectedView, loadClassComparison]);
+
+    // Auto-load subject breakdown when a student is selected
+    useEffect(() => {
+        if (selectedView === 'student' && selectedStudent) {
+            loadSubjectStats(selectedStudent);
+        }
+    }, [selectedStudent, selectedView, loadSubjectStats]);
+
     // Clear analytics data and reset selections when view changes
     useEffect(() => {
         setAnalyticsData(null);
+        setClassComparisonData(null);
+        setSubjectStatsData(null);
         setSelectedDepartment('');
         setSelectedStudent('');
         setSelectedQuestion('');
@@ -611,7 +674,26 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     );
                     return (
                         <div className="table-container">
-                            <h4>Student Performance in {selectedDepartment}</h4>
+                            <div className="analytics-table-toolbar">
+                                <h4>Student Performance in {selectedDepartment}</h4>
+                                <button className="export-csv-btn" onClick={() => downloadCsv(
+                                    sortedStudents.map(s => ({
+                                        Student:     s.name,
+                                        Topics:      s.topicsAnswered,
+                                        Questions:   s.questionsAnswered,
+                                        Red:         s.redCount,
+                                        'Red %':     s.redPercent,
+                                        Amber:       s.amberCount,
+                                        'Amber %':   s.amberPercent,
+                                        Green:       s.greenCount,
+                                        'Green %':   s.greenPercent,
+                                        'RAG Score': (() => { const sc = ragScore(s.redCount, s.amberCount, s.greenCount); return sc === null ? '' : sc; })()
+                                    })),
+                                    `students_${selectedDepartment}.csv`
+                                )}>
+                                    <i className="fa-solid fa-download" aria-hidden="true" /> Export CSV
+                                </button>
+                            </div>
                             <table>
                                 <thead>
                                     <tr>
@@ -715,7 +797,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     </div>
                     <div className="stat-card">
                         <div className="stat-number">{data.unratedCount || 0}</div>
-                        <div className="stat-label">Unrated</div>
+                        <div className="stat-label">No Rating</div>
                     </div>
                 </div>
 
@@ -739,7 +821,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                         </div>
                         {data.unratedCount > 0 && (
                             <div className="rag-stat unrated">
-                                <span className="rag-label">Unrated:</span>
+                                <span className="rag-label">No rating:</span>
                                 <span className="rag-count">{data.unratedCount || 0}</span>
                                 <span className="rag-percent">({data.unratedPercent || 0}%)</span>
                             </div>
@@ -757,7 +839,20 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     );
                     return (
                         <div className="table-container">
-                            <h4>Question Attempts</h4>
+                            <div className="analytics-table-toolbar">
+                                <h4>Question Attempts</h4>
+                                <button className="export-csv-btn" onClick={() => downloadCsv(
+                                    sortedAttempts.map(a => ({
+                                        Question:     a.question,
+                                        Topic:        a.topicName,
+                                        Attempts:     a.attemptCount,
+                                        'Latest RAG': a.latestRag === 'R' ? 'Red' : a.latestRag === 'A' ? 'Amber' : a.latestRag === 'G' ? 'Green' : 'Unrated'
+                                    })),
+                                    `question_attempts_student_${selectedStudent}.csv`
+                                )}>
+                                    <i className="fa-solid fa-download" aria-hidden="true" /> Export CSV
+                                </button>
+                            </div>
                             <table>
                                 <thead>
                                     <tr>
@@ -784,11 +879,70 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     );
                 })()}
 
-                 * Provides comprehensive analytics views for admin users including department statistics,
-                 * student performance tracking, and question analysis with interactive progress graphs.
-                 * Per-student badge achievements are fetched from getStudentRewards.php and displayed
-                 * alongside RAG stats — as a badge strip in the department table and a full Earned Badges
-                 * section in the individual student view.
+                {subjectStatsData && subjectStatsData.length > 0 && (() => {
+                    const sortedSubjects = sortData(
+                        subjectStatsData,
+                        subjectStatsSort.key,
+                        subjectStatsSort.dir,
+                        (row, key) => key === 'ragScore' ? (row.ragScore ?? -Infinity) : row[key]
+                    );
+                    return (
+                        <div className="table-container">
+                            <div className="analytics-table-toolbar">
+                                <h4>Performance by Subject</h4>
+                                <button className="export-csv-btn" onClick={() => downloadCsv(
+                                    sortedSubjects.map(s => ({
+                                        Subject:     s.subjectName,
+                                        Topics:      s.topicsAnswered,
+                                        Questions:   s.questionsAnswered,
+                                        Attempts:    s.totalAttempts,
+                                        Red:         s.redCount,
+                                        Amber:       s.amberCount,
+                                        Green:       s.greenCount,
+                                        'Green %':   s.greenPercent,
+                                        'RAG Score': s.ragScore !== null ? s.ragScore : ''
+                                    })),
+                                    `subject_breakdown_student_${selectedStudent}.csv`
+                                )}>
+                                    <i className="fa-solid fa-download" aria-hidden="true" /> Export CSV
+                                </button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <SortTh sortKey="subjectName"       config={subjectStatsSort} onSort={handleSubjectStatsSort}>Subject</SortTh>
+                                        <SortTh sortKey="topicsAnswered"    config={subjectStatsSort} onSort={handleSubjectStatsSort}>Topics</SortTh>
+                                        <SortTh sortKey="questionsAnswered" config={subjectStatsSort} onSort={handleSubjectStatsSort}>Questions</SortTh>
+                                        <SortTh sortKey="totalAttempts"     config={subjectStatsSort} onSort={handleSubjectStatsSort}>Attempts</SortTh>
+                                        <SortTh sortKey="redCount"          config={subjectStatsSort} onSort={handleSubjectStatsSort}>Red</SortTh>
+                                        <SortTh sortKey="amberCount"        config={subjectStatsSort} onSort={handleSubjectStatsSort}>Amber</SortTh>
+                                        <SortTh sortKey="greenCount"        config={subjectStatsSort} onSort={handleSubjectStatsSort}>Green</SortTh>
+                                        <SortTh sortKey="greenPercent"      config={subjectStatsSort} onSort={handleSubjectStatsSort}>Green %</SortTh>
+                                        <SortTh sortKey="ragScore"          config={subjectStatsSort} onSort={handleSubjectStatsSort}>RAG Score</SortTh>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sortedSubjects.map((row) => (
+                                        <tr key={row.subjectName}>
+                                            <td><strong>{row.subjectName}</strong></td>
+                                            <td>{row.topicsAnswered}</td>
+                                            <td>{row.questionsAnswered}</td>
+                                            <td>{row.totalAttempts}</td>
+                                            <td className="red-stat">{row.redCount}</td>
+                                            <td className="amber-stat">{row.amberCount}</td>
+                                            <td className="green-stat">{row.greenCount}</td>
+                                            <td>{row.greenPercent}%</td>
+                                            <td className={(() => { const s = row.ragScore; return s === null ? '' : s > 0 ? 'green-stat' : s < 0 ? 'red-stat' : 'amber-stat'; })()}>
+                                                {row.ragScore === null ? '—' : (row.ragScore > 0 ? `+${row.ragScore}%` : `${row.ragScore}%`)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
+
                 {(() => {
                     const rewards = studentRewardsCache[selectedStudent];
                     const badges = rewards ? getHighestBadges(rewards) : null;
@@ -862,7 +1016,24 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                     );
                     return (
                         <div className="table-container">
-                            <h4>Performance by Department</h4>
+                            <div className="analytics-table-toolbar">
+                                <h4>Performance by Department</h4>
+                                <button className="export-csv-btn" onClick={() => downloadCsv(
+                                    sortedDepts.map(d => ({
+                                        Department:    d.department,
+                                        Students:      d.studentCount,
+                                        Attempts:      d.attempts,
+                                        Red:           d.redCount,
+                                        Amber:         d.amberCount,
+                                        Green:         d.greenCount,
+                                        'Success Rate': d.successRate,
+                                        'RAG Score':   (() => { const s = ragScore(d.redCount, d.amberCount, d.greenCount); return s === null ? '' : s; })()
+                                    })),
+                                    `question_${selectedQuestion}_departments.csv`
+                                )}>
+                                    <i className="fa-solid fa-download" aria-hidden="true" /> Export CSV
+                                </button>
+                            </div>
                             <table>
                                 <thead>
                                     <tr>
@@ -900,6 +1071,85 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
         );
     };
 
+    const renderClassComparison = (data) => {
+        if (!data) return null;
+        if (data.length === 0) return <div className="analytics-section"><h3>Compare All Classes</h3><p>No class data found.</p></div>;
+
+        const sorted = sortData(
+            data,
+            classComparisonSort.key,
+            classComparisonSort.dir,
+            (row, key) => key === 'ragScore' ? (row.ragScore ?? -Infinity) : row[key]
+        );
+
+        const csvRows = sorted.map(r => ({
+            Class:                r.department,
+            Students:             r.studentCount,
+            'Questions Answered': r.questionsAnswered,
+            'Topics Answered':    r.topicsAnswered,
+            Red:                  r.redCount,
+            Amber:                r.amberCount,
+            Green:                r.greenCount,
+            'Total Responses':    r.totalResponses,
+            'RAG Score':          r.ragScore !== null ? r.ragScore : ''
+        }));
+
+        return (
+            <div className="analytics-section">
+                <h3>Compare All Classes</h3>
+                <div className="table-container">
+                    <div className="analytics-table-toolbar">
+                        <h4>All Classes Overview</h4>
+                        <button className="export-csv-btn" onClick={() => downloadCsv(csvRows, 'class_comparison.csv')}>
+                            <i className="fa-solid fa-download" aria-hidden="true" /> Export CSV
+                        </button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <SortTh sortKey="department"        config={classComparisonSort} onSort={handleClassComparisonSort}>Class</SortTh>
+                                <SortTh sortKey="studentCount"      config={classComparisonSort} onSort={handleClassComparisonSort}>Students</SortTh>
+                                <SortTh sortKey="questionsAnswered" config={classComparisonSort} onSort={handleClassComparisonSort}>Questions</SortTh>
+                                <SortTh sortKey="topicsAnswered"    config={classComparisonSort} onSort={handleClassComparisonSort}>Topics</SortTh>
+                                <SortTh sortKey="redCount"          config={classComparisonSort} onSort={handleClassComparisonSort}>Red</SortTh>
+                                <SortTh sortKey="amberCount"        config={classComparisonSort} onSort={handleClassComparisonSort}>Amber</SortTh>
+                                <SortTh sortKey="greenCount"        config={classComparisonSort} onSort={handleClassComparisonSort}>Green</SortTh>
+                                <SortTh sortKey="totalResponses"    config={classComparisonSort} onSort={handleClassComparisonSort}>Responses</SortTh>
+                                <SortTh sortKey="ragScore"          config={classComparisonSort} onSort={handleClassComparisonSort}>RAG Score</SortTh>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sorted.map((row) => (
+                                <tr key={row.department}>
+                                    <td>
+                                        <span
+                                            className="clickable-student-name"
+                                            style={{ cursor: 'pointer', color: '#1890ff', textDecoration: 'underline' }}
+                                            title="Click to view class detail"
+                                            onClick={() => { setSelectedView('department'); setSelectedDepartment(row.department); }}
+                                        >
+                                            {row.department}
+                                        </span>
+                                    </td>
+                                    <td>{row.studentCount}</td>
+                                    <td>{row.questionsAnswered}</td>
+                                    <td>{row.topicsAnswered}</td>
+                                    <td className="red-stat">{row.redCount}</td>
+                                    <td className="amber-stat">{row.amberCount}</td>
+                                    <td className="green-stat">{row.greenCount}</td>
+                                    <td>{row.totalResponses}</td>
+                                    <td className={(() => { const s = row.ragScore; return s === null ? '' : s > 0 ? 'green-stat' : s < 0 ? 'red-stat' : 'amber-stat'; })()}>
+                                        {row.ragScore === null ? '—' : (row.ragScore > 0 ? `+${row.ragScore}%` : `${row.ragScore}%`)}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="analytics-module">
             <div className="analytics-header">
@@ -927,6 +1177,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                             <option value="department">By Class/Department</option>
                             <option value="student">By Student</option>
                             <option value="question">By Question</option>
+                            <option value="classComparison">Compare All Classes</option>
                         </select>
                     </div>
                 </div>
@@ -1040,6 +1291,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 {selectedView === 'department' && renderDepartmentStats(analyticsData)}
                 {selectedView === 'student' && renderStudentStats(analyticsData)}
                 {selectedView === 'question' && renderQuestionStats(analyticsData)}
+                {selectedView === 'classComparison' && renderClassComparison(classComparisonData)}
             </div>
 
             {/* Student Progress Modal */}

@@ -36,6 +36,12 @@ switch ($requestType) {
     case 'studentProgress':
         getStudentProgressOverTime($receivedData['studentId']);
         break;
+    case 'classComparison':
+        getClassComparison();
+        break;
+    case 'subjectStats':
+        getSubjectStats($receivedData['studentId']);
+        break;
     default:
         log_info("Invalid request type: " . $requestType);
         send_response("Invalid request type: " . $requestType, 400);
@@ -121,9 +127,9 @@ function getDepartmentStats($department) {
             u.userName as name,
             COUNT(DISTINCT r.topic_id) as topicsAnswered,
             COUNT(DISTINCT r.question_id) as questionsAnswered,
-            SUM(CASE WHEN r.teacher_rating = 'R' THEN 1 ELSE 0 END) as redCount,
-            SUM(CASE WHEN r.teacher_rating = 'A' THEN 1 ELSE 0 END) as amberCount,
-            SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) as greenCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END) as redCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 1 ELSE 0 END) as amberCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END) as greenCount,
             COUNT(*) as totalResponses
         FROM tbluser u
         LEFT JOIN tblresponse r ON u.id = r.user_id
@@ -168,10 +174,10 @@ function getStudentStats($studentId) {
                 COUNT(DISTINCT r.topic_id) as topicsAnswered,
                 COUNT(DISTINCT r.question_id) as questionsAnswered,
                 COUNT(*) as totalAttempts,
-                SUM(CASE WHEN r.teacher_rating = 'R' THEN 1 ELSE 0 END) as redCount,
-                SUM(CASE WHEN r.teacher_rating = 'A' THEN 1 ELSE 0 END) as amberCount,
-                SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) as greenCount,
-                SUM(CASE WHEN r.teacher_rating IS NULL THEN 1 ELSE 0 END) as unratedCount
+                SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END) as redCount,
+                SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 1 ELSE 0 END) as amberCount,
+                SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END) as greenCount,
+                SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) IS NULL THEN 1 ELSE 0 END) as unratedCount
             FROM tblresponse r
             WHERE r.user_id = ?
         ";
@@ -200,7 +206,7 @@ function getStudentStats($studentId) {
                 q.question,
                 t.topic as topicName,
                 r.attempt_number as attemptCount,
-                r.teacher_rating as latestRag
+                COALESCE(r.teacher_rating, r.estimated_grade) as latestRag
             FROM tblresponse r
             LEFT JOIN tblquestion q ON r.question_id = q.id
             LEFT JOIN tbltopic t ON r.topic_id = t.id
@@ -289,10 +295,10 @@ function getStudentStats($studentId) {
             COUNT(DISTINCT r.topic_id) as topicsAnswered,
             COUNT(DISTINCT r.question_id) as questionsAnswered,
             COUNT(*) as totalAttempts,
-            SUM(CASE WHEN r.teacher_rating = 'R' THEN 1 ELSE 0 END) as redCount,
-            SUM(CASE WHEN r.teacher_rating = 'A' THEN 1 ELSE 0 END) as amberCount,
-            SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) as greenCount,
-            SUM(CASE WHEN r.teacher_rating IS NULL THEN 1 ELSE 0 END) as unratedCount
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END) as redCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 1 ELSE 0 END) as amberCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END) as greenCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) IS NULL THEN 1 ELSE 0 END) as unratedCount
         FROM tblresponse r
         WHERE r.user_id = ?
     ";
@@ -346,7 +352,7 @@ function getStudentStats($studentId) {
             q.question,
             t.topic as topicName,
             MAX(r.attempt_number) as attemptCount,
-            (SELECT r2.teacher_rating FROM tblresponse r2 
+            (SELECT COALESCE(r2.teacher_rating, r2.estimated_grade) FROM tblresponse r2 
              WHERE r2.user_id = r.user_id AND r2.question_id = r.question_id 
              ORDER BY r2.attempt_number DESC LIMIT 1) as latestRag
         FROM tblresponse r
@@ -386,9 +392,9 @@ function getStudentStats($studentId) {
             COUNT(DISTINCT u.userClass) as classesAttempted,
             ROUND(AVG(
                 CASE 
-                    WHEN r.teacher_rating = 'R' THEN 1
-                    WHEN r.teacher_rating = 'A' THEN 2
-                    WHEN r.teacher_rating = 'G' THEN 3
+                    WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1
+                    WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 2
+                    WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 3
                     ELSE 0
                 END
             ), 2) as avgRagScore
@@ -409,10 +415,10 @@ function getStudentStats($studentId) {
             u.userClass as department,
             COUNT(DISTINCT r.user_id) as studentCount,
             COUNT(*) as attempts,
-            SUM(CASE WHEN r.teacher_rating = 'R' THEN 1 ELSE 0 END) as redCount,
-            SUM(CASE WHEN r.teacher_rating = 'A' THEN 1 ELSE 0 END) as amberCount,
-            SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) as greenCount,
-            ROUND((SUM(CASE WHEN r.teacher_rating = 'G' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as successRate
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END) as redCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 1 ELSE 0 END) as amberCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END) as greenCount,
+            ROUND((SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as successRate
         FROM tblresponse r
         JOIN tbluser u ON r.user_id = u.id
         WHERE r.question_id = ? AND u.admin != 1 AND u.userClass IS NOT NULL
@@ -469,22 +475,22 @@ function getStudentProgressOverTime($studentId) {
     $progressQuery = "
         SELECT 
             r.created_at,
-            r.teacher_rating,
+            COALESCE(r.teacher_rating, r.estimated_grade) AS teacher_rating,
             q.question,
             t.topic,
             s.subject,
             r.attempt_number,
             CASE 
-                WHEN r.teacher_rating = 'G' THEN 3
-                WHEN r.teacher_rating = 'A' THEN 2
-                WHEN r.teacher_rating = 'R' THEN 1
+                WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 3
+                WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 2
+                WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1
                 ELSE 0
             END as rag_value
         FROM tblresponse r
         JOIN tblquestion q ON r.question_id = q.id
         JOIN tbltopic t ON q.topicid = t.id
         JOIN tblsubject s ON t.subjectid = s.id
-        WHERE r.user_id = ? AND r.teacher_rating IS NOT NULL
+        WHERE r.user_id = ? AND COALESCE(r.teacher_rating, r.estimated_grade) IS NOT NULL
         ORDER BY r.created_at ASC
     ";
     
@@ -555,6 +561,127 @@ function getStudentProgressOverTime($studentId) {
     ];
     
     send_response(json_encode($response), 200);
+}
+
+function getClassComparison() {
+    global $mysqli;
+
+    $query = "
+        SELECT
+            u.userClass                                                          AS department,
+            COUNT(DISTINCT u.id)                                                 AS studentCount,
+            COUNT(DISTINCT r.question_id)                                        AS questionsAnswered,
+            COUNT(DISTINCT r.topic_id)                                           AS topicsAnswered,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END)             AS redCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 1 ELSE 0 END)             AS amberCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END)             AS greenCount,
+            COUNT(r.id)                                                          AS totalResponses,
+            ROUND(
+                (
+                    SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END)
+                  - SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END)
+                ) / NULLIF(
+                    SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) IN ('R','A','G') THEN 1 ELSE 0 END),
+                    0
+                ) * 100,
+                1
+            )                                                                    AS ragScore
+        FROM tbluser u
+        LEFT JOIN tblresponse r ON r.user_id = u.id
+        WHERE u.admin != 1
+          AND u.userClass IS NOT NULL
+          AND u.userClass != ''
+        GROUP BY u.userClass
+        ORDER BY u.userClass
+    ";
+
+    $result = $mysqli->query($query);
+    if (!$result) {
+        send_response('Error fetching class comparison: ' . $mysqli->error, 500);
+        return;
+    }
+
+    $classes = [];
+    while ($row = $result->fetch_assoc()) {
+        $row['studentCount']      = (int)   $row['studentCount'];
+        $row['questionsAnswered'] = (int)   $row['questionsAnswered'];
+        $row['topicsAnswered']    = (int)   $row['topicsAnswered'];
+        $row['redCount']          = (int)   $row['redCount'];
+        $row['amberCount']        = (int)   $row['amberCount'];
+        $row['greenCount']        = (int)   $row['greenCount'];
+        $row['totalResponses']    = (int)   $row['totalResponses'];
+        $row['ragScore']          = $row['ragScore'] !== null ? (float) $row['ragScore'] : null;
+        $classes[] = $row;
+    }
+
+    send_response(json_encode($classes), 200);
+}
+
+function getSubjectStats($studentId) {
+    global $mysqli;
+
+    if (empty($studentId)) {
+        send_response('Student ID parameter required', 400);
+        return;
+    }
+
+    $query = "
+        SELECT
+            s.subject                                                            AS subjectName,
+            COUNT(DISTINCT r.topic_id)                                           AS topicsAnswered,
+            COUNT(DISTINCT r.question_id)                                        AS questionsAnswered,
+            COUNT(*)                                                             AS totalAttempts,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END)             AS redCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 1 ELSE 0 END)             AS amberCount,
+            SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END)             AS greenCount,
+            ROUND(
+                SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END)
+                / NULLIF(COUNT(*), 0) * 100,
+                1
+            )                                                                    AS greenPercent,
+            ROUND(
+                (
+                    SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END)
+                  - SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1 ELSE 0 END)
+                ) / NULLIF(
+                    SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) IN ('R','A','G') THEN 1 ELSE 0 END),
+                    0
+                ) * 100,
+                1
+            )                                                                    AS ragScore
+        FROM tblresponse r
+        JOIN tblquestion q ON r.question_id = q.id
+        JOIN tbltopic    t ON q.topicid     = t.id
+        JOIN tblsubject  s ON t.subjectid   = s.id
+        WHERE r.user_id = ?
+        GROUP BY s.id, s.subject
+        ORDER BY s.subject
+    ";
+
+    $stmt = $mysqli->prepare($query);
+    if (!$stmt) {
+        send_response('Database error: ' . $mysqli->error, 500);
+        return;
+    }
+
+    $stmt->bind_param('i', $studentId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $subjects = [];
+    while ($row = $result->fetch_assoc()) {
+        $row['topicsAnswered']    = (int)   $row['topicsAnswered'];
+        $row['questionsAnswered'] = (int)   $row['questionsAnswered'];
+        $row['totalAttempts']     = (int)   $row['totalAttempts'];
+        $row['redCount']          = (int)   $row['redCount'];
+        $row['amberCount']        = (int)   $row['amberCount'];
+        $row['greenCount']        = (int)   $row['greenCount'];
+        $row['greenPercent']      = $row['greenPercent'] !== null ? (float) $row['greenPercent'] : 0.0;
+        $row['ragScore']          = $row['ragScore']     !== null ? (float) $row['ragScore']     : null;
+        $subjects[] = $row;
+    }
+
+    send_response(json_encode($subjects), 200);
 }
 
 ?>

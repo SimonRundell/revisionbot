@@ -141,7 +141,7 @@ function earnedPercentageBadges($percent, $thresholds, $prefix) {
             $earned[] = [
                 'threshold' => $threshold,
                 'filename' => $prefix . '-' . $threshold . '.png',
-                'src' => '/' . $prefix . '-' . $threshold . '.png'
+                'src' => '/images/' . $prefix . '-' . $threshold . '.png'
             ];
         }
     }
@@ -155,7 +155,7 @@ function earnedStreakBadges($streak, $thresholds, $prefix) {
             $earned[] = [
                 'threshold' => $threshold,
                 'filename' => $prefix . '-' . $threshold . '.png',
-                'src' => '/' . $prefix . '-' . $threshold . '.png'
+                'src' => '/images/' . $prefix . '-' . $threshold . '.png'
             ];
         }
     }

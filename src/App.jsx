@@ -282,10 +282,10 @@ useEffect(() => {
           {/* Logo Section */}
           <div className="app-logo-section">
             <div className="app-title-image">
-              <img src="/logo_bw_long_2.png" alt="AI Exam Revision Robot" />
+              <img src="/images/logo_bw_long_2.png" alt="AI Exam Revision Robot" />
             </div>
             <div className="app-robot">
-              <img src="/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
+              <img src="/images/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
             </div>
           </div>
           

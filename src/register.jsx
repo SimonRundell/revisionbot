@@ -26,7 +26,7 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
     const [userLocale, setUserLocale] = useState('en-GB');
     
     // Constants for registration defaults (not user-configurable in this form)
-    const avatar = '/default_avatar.png';
+    const avatar = '/images/default_avatar.png';
     const admin = false;
 
     /**

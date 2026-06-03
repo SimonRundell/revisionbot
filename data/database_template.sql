@@ -12,7 +12,7 @@ SET time_zone = "+00:00";
 --
 -- Database: `u2440325118_aibot`
 --
--- Schema version: 0.4.6 (June 2026)
+-- Schema version: 0.4.9 (June 2026)
 --
 
 -- --------------------------------------------------------
@@ -65,7 +65,7 @@ CREATE TABLE `tblresponse` (
   `ai_processed` tinyint(1) DEFAULT 0,
   `ai_timestamp` timestamp NULL DEFAULT NULL,
   `ai_error` text DEFAULT NULL,
-  `estimated_grade` varchar(10) DEFAULT NULL,
+  `estimated_grade` varchar(10) DEFAULT NULL COMMENT 'AI-suggested RAG rating (R/A/G), extracted from ai_feedback HTML on assessment. Used in analytics when teacher_rating is absent.',
   `completion_status` enum('started','submitted','assessed') DEFAULT 'started',
   `session_id` varchar(100) DEFAULT NULL,
   `attempt_number` int(11) DEFAULT 1,

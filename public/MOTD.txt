@@ -1,8 +1,9 @@
-  <h2>Beta Test Version 0.4.6</h2>
+  <h2>Beta Test Version 0.4.9</h2>
   <div class="motd-notice">
   <p>Please report any issues to the development team: <a class="little-button" href="https://forms.microsoft.com/e/H10SRY6eRx">Report an issue</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Inclusion of AI RAG Rating alongside Teacher RAG rating</li>
   <li>Improvements to analytics</li>
   <li>Addition of subscript<sub>like this</sub> and superscript<sup>like this</sup></li>
   <li>Improvements to AI model: 6x Cost reduction per million tokens</li>
