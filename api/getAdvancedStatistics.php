@@ -487,9 +487,9 @@ function getStudentProgressOverTime($studentId) {
                 ELSE 0
             END as rag_value
         FROM tblresponse r
-        JOIN tblquestion q ON r.question_id = q.id
-        JOIN tbltopic t ON q.topicid = t.id
-        JOIN tblsubject s ON t.subjectid = s.id
+        LEFT JOIN tblquestion q ON r.question_id = q.id
+        LEFT JOIN tbltopic t ON q.topicid = t.id
+        LEFT JOIN tblsubject s ON t.subjectid = s.id
         WHERE r.user_id = ? AND COALESCE(r.teacher_rating, r.estimated_grade) IS NOT NULL
         ORDER BY r.response_timestamp ASC
     ";
