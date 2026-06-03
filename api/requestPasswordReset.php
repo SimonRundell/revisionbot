@@ -30,6 +30,7 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
 require __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/emailHelper.php';
 
 /**
  * Write endpoint errors to the local API log file.
@@ -65,22 +66,6 @@ function createPdoConnection($config) {
 }
 
 /**
- * Replace template placeholders with provided values.
- *
- * @param string $templatePath
- * @param array $variables
- * @return string
- */
-function renderTemplate($templatePath, $variables) {
-    $content = file_get_contents($templatePath);
-    foreach ($variables as $key => $value) {
-        $content = str_replace('{{' . $key . '}}', $value, $content);
-    }
-
-    return $content;
-}
-
-/**
  * Send the password reset email.
  *
  * @param array $config
@@ -92,53 +77,27 @@ function sendPasswordResetEmail($config, $user, $resetLink, $logoUrl) {
     try {
         logEndpointError('SMTP: Starting password reset email for: ' . $user['email']);
         
-        $mail = new PHPMailer(true);
-        
-        // Enable SMTP debug output (0=off, 1=client, 2=client+server, 3=verbose)
+        $mail = createMailer($config);
         $mail->SMTPDebug = 2;
         $mail->Debugoutput = function($str, $level) {
             logEndpointError("SMTP Debug (Level $level): " . trim($str));
         };
-        
-        $mail->isSMTP();
-        $mail->Host = $config['smtpServer'];
-        
-        // Conditionally enable SMTP auth and encryption (disable for local Mailpit)
-        if (!empty($config['smtpSecure'])) {
-            $mail->SMTPAuth = true;
-            $mail->Username = $config['smtpUser'];
-            $mail->Password = $config['smtpPass'];
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPAuth = false;
-        }
-        
-        $mail->Port = (int) $config['smtpPort'];
-        
-        logEndpointError('SMTP: Attempting connection to ' . $config['smtpServer'] . ':' . $config['smtpPort']);
-        logEndpointError('SMTP: Auth User: ' . $config['smtpUser']);
-        $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
+
         $mail->addAddress($user['email'], $user['userName']);
-        $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
-        $mail->Encoding = 'base64';
         $mail->Subject = 'RevisionBot - Password Reset Request';
 
-        $variables = [
-            'name' => htmlspecialchars($user['userName'] ?: 'Student', ENT_QUOTES, 'UTF-8'),
-            'resetLink' => htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8'),
+        $mail->Body = renderEmailTemplate(dirname(__DIR__) . '/public/templates/password_reset.html', [
+            'name'          => htmlspecialchars($user['userName'] ?: 'Student', ENT_QUOTES, 'UTF-8'),
+            'resetLink'     => htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8'),
             'expiryMinutes' => '60',
-            'logoUrl' => htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8')
-        ];
+            'logoUrl'       => htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8'),
+        ]);
 
-        $mail->Body = renderTemplate(dirname(__DIR__) . '/public/templates/password_reset.html', $variables);
-
-        $textVariables = [
-            'name' => $user['userName'] ?: 'Student',
-            'resetLink' => $resetLink,
-            'expiryMinutes' => '60'
-        ];
-        $mail->AltBody = renderTemplate(dirname(__DIR__) . '/public/templates/password_reset.txt', $textVariables);
+        $mail->AltBody = renderEmailTemplate(dirname(__DIR__) . '/public/templates/password_reset.txt', [
+            'name'          => $user['userName'] ?: 'Student',
+            'resetLink'     => $resetLink,
+            'expiryMinutes' => '60',
+        ]);
         
         logEndpointError('SMTP: Attempting to send email to: ' . $user['email']);
         $mail->send();
@@ -197,7 +156,7 @@ try {
 
     if ($resetBaseUrl !== '') {
         $resetLink = $resetBaseUrl . '/reset-password?token=' . urlencode($token);
-        $logoUrl = $resetBaseUrl . '/images/title_bw.png';
+        $logoUrl   = getLogoUrl();
         sendPasswordResetEmail($config, $user, $resetLink, $logoUrl);
     } else {
         logEndpointError('Password reset skipped email send because appBaseUrl is missing.');

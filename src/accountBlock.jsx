@@ -1,6 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
-import { parseApiResponse } from './utils/apiHelpers';
+import { useBadges } from './utils/useBadges';
 
 /****************************************************************************
  * AccountBlock Component
@@ -25,88 +23,7 @@ function AccountBlock({currentUser, config, setCurrentUser,
                         setShowAccountManager, showAccountManager,
                         showAdminManager, setShowAdminManager
                         }) {
-    const [highestBadges, setHighestBadges] = useState([]);
-    const [rewardStats, setRewardStats] = useState(null);
-
-    const loadStudentBadges = useCallback(async () => {
-        if (!config?.api || !currentUser?.token || currentUser?.admin === 1) {
-            setHighestBadges([]);
-            setRewardStats(null);
-            return;
-        }
-
-        try {
-            const response = await axios.post(
-                `${config.api}/getStudentRewards.php`,
-                { userId: currentUser.id },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentUser.token}`,
-                    },
-                }
-            );
-
-            const parsed = parseApiResponse(response.data, null, null, '', '');
-            if (!parsed || !parsed.highestBadges) {
-                setHighestBadges([]);
-                setRewardStats(null);
-                return;
-            }
-
-            setRewardStats(parsed);
-
-            const orderedBadges = [
-                parsed.highestBadges.greenPercent     ? { ...parsed.highestBadges.greenPercent,     track: 'greenPercent'     } : null,
-                parsed.highestBadges.amberOrGreenPercent ? { ...parsed.highestBadges.amberOrGreenPercent, track: 'amberOrGreenPercent' } : null,
-                parsed.highestBadges.noRedStreak      ? { ...parsed.highestBadges.noRedStreak,      track: 'noRedStreak'      } : null,
-                parsed.highestBadges.greenStreak      ? { ...parsed.highestBadges.greenStreak,      track: 'greenStreak'      } : null,
-            ].filter(Boolean);
-
-            setHighestBadges(orderedBadges);
-        } catch (error) {
-            console.error('Error loading student badges:', error);
-        }
-    }, [config?.api, currentUser]);
-
-    useEffect(() => {
-        loadStudentBadges();
-    }, [loadStudentBadges]);
-
-    useEffect(() => {
-        if (currentUser?.admin === 1) {
-            return;
-        }
-
-        const intervalId = window.setInterval(() => {
-            loadStudentBadges();
-        }, 30000);
-
-        return () => {
-            window.clearInterval(intervalId);
-        };
-    }, [currentUser?.admin, loadStudentBadges]);
-
-    // Build a human-readable tooltip for a badge given the live stats
-    const badgeTooltip = (badge) => {
-        if (!rewardStats) {
-            return badge.filename.replace('.png', '');
-        }
-        switch (badge.track) {
-            case 'greenPercent':
-                return `Green %: ${rewardStats.greenPercentOverall}% → ${badge.filename.replace('.png', '')} badge`;
-            case 'amberOrGreenPercent':
-                return `Amber/Green %: ${rewardStats.amberOrGreenPercentOverall}% → ${badge.filename.replace('.png', '')} badge`;
-            case 'noRedStreak':
-                return `No-Red streak: ${rewardStats.noRedStreak} in a row → ${badge.filename.replace('.png', '')} badge`;
-            case 'greenStreak':
-                return `Green streak: ${rewardStats.greenStreak} in a row → ${badge.filename.replace('.png', '')} badge`;
-            default:
-                return badge.filename.replace('.png', '');
-        }
-    };
-
-    // console.log("Manage status:", showAccountManager)
+    const { highestBadges, badgeTooltip } = useBadges(config, currentUser);
 
     return (
         <div className="account-block">

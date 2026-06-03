@@ -5,6 +5,7 @@ import { handleApiCall } from './utils/apiHelpers';
 import { formatDateRange } from './utils/dateHelpers';
 import './App.css';
 import { downloadCsv } from './utils/csvHelpers';
+import { buildHighestBadges, buildBadgeTooltip } from './utils/useBadges';
 
 /****************************************************************************
  * StudentProgressChart Component
@@ -430,29 +431,6 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
         } catch (_) { /* silently ignore */ }
     }, [config.api, currentUser.token]);
 
-    // Build ordered highest-badge array from a rewards object
-    const getHighestBadges = (rewards) => {
-        if (!rewards?.highestBadges) return [];
-        const hb = rewards.highestBadges;
-        return [
-            hb.greenPercent           ? { ...hb.greenPercent,           track: 'greenPercent'           } : null,
-            hb.amberOrGreenPercent    ? { ...hb.amberOrGreenPercent,    track: 'amberOrGreenPercent'    } : null,
-            hb.noRedStreak            ? { ...hb.noRedStreak,            track: 'noRedStreak'            } : null,
-            hb.greenStreak            ? { ...hb.greenStreak,            track: 'greenStreak'            } : null,
-        ].filter(Boolean);
-    };
-
-    // Rich tooltip text for a badge given the full rewards object
-    const badgeTooltip = (badge, rewards) => {
-        if (!rewards) return badge.filename.replace('.png', '');
-        switch (badge.track) {
-            case 'greenPercent':        return `Green %: ${rewards.greenPercentOverall}% → ${badge.filename.replace('.png', '')} badge`;
-            case 'amberOrGreenPercent': return `Amber/Green %: ${rewards.amberOrGreenPercentOverall}% → ${badge.filename.replace('.png', '')} badge`;
-            case 'noRedStreak':         return `No-Red streak: ${rewards.noRedStreak} in a row → ${badge.filename.replace('.png', '')} badge`;
-            case 'greenStreak':         return `Green streak: ${rewards.greenStreak} in a row → ${badge.filename.replace('.png', '')} badge`;
-            default:                    return badge.filename.replace('.png', '');
-        }
-    };
 
     const loadAnalytics = useCallback(async () => {
         let endpoint = '';
@@ -667,7 +645,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                 const sd = students.find(s => s.userName === student.name);
                                 const sid = sd ? sd.id : null;
                                 const rewards = sid ? studentRewardsCache[sid.toString()] : null;
-                                return rewards ? getHighestBadges(rewards).length : -1;
+                                return rewards ? buildHighestBadges(rewards).length : -1;
                             }
                             return student[key];
                         }
@@ -712,7 +690,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         const studentData = students.find(s => s.userName === student.name);
                                         const studentId = studentData ? studentData.id : null;
                                         const rewards = studentId ? studentRewardsCache[studentId.toString()] : null;
-                                        const badges = rewards ? getHighestBadges(rewards) : null;
+                                        const badges = rewards ? buildHighestBadges(rewards) : null;
 
                                         return (
                                             <tr key={student.name}>
@@ -755,7 +733,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                                                     src={badge.src}
                                                                     alt={badge.filename.replace('.png', '')}
                                                                     className="analytics-badge-strip-img"
-                                                                    title={badgeTooltip(badge, rewards)}
+                                                                    title={buildBadgeTooltip(badge, rewards)}
                                                                 />
                                                             ))}
                                                         </div>
@@ -945,7 +923,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
 
                 {(() => {
                     const rewards = studentRewardsCache[selectedStudent];
-                    const badges = rewards ? getHighestBadges(rewards) : null;
+                    const badges = rewards ? buildHighestBadges(rewards) : null;
                     return (
                         <div className="analytics-badges-section">
                             <h4>Earned Badges</h4>
@@ -961,9 +939,9 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                                 src={badge.src}
                                                 alt={badge.filename.replace('.png', '')}
                                                 className="analytics-badge-img"
-                                                title={badgeTooltip(badge, rewards)}
+                                                title={buildBadgeTooltip(badge, rewards)}
                                             />
-                                            <span className="analytics-badge-label">{badgeTooltip(badge, rewards)}</span>
+                                            <span className="analytics-badge-label">{buildBadgeTooltip(badge, rewards)}</span>
                                         </div>
                                     ))}
                                 </div>

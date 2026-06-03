@@ -31,6 +31,7 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
 require __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/emailHelper.php';
 
 /**
  * Write endpoint errors to the local API log file.
@@ -66,22 +67,6 @@ function createPdoConnection($config) {
 }
 
 /**
- * Replace template placeholders with provided values.
- *
- * @param string $templatePath
- * @param array $variables
- * @return string
- */
-function renderTemplate($templatePath, $variables) {
-    $content = file_get_contents($templatePath);
-    foreach ($variables as $key => $value) {
-        $content = str_replace('{{' . $key . '}}', $value, $content);
-    }
-
-    return $content;
-}
-
-/**
  * Send a password change notification email.
  *
  * @param array $config
@@ -91,44 +76,25 @@ function renderTemplate($templatePath, $variables) {
  */
 function sendPasswordChangeNotificationEmail($config, $user, $changedBy, $logoUrl) {
     try {
-        $mail = new PHPMailer(true);
-        $mail->isSMTP();
-        $mail->Host = $config['smtpServer'];
-        
-        // Conditionally enable SMTP auth and encryption (disable for local Mailpit)
-        if (!empty($config['smtpSecure'])) {
-            $mail->SMTPAuth = true;
-            $mail->Username = $config['smtpUser'];
-            $mail->Password = $config['smtpPass'];
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPAuth = false;
-        }
-        
-        $mail->Port = (int) $config['smtpPort'];
-        $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
+        $mail = createMailer($config);
         $mail->addAddress($user['email'], $user['userName']);
-        $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
-        $mail->Encoding = 'base64';
         $mail->Subject = 'Password Changed - AI Revision Bot';
 
-        $htmlVariables = [
-            'NAME' => htmlspecialchars($user['userName'] ?: 'Student', ENT_QUOTES, 'UTF-8'),
-            'EMAIL' => htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8'),
-            'DATETIME' => htmlspecialchars(date('F j, Y \a\t g:i A T'), ENT_QUOTES, 'UTF-8'),
+        $mail->Body = renderEmailTemplate(dirname(__DIR__) . '/public/templates/password_change_notification.html', [
+            'NAME'       => htmlspecialchars($user['userName'] ?: 'Student', ENT_QUOTES, 'UTF-8'),
+            'EMAIL'      => htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8'),
+            'DATETIME'   => htmlspecialchars(date('F j, Y \a\t g:i A T'), ENT_QUOTES, 'UTF-8'),
             'CHANGED_BY' => htmlspecialchars($changedBy, ENT_QUOTES, 'UTF-8'),
-            'logoUrl' => htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8')
-        ];
-        $mail->Body = renderTemplate(dirname(__DIR__) . '/public/templates/password_change_notification.html', $htmlVariables);
+            'logoUrl'    => htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8'),
+        ]);
 
-        $textVariables = [
-            'NAME' => $user['userName'] ?: 'Student',
-            'EMAIL' => $user['email'],
-            'DATETIME' => date('F j, Y \a\t g:i A T'),
-            'CHANGED_BY' => $changedBy
-        ];
-        $mail->AltBody = renderTemplate(dirname(__DIR__) . '/public/templates/password_change_notification.txt', $textVariables);
+        $mail->AltBody = renderEmailTemplate(dirname(__DIR__) . '/public/templates/password_change_notification.txt', [
+            'NAME'       => $user['userName'] ?: 'Student',
+            'EMAIL'      => $user['email'],
+            'DATETIME'   => date('F j, Y \a\t g:i A T'),
+            'CHANGED_BY' => $changedBy,
+        ]);
+
         $mail->send();
 
         return true;

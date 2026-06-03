@@ -1,7 +1,7 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.4.10** — June 2026
+**Version 0.5.0** — June 2026
 
 A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
@@ -413,6 +413,12 @@ The system includes a comprehensive email notification system with professional 
   - `welcome_email.html` / `welcome_email.txt`
   - `password_change_notification.html` / `password_change_notification.txt`
 
+### Email Helper
+All six email endpoints share `api/emailHelper.php`, which provides:
+- `createMailer(array $config)` — builds a configured PHPMailer instance (SMTP, auth, sender, encoding)
+- `getLogoUrl()` — resolves the app logo URL from `public/.config.json`
+- `renderEmailTemplate(string $path, array $vars)` — loads an HTML/TXT file and substitutes `{{KEY}}` placeholders
+
 ### Email Features
 - **Professional Design**: Exeter College branding with logo
 - **Responsive Templates**: Work across all email clients
@@ -687,6 +693,26 @@ const chartData = progressData.map(entry => ({
    - Foreign key constraints for data integrity
 
 ## Recent Enhancements
+
+### v0.5.0 — Architecture Consolidation (June 2026)
+
+Three independent refactors to reduce duplication and simplify the codebase without changing any user-facing behaviour.
+
+**1. Single view-state string (App.jsx + menu.jsx)**
+- Replaced six boolean state variables (`quizBuilder`, `studentMode`, `progressMode`, `dashboard`, `analytics`, and the home default) with a single `currentView` string (`'home' | 'quiz' | 'student' | 'dashboard' | 'analytics' | 'progress'`)
+- Eliminates impossible state combinations where two views could be simultaneously true
+- Reset-on-logout simplified from five `setX(false)` calls to one `setCurrentView('home')`
+- `Menu` component props reduced from eleven to three (`currentView`, `setCurrentView`, `currentUser`)
+
+**2. Shared badge hook (`src/utils/useBadges.js`)**
+- Badge-loading logic was duplicated in `accountBlock.jsx` (~80 lines), `accountManager.jsx` (~67 lines), and `AnalyticsModule.jsx` (~22 lines)
+- Extracted into a single module exporting: `useBadges()` hook for single-user contexts, and two pure functions (`buildHighestBadges()`, `buildBadgeTooltip()`) for the analytics multi-student cache
+- `accountBlock.jsx` and `accountManager.jsx` each replaced their state + callbacks + effects blocks with a single hook call; `AnalyticsModule.jsx` updated to call the two pure functions directly
+
+**3. Shared PHP email helper (`api/emailHelper.php`)**
+- PHPMailer setup (SMTP config, conditional auth, sender address, encoding) was repeated across six endpoint files
+- Extracted into three shared functions: `createMailer()`, `getLogoUrl()`, and `renderEmailTemplate()`
+- Applied to: `sendWelcomeEmail.php`, `sendAdminMessage.php`, `sendPasswordChangeNotification.php`, `bulkUploadUsers.php`, `requestPasswordReset.php`, `resetPassword.php`
 
 ### v0.4.10 — Student RAG Summary and Image Folder Reorganisation (June 2026)
 

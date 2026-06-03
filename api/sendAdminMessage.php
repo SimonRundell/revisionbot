@@ -29,6 +29,7 @@ use PHPMailer\PHPMailer\Exception;
 require 'vendor/autoload.php';
 require_once 'simple_security.php';
 include 'setup.php';
+require_once __DIR__ . '/emailHelper.php';
 
 requireAdmin($mysqli);
 
@@ -69,25 +70,15 @@ if (count($recipients) === 0) {
     send_response('No active users found for the given IDs.', 404);
 }
 
-// Build logo URL from public config
-$publicConfigPath = dirname(__DIR__) . '/public/.config.json';
-$publicConfig     = file_exists($publicConfigPath)
-    ? json_decode(file_get_contents($publicConfigPath), true)
-    : [];
-$logoBaseUrl = rtrim((string)($publicConfig['appBaseUrl'] ?? ''), '/');
-$logoUrl     = $logoBaseUrl !== ''
-    ? $logoBaseUrl . '/images/title_bw.png'
-    : 'https://exe-coll.ac.uk/wp-content/themes/exeter-college/assets/images/logo.png';
+$logoUrl = getLogoUrl();
 
-// Load templates
 $htmlTemplatePath = '../public/templates/admin_message.html';
 $txtTemplatePath  = '../public/templates/admin_message.txt';
-$htmlTemplate     = file_exists($htmlTemplatePath) ? file_get_contents($htmlTemplatePath) : null;
-$txtTemplate      = file_exists($txtTemplatePath)  ? file_get_contents($txtTemplatePath)  : null;
 
-if ($htmlTemplate === null) {
+if (!file_exists($htmlTemplatePath)) {
     send_response('Admin message email template not found.', 500);
 }
+$hasTxtTemplate = file_exists($txtTemplatePath);
 
 $appUrl = $config['appUrl'] ?? '';
 $sent   = 0;
@@ -104,43 +95,29 @@ foreach ($recipients as $recipient) {
     // Build HTML: convert newlines to <br> before embedding in the template
     $personalizedBodyHtml = nl2br(htmlspecialchars($personalizedBody, ENT_QUOTES, 'UTF-8'));
 
-    $htmlBody = str_replace('{{NAME}}',         htmlspecialchars($recipientName, ENT_QUOTES, 'UTF-8'), $htmlTemplate);
-    $htmlBody = str_replace('{{SUBJECT}}',      htmlspecialchars($subject, ENT_QUOTES, 'UTF-8'),       $htmlBody);
-    $htmlBody = str_replace('{{MESSAGE_BODY}}', $personalizedBodyHtml,                                  $htmlBody);
-    $htmlBody = str_replace('{{APP_URL}}',      htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8'),         $htmlBody);
-    $htmlBody = str_replace('{{logoUrl}}',      htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8'),        $htmlBody);
+    $htmlBody = renderEmailTemplate($htmlTemplatePath, [
+        'NAME'         => htmlspecialchars($recipientName, ENT_QUOTES, 'UTF-8'),
+        'SUBJECT'      => htmlspecialchars($subject, ENT_QUOTES, 'UTF-8'),
+        'MESSAGE_BODY' => $personalizedBodyHtml,
+        'APP_URL'      => htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8'),
+        'logoUrl'      => htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8'),
+    ]);
 
     // Plain-text version
-    if ($txtTemplate !== null) {
-        $txtBody = str_replace('{{NAME}}',         $recipientName,     $txtTemplate);
-        $txtBody = str_replace('{{SUBJECT}}',      $subject,           $txtBody);
-        $txtBody = str_replace('{{MESSAGE_BODY}}', $personalizedBody,  $txtBody);
-        $txtBody = str_replace('{{APP_URL}}',      $appUrl,            $txtBody);
+    if ($hasTxtTemplate) {
+        $txtBody = renderEmailTemplate($txtTemplatePath, [
+            'NAME'         => $recipientName,
+            'SUBJECT'      => $subject,
+            'MESSAGE_BODY' => $personalizedBody,
+            'APP_URL'      => $appUrl,
+        ]);
     } else {
         $txtBody = "Dear $recipientName,\n\n$personalizedBody\n\n---\nAI Revision Bot\n$appUrl";
     }
 
     try {
-        $mail = new PHPMailer(true);
-        $mail->SMTPDebug  = 0;
-        $mail->isSMTP();
-        $mail->Host = $config['smtpServer'];
-
-        if (!empty($config['smtpSecure'])) {
-            $mail->SMTPAuth   = true;
-            $mail->Username   = $config['smtpUser'];
-            $mail->Password   = $config['smtpPass'];
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPAuth = false;
-        }
-
-        $mail->Port     = $config['smtpPort'];
-        $mail->setFrom($config['smtpFromEmail'], $config['smtpFrom']);
+        $mail = createMailer($config);
         $mail->addAddress($recipientEmail, $recipientName);
-        $mail->isHTML(true);
-        $mail->CharSet  = 'UTF-8';
-        $mail->Encoding = 'base64';
         $mail->Subject  = $subject;
         $mail->Body     = $htmlBody;
         $mail->AltBody  = $txtBody;

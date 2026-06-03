@@ -4,7 +4,7 @@ import './App.css';
 import { message, Spin } from 'antd';
 import Login from './login.jsx';
 import CMFloatAd from './cmFloatAd.jsx';
-import AccountManager from './accountManager.jsx';  
+import AccountManager from './accountManager.jsx';
 import AccountBlock from './accountBlock.jsx';
 import AdminManager from './adminManager.jsx';
 import Menu from './menu.jsx';
@@ -54,8 +54,12 @@ const clearStoredSession = () => {
  * App Component
  * Main application component that manages global state and routing.
  * Handles user authentication, configuration loading, and message display.
- * Controls visibility of different application modes and manages the overall layout.
- * 
+ * Controls which view is active via a single `currentView` string state.
+ *
+ * View values: 'home' | 'quiz' | 'student' | 'dashboard' | 'analytics' | 'progress'
+ * Modal overlays (showAccountManager, showAdminManager) are separate booleans
+ * because they layer on top of whatever view is active.
+ *
  * @returns {JSX.Element} The main App component with conditional rendering based on auth state
 ****************************************************************************/
 
@@ -71,11 +75,7 @@ function App() {
   const [sendErrorMessage, setSendErrorMessage] = useState(false);
   const [showAccountManager, setShowAccountManager] = useState(false);
   const [showAdminManager, setShowAdminManager] = useState(false);
-  const [quizBuilder, setQuizBuilder] = useState(false);
-  const [studentMode, setStudentMode] = useState(false);
-  const [progressMode, setProgressMode] = useState(false);
-  const [dashboard, setDashboard] = useState(false);
-  const [analytics, setAnalytics] = useState(false);
+  const [currentView, setCurrentView] = useState('home');
 
   useEffect(() => {
     // Restore persisted login if the session has not expired.
@@ -192,7 +192,6 @@ function App() {
     axios.get(`/.config.json?t=${timestamp}`)
       .then(response => {
         setConfig(response.data);
-        // console.log('Config loaded:', response.data);
         messageApi.success('Welcome to the AI Revision Bot!');
       })
       .catch(error => {
@@ -201,12 +200,12 @@ function App() {
       });
   }, [messageApi]);
 
-useEffect(() => {
+  useEffect(() => {
     if (sendSuccessMessage) {
        messageApi.success(sendSuccessMessage);
     }
       setSendSuccessMessage(false);
-    
+
   }, [sendSuccessMessage, messageApi]);
 
   useEffect(() => {
@@ -217,20 +216,16 @@ useEffect(() => {
 
   useEffect(() => {
     if (!currentUser) {
-      setQuizBuilder(false);
-      setStudentMode(false);
-      setProgressMode(false);
-      setDashboard(false);
+      setCurrentView('home');
+      setShowAdminManager(false);
       return;
     }
 
-    if (currentUser.admin === 1) {
-      setDashboard(false);
+    // Students land on their past-answers dashboard; admins land on home (AdminDashboard default).
+    if (currentUser.admin !== 1) {
+      setCurrentView('dashboard');
     } else {
-      setQuizBuilder(false);
-      setStudentMode(false);
-      setProgressMode(false);
-      setDashboard(true);
+      setCurrentView('home');
     }
   }, [currentUser]);
 
@@ -259,8 +254,8 @@ useEffect(() => {
       )}
     { !currentUser && currentPath !== '/reset-password' && (
       <div className="App">
-        <Login config={config} setCurrentUser={setCurrentUser} 
-                setSendSuccessMessage={setSendSuccessMessage} 
+        <Login config={config} setCurrentUser={setCurrentUser}
+                setSendSuccessMessage={setSendSuccessMessage}
                 setSendErrorMessage={setSendErrorMessage} />
       </div>
       )}
@@ -288,24 +283,19 @@ useEffect(() => {
               <img src="/images/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
             </div>
           </div>
-          
+
           {/* Horizontal Steampunk Menus */}
           <div className="steampunk-menu-bar">
             <AccountBlock config={config}
-                            currentUser={currentUser} 
+                            currentUser={currentUser}
                             setCurrentUser={setCurrentUser}
-                            setShowAccountManager={setShowAccountManager} 
+                            setShowAccountManager={setShowAccountManager}
                             showAccountManager={showAccountManager}
                             showAdminManager={showAdminManager}
                             setShowAdminManager={setShowAdminManager} />
-                    
-              <Menu quizBuilder={quizBuilder} setQuizBuilder={setQuizBuilder} 
-                    studentMode={studentMode} setStudentMode={setStudentMode}
-                  progressMode={progressMode} setProgressMode={setProgressMode}
-                    dashboard={dashboard} setDashboard={setDashboard}
-                    analytics={analytics} setAnalytics={setAnalytics}
-                    currentUser={currentUser} />
-        </div>
+
+            <Menu currentView={currentView} setCurrentView={setCurrentView} currentUser={currentUser} />
+          </div>
         </div>
 
         {showSessionWarning && (
@@ -315,7 +305,6 @@ useEffect(() => {
         )}
 
         {showAccountManager && (
-
             <AccountManager config={config} currentUser={currentUser}
                             setCurrentUser={setCurrentUser}
                             setSendSuccessMessage={setSendSuccessMessage}
@@ -324,8 +313,7 @@ useEffect(() => {
                             showAccountManager={showAccountManager} />
         )}
 
-        {showAdminManager && currentUser.admin===1 &&(
-
+        {showAdminManager && currentUser.admin === 1 && (
             <AdminManager config={config} currentUser={currentUser}
                             setSendSuccessMessage={setSendSuccessMessage}
                             setSendErrorMessage={setSendErrorMessage}
@@ -333,22 +321,22 @@ useEffect(() => {
                             showAdminManager={showAdminManager} />
         )}
 
-      {quizBuilder && currentUser.admin === 1 && !dashboard && (
-        <AdminSubjects config={config} currentUser={currentUser} 
+      {currentView === 'quiz' && currentUser.admin === 1 && (
+        <AdminSubjects config={config} currentUser={currentUser}
                        setSendErrorMessage={setSendErrorMessage}
-                       setSendSuccessMessage={setSendSuccessMessage} /> 
+                       setSendSuccessMessage={setSendSuccessMessage} />
       )}
 
-      {dashboard && (
+      {currentView === 'dashboard' && (
         currentUser.admin === 1 ? (
-          <AdminDashboard 
+          <AdminDashboard
             config={config}
             currentUser={currentUser}
             setSendErrorMessage={setSendErrorMessage}
             setSendSuccessMessage={setSendSuccessMessage}
           />
         ) : (
-          <PastAnswersViewer 
+          <PastAnswersViewer
             userId={currentUser.id}
             currentUser={currentUser}
             config={config}
@@ -358,8 +346,8 @@ useEffect(() => {
         )
       )}
 
-      {analytics && currentUser.admin === 1 && (
-        <AnalyticsModule 
+      {currentView === 'analytics' && currentUser.admin === 1 && (
+        <AnalyticsModule
           config={config}
           currentUser={currentUser}
           setSendErrorMessage={setSendErrorMessage}
@@ -367,21 +355,17 @@ useEffect(() => {
         />
       )}
 
-      {studentMode && !dashboard && !analytics && (
-
-      <>     
-        <StudentInterface 
+      {currentView === 'student' && (
+        <StudentInterface
           userId={currentUser.id}
-          // onBack={() => setStudentMode(false)}
           config={config}
           currentUser={currentUser}
           setSendErrorMessage={setSendErrorMessage}
           setSendSuccessMessage={setSendSuccessMessage}
         />
-        </>
       )}
 
-      {progressMode && !dashboard && !analytics && !studentMode && currentUser.admin !== 1 && (
+      {currentView === 'progress' && currentUser.admin !== 1 && (
         <StudentProgress
           userId={currentUser.id}
           config={config}
@@ -390,15 +374,14 @@ useEffect(() => {
         />
       )}
 
-      {!quizBuilder && !studentMode && !dashboard && currentUser.admin === 1 && (
-        <AdminDashboard 
+      {currentView === 'home' && currentUser.admin === 1 && (
+        <AdminDashboard
           config={config}
           currentUser={currentUser}
           setSendErrorMessage={setSendErrorMessage}
           setSendSuccessMessage={setSendSuccessMessage}
         />
       )}
-
 
       </div>
       )}
