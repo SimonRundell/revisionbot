@@ -628,7 +628,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         const badges = rewards ? getHighestBadges(rewards) : null;
 
                                         return (
-                                            <tr key={index}>
+                                            <tr key={student.name}>
                                                 <td>
                                                     {studentId ? (
                                                         <span
@@ -763,8 +763,8 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedAttempts.map((attempt, index) => (
-                                        <tr key={index}>
+                                    {sortedAttempts.map((attempt) => (
+                                        <tr key={attempt.question}>
                                             <td>{attempt.question.substring(0, 50)}...</td>
                                             <td>{attempt.topicName}</td>
                                             <td>{attempt.attemptCount}</td>
@@ -872,8 +872,8 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedDepts.map((dept, index) => (
-                                        <tr key={index}>
+                                    {sortedDepts.map((dept) => (
+                                        <tr key={dept.department}>
                                             <td>{dept.department}</td>
                                             <td>{dept.studentCount}</td>
                                             <td>{dept.attempts}</td>
