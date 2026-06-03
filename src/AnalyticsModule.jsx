@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Spin, Modal } from 'antd';
-import { handleApiCall } from './utils/apiHelpers';
+import { handleApiCall, parseApiResponse } from './utils/apiHelpers';
 import { formatDateRange } from './utils/dateHelpers';
 import './App.css';
 import { downloadCsv } from './utils/csvHelpers';
@@ -423,8 +423,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 { userId: studentId },
                 { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}` } }
             );
-            const d = response.data;
-            const parsed = d?.success ? (d.data ?? d) : null;
+            const parsed = parseApiResponse(response.data, null, null);
             if (parsed) {
                 setStudentRewardsCache(prev => ({ ...prev, [key]: parsed }));
             }
