@@ -390,6 +390,19 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                 <div className="dashboard-filters">
                     <div className="filters-header" onClick={() => setFiltersOpen(o => !o)}>
                         <span className="filters-header-title">Filters</span>
+                        {!filtersOpen && (() => {
+                            const parts = [];
+                            if (filters.unmarked) parts.push('New Only');
+                            if (filters.location) parts.push(`Class: ${filters.location}`);
+                            if (filters.student) parts.push(`Student: ${filters.student}`);
+                            if (filters.subject) parts.push(`Subject: ${filters.subject}`);
+                            if (filters.topic) parts.push(`Topic: ${filters.topic}`);
+                            if (filters.dateFrom) parts.push(`From: ${formatDate(filters.dateFrom)}`);
+                            if (filters.dateTo) parts.push(`To: ${formatDate(filters.dateTo)}`);
+                            return parts.length > 0
+                                ? <span className="filters-active-summary">{parts.join(' · ')}</span>
+                                : null;
+                        })()}
                         <span className={`filters-toggle-arrow${filtersOpen ? ' open' : ''}`}>▼</span>
                     </div>
                     <div className={`filters-body${filtersOpen ? ' open' : ''}`}>

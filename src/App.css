@@ -3383,11 +3383,22 @@ ANSWER MODAL STYLING
   font-size: 14px;
 }
 
+.filters-active-summary {
+  flex: 1;
+  margin: 0 12px;
+  font-size: 12px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .filters-toggle-arrow {
   font-size: 13px;
   color: #aaa;
   transition: transform 0.3s ease;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .filters-toggle-arrow.open {

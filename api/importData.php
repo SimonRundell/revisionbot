@@ -17,6 +17,7 @@ include 'setup.php';
         'subjects_imported' => 0,
         'topics_imported' => 0,
         'questions_imported' => 0,
+        'questions_updated' => 0,
         'subjects_skipped' => 0,
         'topics_skipped' => 0,
         'questions_skipped' => 0
@@ -102,7 +103,7 @@ include 'setup.php';
             $topicStmt->bind_param("i", $question['topicid']);
             $topicStmt->execute();
             $topicResult = $topicStmt->get_result();
-            
+
             if ($topicResult->num_rows === 0) {
                 $importResults['questions_skipped']++;
                 $topicStmt->close();
@@ -110,36 +111,61 @@ include 'setup.php';
             }
             $topicStmt->close();
 
-            // Check if question already exists (by text and topic)
-            $checkQuery = "SELECT id FROM tblquestion WHERE question = ? AND topicid = ?";
-            $checkStmt = $mysqli->prepare($checkQuery);
+            $attachments_json = json_encode($question['attachments'] ?? []);
+            $order      = $question['question_order'] ?? 0;
+            $markscheme = $question['markscheme'] ?? '';
+
+            // If the JSON entry carries an id, check whether that row exists and UPDATE it
+            $incomingId = isset($question['id']) ? intval($question['id']) : 0;
+            if ($incomingId > 0) {
+                $existsStmt = $mysqli->prepare("SELECT id FROM tblquestion WHERE id = ?");
+                $existsStmt->bind_param("i", $incomingId);
+                $existsStmt->execute();
+                $exists = $existsStmt->get_result()->num_rows > 0;
+                $existsStmt->close();
+
+                if ($exists) {
+                    $updateStmt = $mysqli->prepare(
+                        "UPDATE tblquestion SET question = ?, topicid = ?, attachments = ?, markscheme = ?, question_order = ? WHERE id = ?"
+                    );
+                    $updateStmt->bind_param("sissii",
+                        $question['question'],
+                        $question['topicid'],
+                        $attachments_json,
+                        $markscheme,
+                        $order,
+                        $incomingId
+                    );
+                    if ($updateStmt->execute()) {
+                        $importResults['questions_updated']++;
+                    }
+                    $updateStmt->close();
+                    continue;
+                }
+            }
+
+            // No matching id — insert as new (skip if identical text+topic already exists)
+            $checkStmt = $mysqli->prepare("SELECT id FROM tblquestion WHERE question = ? AND topicid = ?");
             $checkStmt->bind_param("si", $question['question'], $question['topicid']);
             $checkStmt->execute();
-            $result = $checkStmt->get_result();
-            
-            if ($result->num_rows > 0) {
-                $importResults['questions_skipped']++;
-                $checkStmt->close();
-                continue;
-            }
+            $duplicate = $checkStmt->get_result()->num_rows > 0;
             $checkStmt->close();
 
-            // Prepare attachments
-            $attachments_json = json_encode($question['attachments'] ?? []);
+            if ($duplicate) {
+                $importResults['questions_skipped']++;
+                continue;
+            }
 
-            // Insert new question
-            $insertQuery = "INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order) VALUES (?, ?, ?, ?, ?)";
-            $insertStmt = $mysqli->prepare($insertQuery);
-            $order = $question['question_order'] ?? 0;
-            $markscheme = $question['markscheme'] ?? '';
-            $insertStmt->bind_param("sissi", 
-                $question['question'], 
-                $question['topicid'], 
-                $attachments_json, 
-                $markscheme, 
+            $insertStmt = $mysqli->prepare(
+                "INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order) VALUES (?, ?, ?, ?, ?)"
+            );
+            $insertStmt->bind_param("sissi",
+                $question['question'],
+                $question['topicid'],
+                $attachments_json,
+                $markscheme,
                 $order
             );
-            
             if ($insertStmt->execute()) {
                 $importResults['questions_imported']++;
             }
@@ -151,10 +177,11 @@ include 'setup.php';
         $mysqli->autocommit(true);
 
         $message = sprintf(
-            "Import completed: %d subjects, %d topics, %d questions imported. %d subjects, %d topics, %d questions skipped.",
+            "Import completed: %d subjects, %d topics, %d questions imported, %d questions updated. %d subjects, %d topics, %d questions skipped.",
             $importResults['subjects_imported'],
-            $importResults['topics_imported'], 
+            $importResults['topics_imported'],
             $importResults['questions_imported'],
+            $importResults['questions_updated'],
             $importResults['subjects_skipped'],
             $importResults['topics_skipped'],
             $importResults['questions_skipped']
