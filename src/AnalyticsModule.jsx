@@ -204,7 +204,7 @@ const ragScore = (red, amber, green) => {
  */
 const sortData = (arr, key, dir, getValue) => {
     if (!key) return arr;
-    return [...arr].sort((a, b) => {
+    return arr.toSorted((a, b) => {
         const av = getValue ? getValue(a, key) : a[key];
         const bv = getValue ? getValue(b, key) : b[key];
         if (av === null || av === undefined) return 1;
