@@ -3,6 +3,7 @@
   <p>Please report any issues to the development team: <a class="little-button" href="https://forms.microsoft.com/e/H10SRY6eRx">Report an issue</a></p>
   <p>Recent changes and fixes include:</p>
   <ul>
+  <li>Simplified internal operation</li>
   <li>Teaching Analytics: sortable column headers on all performance tables</li>
   <li>Teaching Analytics: student badges now display correctly in the class view</li>
   <li>Teaching Analytics: RAG Score column &mdash; a single &plusmn;% performance quotient per student and class</li>
