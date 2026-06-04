@@ -40,10 +40,12 @@ api/.config.json
 public/.config.json
 api/.config.live.json
 
-# Deployment credentials and logs
+# Deployment scripts and credentials (contain or reference sensitive data)
 deploy.config.json
 deploy.log
 deploy.ps1
+deploy.sh
+
 
 # Database files
 *.db
