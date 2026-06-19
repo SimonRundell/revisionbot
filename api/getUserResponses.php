@@ -29,8 +29,25 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to user response data
-requireAuth();
+// Authenticated only. Students may read only their own responses; a department
+// admin may read any student in their department; super-admin reads anyone.
+$caller = requireAuth($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
+$callerIsAdmin = (int) ($caller['admin'] ?? 0) === 1 || $callerIsSuper;
+$requestedUserId = (int) ($receivedData['userId'] ?? 0);
+
+if (!$callerIsAdmin) {
+    // Non-admins are locked to their own data regardless of what they ask for.
+    $targetUserId = (int) $caller['id'];
+} else {
+    $targetUserId = $requestedUserId > 0 ? $requestedUserId : (int) $caller['id'];
+    if (!$callerIsSuper) {
+        $targetDepartmentId = lookupUserDepartmentId($mysqli, $targetUserId);
+        if (!callerActsOnDepartment($caller, $targetDepartmentId)) {
+            send_response('You are not allowed to view this user\'s responses.', 403);
+        }
+    }
+}
 
 // Get user responses with AI feedback - simplified JOIN
 $query = "SELECT 
@@ -66,8 +83,8 @@ if (!$stmt) {
     log_info("User responses query prepare failed: " . $mysqli->error);
     send_response("User responses query prepare failed: " . $mysqli->error, 500);
 } else {
-    log_info("Querying responses for user ID: " . $receivedData['userId']);
-    $stmt->bind_param("i", $receivedData['userId']);
+    log_info("Querying responses for user ID: " . $targetUserId);
+    $stmt->bind_param("i", $targetUserId);
     
     if (!$stmt->execute()) {
         log_info("User responses query execute failed: " . $stmt->error);
@@ -101,7 +118,7 @@ if (!$stmt) {
             ];
         }
         
-        log_info("Retrieved " . count($responses) . " responses for user: " . $receivedData['userId']);
+        log_info("Retrieved " . count($responses) . " responses for user: " . $targetUserId);
         $json = json_encode($responses);
         send_response($json, 200);
     }

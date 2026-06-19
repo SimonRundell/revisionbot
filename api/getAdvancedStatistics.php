@@ -8,7 +8,44 @@ $authenticatedUser = requireAuth($mysqli);
 /**
  * Advanced Analytics API for Teaching Dashboard
  * Provides comprehensive statistics for teachers to track student progress
+ *
+ * Tenant isolation: every aggregate is scoped to the caller's department unless
+ * they are the super-admin. The department id comes from the token and is cast
+ * to int, so it is safe to inline into the filter strings below.
  */
+
+$callerIsSuper = (int) ($authenticatedUser['is_super_admin'] ?? 0) === 1;
+$callerDepartmentId = (int) ($authenticatedUser['department_id'] ?? 0);
+
+// Reusable department predicates keyed on the relevant table alias.
+$deptFilterUser     = $callerIsSuper ? '' : ' AND u.department_id = ' . $callerDepartmentId . ' ';
+$deptFilterResponse = $callerIsSuper ? '' : ' AND r.department_id = ' . $callerDepartmentId . ' ';
+
+/**
+ * Guard: ensure the caller may view the given student's analytics.
+ * Students may only view themselves; department admins only their department;
+ * super-admin anyone. Exits 403 otherwise.
+ */
+function requireStudentInScope($studentId) {
+    global $mysqli, $authenticatedUser, $callerIsSuper;
+
+    if ($callerIsSuper) {
+        return;
+    }
+
+    $callerIsAdmin = (int) ($authenticatedUser['admin'] ?? 0) === 1;
+    if (!$callerIsAdmin) {
+        if ((int) $studentId !== (int) $authenticatedUser['id']) {
+            send_response('Forbidden', 403);
+        }
+        return;
+    }
+
+    $targetDepartmentId = lookupUserDepartmentId($mysqli, (int) $studentId);
+    if (!callerActsOnDepartment($authenticatedUser, $targetDepartmentId)) {
+        send_response('Forbidden', 403);
+    }
+}
 
 $requestType = $receivedData['type'] ?? $_GET['type'] ?? '';
 
@@ -48,13 +85,16 @@ switch ($requestType) {
 }
 
 function getDepartments() {
-    global $mysqli;
-    
-    $query = "SELECT DISTINCT userClass as department 
-              FROM tbluser 
-              WHERE userClass IS NOT NULL 
-              AND userClass != '' 
-              AND admin != 1 
+    global $mysqli, $callerIsSuper, $callerDepartmentId;
+
+    $deptClause = $callerIsSuper ? '' : ' AND department_id = ' . (int) $callerDepartmentId . ' ';
+
+    $query = "SELECT DISTINCT userClass as department
+              FROM tbluser
+              WHERE userClass IS NOT NULL
+              AND userClass != ''
+              AND admin != 1
+              $deptClause
               ORDER BY userClass";
     
     $result = $mysqli->query($query);
@@ -93,25 +133,25 @@ function getAllQuestions() {
 }
 
 function getDepartmentStats($department) {
-    global $mysqli;
-    
+    global $mysqli, $deptFilterUser;
+
     if (empty($department)) {
         send_response("Department parameter required", 400);
         return;
     }
-    
+
     log_info("getDepartmentStats called with department: " . $department);
-    
+
     // Get basic department statistics
     $statsQuery = "
-        SELECT 
+        SELECT
             COUNT(DISTINCT r.topic_id) as topicsAnswered,
             COUNT(DISTINCT r.question_id) as questionsAnswered,
             COUNT(DISTINCT r.user_id) as totalStudents,
             ROUND(AVG(r.attempt_number), 2) as avgAttempts
         FROM tblresponse r
         JOIN tbluser u ON r.user_id = u.id
-        WHERE u.userClass = ? AND u.admin != 1
+        WHERE u.userClass = ? AND u.admin != 1 $deptFilterUser
     ";
     
     $stmt = $mysqli->prepare($statsQuery);
@@ -133,7 +173,7 @@ function getDepartmentStats($department) {
             COUNT(*) as totalResponses
         FROM tbluser u
         LEFT JOIN tblresponse r ON u.id = r.user_id
-        WHERE u.userClass = ? AND u.admin != 1
+        WHERE u.userClass = ? AND u.admin != 1 $deptFilterUser
         GROUP BY u.id, u.userName
         ORDER BY u.userName
     ";
@@ -142,8 +182,8 @@ function getDepartmentStats($department) {
     $stmt->bind_param("s", $department);
     $stmt->execute();
     $studentResult = $stmt->get_result();
-    
-    $students = [];
+
+    $studentBreakdown = [];
     while ($row = $studentResult->fetch_assoc()) {
         if ($row['totalResponses'] > 0) {
             $row['redPercent'] = round(($row['redCount'] / $row['totalResponses']) * 100, 1);
@@ -162,12 +202,14 @@ function getDepartmentStats($department) {
 
 function getStudentStats($studentId) {
     global $mysqli;
-    
+
     if (empty($studentId)) {
         send_response("Student ID parameter required", 400);
         return;
     }
-        
+
+    requireStudentInScope($studentId);
+
         // Now let's get the actual stats using the same structure as getUserResponses.php
         $statsQuery = "
             SELECT 
@@ -377,21 +419,21 @@ function getStudentStats($studentId) {
     
         send_response(json_encode($stats), 200);
 }function getQuestionStats($questionId) {
-    global $mysqli;
-    
+    global $mysqli, $deptFilterUser;
+
     if (empty($questionId)) {
         send_response("Question ID parameter required", 400);
         return;
     }
-    
-    // Get basic question statistics
+
+    // Get basic question statistics (scoped to the caller's department)
     $statsQuery = "
-        SELECT 
+        SELECT
             COUNT(*) as totalAttempts,
             COUNT(DISTINCT r.user_id) as uniqueStudents,
             COUNT(DISTINCT u.userClass) as classesAttempted,
             ROUND(AVG(
-                CASE 
+                CASE
                     WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'R' THEN 1
                     WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'A' THEN 2
                     WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 3
@@ -400,7 +442,7 @@ function getStudentStats($studentId) {
             ), 2) as avgRagScore
         FROM tblresponse r
         JOIN tbluser u ON r.user_id = u.id
-        WHERE r.question_id = ? AND u.admin != 1
+        WHERE r.question_id = ? AND u.admin != 1 $deptFilterUser
     ";
     
     $stmt = $mysqli->prepare($statsQuery);
@@ -421,7 +463,7 @@ function getStudentStats($studentId) {
             ROUND((SUM(CASE WHEN COALESCE(r.teacher_rating, r.estimated_grade) = 'G' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as successRate
         FROM tblresponse r
         JOIN tbluser u ON r.user_id = u.id
-        WHERE r.question_id = ? AND u.admin != 1 AND u.userClass IS NOT NULL
+        WHERE r.question_id = ? AND u.admin != 1 AND u.userClass IS NOT NULL $deptFilterUser
         GROUP BY u.userClass
         ORDER BY u.userClass
     ";
@@ -462,14 +504,10 @@ function getStudentProgressOverTime($studentId) {
         return;
     }
 
-    // Students can only view their own progress graph; admins can view any student.
+    // Students may view only their own graph; department admins only their
+    // department; super-admin anyone.
     $requestedStudentId = (int) $studentId;
-    $callerIsAdmin = (int) ($authenticatedUser['admin'] ?? 0) === 1;
-    $callerId = (int) ($authenticatedUser['id'] ?? 0);
-    if (!$callerIsAdmin && $requestedStudentId !== $callerId) {
-        send_response("Forbidden", 403);
-        return;
-    }
+    requireStudentInScope($requestedStudentId);
     
     // Get all responses with timestamps, ordered by date
     $progressQuery = "
@@ -564,7 +602,7 @@ function getStudentProgressOverTime($studentId) {
 }
 
 function getClassComparison() {
-    global $mysqli;
+    global $mysqli, $deptFilterUser;
 
     $query = "
         SELECT
@@ -591,6 +629,7 @@ function getClassComparison() {
         WHERE u.admin != 1
           AND u.userClass IS NOT NULL
           AND u.userClass != ''
+          $deptFilterUser
         GROUP BY u.userClass
         ORDER BY u.userClass
     ";
@@ -624,6 +663,8 @@ function getSubjectStats($studentId) {
         send_response('Student ID parameter required', 400);
         return;
     }
+
+    requireStudentInScope($studentId);
 
     $query = "
         SELECT

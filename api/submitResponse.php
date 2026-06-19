@@ -36,8 +36,12 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access
-blockDirectAccess();
+// Authenticated users only. The response is recorded against the token's user
+// and department, never a client-supplied id (prevents submitting as someone
+// else or into another tenant).
+$caller = requireAuth($mysqli);
+$receivedData['userId'] = (int) $caller['id'];
+$departmentId = $caller['department_id'] ?? null;
 
 // Check if user already has a response for this question (for attempt numbering)
 $checkStmt = $mysqli->prepare("SELECT MAX(attempt_number) as max_attempt FROM tblresponse WHERE user_id = ? AND question_id = ?");
@@ -69,10 +73,10 @@ if (!$checkStmt) {
          * @see tblresponse schema for field definitions
          */
         $query = "INSERT INTO tblresponse (
-                    user_id, question_id, subject_id, topic_id, 
+                    user_id, department_id, question_id, subject_id, topic_id,
                     student_answer, student_graphic, time_taken, session_id, attempt_number,
                     completion_status
-                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'submitted')";
+                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'submitted')";
         
         $stmt = $mysqli->prepare($query);
         
@@ -97,15 +101,16 @@ if (!$checkStmt) {
              * s = session_id (string)
              * i = attempt_number (integer)
              */
-            $stmt->bind_param("iiiissisi", 
-                $receivedData['userId'], 
-                $receivedData['questionId'], 
-                $receivedData['subjectId'], 
+            $stmt->bind_param("iiiiissisi",
+                $receivedData['userId'],
+                $departmentId,
+                $receivedData['questionId'],
+                $receivedData['subjectId'],
                 $receivedData['topicId'],
                 $receivedData['studentAnswer'],
                 $studentGraphic,
-                $receivedData['timeTaken'], 
-                $receivedData['sessionId'], 
+                $receivedData['timeTaken'],
+                $receivedData['sessionId'],
                 $attemptNumber
             );
             
@@ -117,7 +122,7 @@ if (!$checkStmt) {
                 log_info("Response submitted successfully for user: " . $receivedData['userId'] . " question: " . $receivedData['questionId']);
                 
                 // Update user stats
-                updateUserStats($mysqli, $receivedData['userId'], $receivedData['subjectId'], $receivedData['topicId']);
+                updateUserStats($mysqli, $receivedData['userId'], $departmentId, $receivedData['subjectId'], $receivedData['topicId']);
                 
                 send_response([
                     "success" => true,
@@ -131,19 +136,19 @@ if (!$checkStmt) {
     $checkStmt->close();
 }
 
-function updateUserStats($mysqli, $userId, $subjectId, $topicId) {
+function updateUserStats($mysqli, $userId, $departmentId, $subjectId, $topicId) {
     // Update subject-level stats
     $stmt = $mysqli->prepare("
-        INSERT INTO tbluser_stats (user_id, subject_id, total_questions_attempted, total_questions_completed)
-        VALUES (?, ?, 1, 1)
-        ON DUPLICATE KEY UPDATE 
+        INSERT INTO tbluser_stats (user_id, department_id, subject_id, total_questions_attempted, total_questions_completed)
+        VALUES (?, ?, ?, 1, 1)
+        ON DUPLICATE KEY UPDATE
             total_questions_attempted = total_questions_attempted + 1,
             total_questions_completed = total_questions_completed + 1,
             last_activity = CURRENT_TIMESTAMP
     ");
-    
+
     if ($stmt) {
-        $stmt->bind_param("ii", $userId, $subjectId);
+        $stmt->bind_param("iii", $userId, $departmentId, $subjectId);
         if ($stmt->execute()) {
             log_info("Subject stats updated for user: " . $userId . " subject: " . $subjectId);
         } else {
@@ -151,19 +156,19 @@ function updateUserStats($mysqli, $userId, $subjectId, $topicId) {
         }
         $stmt->close();
     }
-    
+
     // Update topic-level stats
     $stmt = $mysqli->prepare("
-        INSERT INTO tbluser_stats (user_id, subject_id, topic_id, total_questions_attempted, total_questions_completed)
-        VALUES (?, ?, ?, 1, 1)
-        ON DUPLICATE KEY UPDATE 
+        INSERT INTO tbluser_stats (user_id, department_id, subject_id, topic_id, total_questions_attempted, total_questions_completed)
+        VALUES (?, ?, ?, ?, 1, 1)
+        ON DUPLICATE KEY UPDATE
             total_questions_attempted = total_questions_attempted + 1,
             total_questions_completed = total_questions_completed + 1,
             last_activity = CURRENT_TIMESTAMP
     ");
-    
+
     if ($stmt) {
-        $stmt->bind_param("iii", $userId, $subjectId, $topicId);
+        $stmt->bind_param("iiii", $userId, $departmentId, $subjectId, $topicId);
         if ($stmt->execute()) {
             log_info("Topic stats updated for user: " . $userId . " subject: " . $subjectId . " topic: " . $topicId);
         } else {

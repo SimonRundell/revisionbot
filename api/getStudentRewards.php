@@ -29,9 +29,25 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-requireAuth();
+// Authenticated only. Students may read only their own rewards; a department
+// admin only students in their department; super-admin anyone.
+$caller = requireAuth($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
+$callerIsAdmin = (int) ($caller['admin'] ?? 0) === 1 || $callerIsSuper;
+$requestedUserId = isset($receivedData['userId']) ? (int) $receivedData['userId'] : 0;
 
-$userId = isset($receivedData['userId']) ? (int)$receivedData['userId'] : 0;
+if (!$callerIsAdmin) {
+    $userId = (int) $caller['id'];
+} else {
+    $userId = $requestedUserId > 0 ? $requestedUserId : (int) $caller['id'];
+    if (!$callerIsSuper) {
+        $targetDepartmentId = lookupUserDepartmentId($mysqli, $userId);
+        if (!callerActsOnDepartment($caller, $targetDepartmentId)) {
+            send_response('Forbidden', 403);
+        }
+    }
+}
+
 if ($userId <= 0) {
     send_response('Valid userId is required', 400);
 }

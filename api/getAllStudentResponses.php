@@ -29,11 +29,15 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to sensitive response data
-requireAuth();
+// Admin only (was requireAuth, which leaked every student's answers and emails
+// to any authenticated user). Department admins see only their department.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
 
-// Admin endpoint to get all student responses
-$query = "SELECT 
+// Admin endpoint to get student responses (scoped to the caller's department
+// unless super-admin).
+$query = "SELECT
             r.id as response_id,
             r.user_id,
             r.student_answer,
@@ -62,8 +66,12 @@ $query = "SELECT
           LEFT JOIN tblquestion q ON r.question_id = q.id
           LEFT JOIN tblsubject s ON r.subject_id = s.id
           LEFT JOIN tbltopic t ON r.topic_id = t.id
-          WHERE r.ai_feedback IS NOT NULL AND r.ai_feedback != ''
-          ORDER BY r.created_at DESC";
+          WHERE r.ai_feedback IS NOT NULL AND r.ai_feedback != ''";
+
+if (!$callerIsSuper) {
+    $query .= " AND r.department_id = ?";
+}
+$query .= " ORDER BY r.created_at DESC";
 
 $stmt = $mysqli->prepare($query);
 
@@ -71,8 +79,13 @@ if (!$stmt) {
     log_info("Admin responses query prepare failed: " . $mysqli->error);
     send_response("Admin responses query prepare failed: " . $mysqli->error, 500);
 } else {
-    log_info("Admin querying all student responses");
-    
+    log_info("Admin querying student responses");
+
+    if (!$callerIsSuper) {
+        $callerDept = (int) ($caller['department_id'] ?? 0);
+        $stmt->bind_param('i', $callerDept);
+    }
+
     if (!$stmt->execute()) {
         log_info("Admin responses query execute failed: " . $stmt->error);
         send_response("Admin responses query execute failed: " . $stmt->error, 500);

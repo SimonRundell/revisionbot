@@ -35,7 +35,13 @@
  * @todo Add requireAuth() for admin-only access
  ****************************************************************************/
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only (previously unauthenticated). These counts describe the shared
+// subject/topic/question tree, which is a collective resource, so they are not
+// scoped by department.
+requireAdmin($mysqli);
 
 try {
     // Get overall statistics

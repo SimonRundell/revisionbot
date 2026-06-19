@@ -1,19 +1,25 @@
 <?php
 
+require_once 'simple_security.php';
 include 'setup.php';
 
-log_info("Debug API called with data: " . json_encode($receivedData));
-
-// First check if we have any responses at all
-$countQuery = "SELECT COUNT(*) as total FROM tblresponse";
-$countStmt = $mysqli->prepare($countQuery);
-if ($countStmt) {
-    $countStmt->execute();
-    $countResult = $countStmt->get_result();
-    $totalCount = $countResult->fetch_assoc()['total'];
-    log_info("Total responses in database: " . $totalCount);
-    $countStmt->close();
+// Admin only (previously unauthenticated). Scope the target user to the
+// caller's department unless super-admin.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
+$targetUserId = (int) ($receivedData['userId'] ?? 0);
+if ($targetUserId <= 0) {
+    send_response('Valid userId is required', 400);
 }
+if (!$callerIsSuper) {
+    $targetDepartmentId = lookupUserDepartmentId($mysqli, $targetUserId);
+    if (!callerActsOnDepartment($caller, $targetDepartmentId)) {
+        send_response('Forbidden', 403);
+    }
+}
+
+log_info("Debug API called with data: " . json_encode($receivedData));
 
 // Simple query to check what responses exist for a user
 $query = "SELECT 
@@ -35,8 +41,8 @@ if (!$stmt) {
     log_info("Debug query prepare failed: " . $mysqli->error);
     send_response("Debug query prepare failed: " . $mysqli->error, 500);
 } else {
-    log_info("Debug: Querying ALL responses for user ID: " . $receivedData['userId']);
-    $stmt->bind_param("i", $receivedData['userId']);
+    log_info("Debug: Querying ALL responses for user ID: " . $targetUserId);
+    $stmt->bind_param("i", $targetUserId);
     
     if (!$stmt->execute()) {
         log_info("Debug query execute failed: " . $stmt->error);
@@ -49,7 +55,7 @@ if (!$stmt) {
             $responses[] = $row;
         }
         
-        log_info("Debug: Found " . count($responses) . " total responses for user: " . $receivedData['userId']);
+        log_info("Debug: Found " . count($responses) . " total responses for user: " . $targetUserId);
         send_response([
             'totalResponses' => count($responses),
             'responses' => $responses

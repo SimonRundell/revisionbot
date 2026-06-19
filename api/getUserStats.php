@@ -30,8 +30,12 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to user statistics
-requireAuth();
+// Authenticated only. Students may read only their own stats; a department
+// admin only users in their department; super-admin anyone.
+requireAuth($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
+$callerIsAdmin = (int) ($caller['admin'] ?? 0) === 1 || $callerIsSuper;
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET");
@@ -40,19 +44,25 @@ header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Get database connection
-    
+
     try {
-        $userId = $_GET['userId'] ?? null;
-        
-        if (!$userId) {
-            echo json_encode([
-                "error" => "User ID is required"
-            ]);
-            exit;
+        $requestedUserId = (int) ($_GET['userId'] ?? 0);
+
+        if (!$callerIsAdmin) {
+            $userId = (int) $caller['id'];
+        } else {
+            $userId = $requestedUserId > 0 ? $requestedUserId : (int) $caller['id'];
+            if (!$callerIsSuper) {
+                $targetDepartmentId = lookupUserDepartmentId($mysqli, $userId);
+                if (!callerActsOnDepartment($caller, $targetDepartmentId)) {
+                    echo json_encode(["error" => "Forbidden"]);
+                    exit;
+                }
+            }
         }
-        
+
         // Get user statistics
-        $stmt = $conn->prepare("
+        $stmt = $mysqli->prepare("
             SELECT 
                 subject_id,
                 topic_id,
