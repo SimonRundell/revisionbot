@@ -27,10 +27,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 include 'setup.php';
 
 $adminUserId = requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
 $targetUserId = (int) ($receivedData['id'] ?? 0);
 
 if ($targetUserId <= 0) {
     send_response('A valid user id is required.', 400);
+}
+
+// A department admin may only deactivate users in their own department.
+$targetDepartmentId = lookupUserDepartmentId($mysqli, $targetUserId);
+if (!callerActsOnDepartment($caller, $targetDepartmentId)) {
+    send_response('You are not allowed to manage this account.', 403);
 }
 
 $stmt = $mysqli->prepare('UPDATE tbluser SET is_active = 0 WHERE id = ?');

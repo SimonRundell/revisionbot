@@ -373,6 +373,57 @@ function getCallerDepartmentId($connection) {
 }
 
 /**
+ * Pure predicate: may this already-fetched caller act on the given department?
+ *
+ * True for the super-admin (any department) or when the caller's own
+ * department matches the target. Use after getAuthenticatedUser() to avoid an
+ * extra query. The target department must be derived from the database (e.g.
+ * the owning row), never taken from the request body.
+ *
+ * @param array $caller A record from getAuthenticatedUser().
+ * @param int|null $targetDepartmentId Department the action touches.
+ * @return bool
+ */
+function callerActsOnDepartment($caller, $targetDepartmentId) {
+    if ((int) ($caller['is_super_admin'] ?? 0) === 1) {
+        return true;
+    }
+
+    if ($targetDepartmentId === null) {
+        return false;
+    }
+
+    return (int) ($caller['department_id'] ?? -1) === (int) $targetDepartmentId;
+}
+
+/**
+ * Look up the department a given user belongs to.
+ *
+ * @param mysqli $connection
+ * @param int $userId
+ * @return int|null Department id, or null if user missing / department-less.
+ */
+function lookupUserDepartmentId($connection, $userId) {
+    $stmt = $connection->prepare('SELECT department_id FROM tbluser WHERE id = ? LIMIT 1');
+    if (!$stmt) {
+        return null;
+    }
+    $userId = (int) $userId;
+    $stmt->bind_param('i', $userId);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return null;
+    }
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$row || $row['department_id'] === null) {
+        return null;
+    }
+    return (int) $row['department_id'];
+}
+
+/**
  * Convenience guard: returns the caller's department id, or exits 403 if the
  * caller is a department-less account (e.g. super-admin) calling an endpoint
  * that requires a concrete department context.

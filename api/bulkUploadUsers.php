@@ -49,8 +49,9 @@ require_once 'simple_security.php';
 include 'setup.php';
 require_once __DIR__ . '/emailHelper.php';
 
-// Block direct browser access to admin bulk functions
-requireAuth();
+// Admin only.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
 
 // For file uploads, we need to handle form data differently
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
@@ -60,9 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
     }
 }
 
-// TODO: Add proper admin authentication check
-// For now, matching the existing API pattern (no authentication)
-// This should be secured in production
+// Resolve the department all uploaded users will belong to. Department admins
+// are pinned to their own department; the super-admin must name a target.
+if ((int) ($caller['is_super_admin'] ?? 0) === 1) {
+    $targetDepartmentId = (int) ($receivedData['departmentId'] ?? 0);
+} else {
+    $targetDepartmentId = (int) ($caller['department_id'] ?? 0);
+}
+
+if ($targetDepartmentId <= 0) {
+    send_response('A target department is required for bulk upload.', 400);
+    exit;
+}
 
 // Check if file was uploaded
 if (!isset($_FILES['csvFile'])) {
@@ -207,8 +217,8 @@ try {
     // Prepare statements
     $checkUserStmt = $mysqli->prepare("SELECT id FROM tbluser WHERE email = ?");
     $insertUserStmt = $mysqli->prepare("
-        INSERT INTO tbluser (email, passwordHash, userName, userClass, userLocale, admin, userEmailValidated, userAccess) 
-        VALUES (?, ?, ?, ?, ?, 0, 0, ?)
+        INSERT INTO tbluser (email, passwordHash, userName, userClass, userLocale, admin, userEmailValidated, userAccess, department_id)
+        VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?)
     ");
     
     $newUsers = [];
@@ -224,15 +234,17 @@ try {
             continue;
         }
         
-        // Insert new user
+        // Insert new user. The CSV 'department' column is the class label
+        // (userClass); tenant membership is the resolved department_id.
         $insertUserStmt->bind_param(
-            "ssssss",
+            "ssssssi",
             $userData['email'],
             $hashedPassword,
             $userData['name'],
             $userData['department'],
             $userData['locale'],
-            $userAccess
+            $userAccess,
+            $targetDepartmentId
         );
         
         if ($insertUserStmt->execute()) {

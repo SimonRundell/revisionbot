@@ -28,8 +28,23 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin delete functions
-requireAuth();
+// Admin only; a department admin may only delete users in their own department.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+
+$targetUserId = (int) ($receivedData['id'] ?? 0);
+if ($targetUserId <= 0) {
+    send_response('A valid user id is required.', 400);
+}
+
+if ($targetUserId === (int) $caller['id']) {
+    send_response('You cannot delete your own account.', 400);
+}
+
+$targetDepartmentId = lookupUserDepartmentId($mysqli, $targetUserId);
+if (!callerActsOnDepartment($caller, $targetDepartmentId)) {
+    send_response('You are not allowed to delete this account.', 403);
+}
 
 $query = "DELETE FROM tbluser WHERE id = ?";
 $stmt = $mysqli->prepare($query);
@@ -39,7 +54,7 @@ if (!$stmt) {
     send_response("Prepare failed: " . $mysqli->error, 500);
 }
 
-$stmt->bind_param("i", $receivedData['id']);
+$stmt->bind_param("i", $targetUserId);
 
 if (!$stmt->execute()) {
     log_info("Execute failed: " . $stmt->error);

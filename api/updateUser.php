@@ -49,8 +49,21 @@ if ($targetUserId <= 0) {
     send_response('A valid user id is required.', 400);
 }
 
-if ((int) ($authenticatedUser['admin'] ?? 0) !== 1 && (int) $authenticatedUser['id'] !== $targetUserId) {
+$callerIsAdmin = (int) ($authenticatedUser['admin'] ?? 0) === 1
+    || (int) ($authenticatedUser['is_super_admin'] ?? 0) === 1;
+$callerIsSelf = (int) $authenticatedUser['id'] === $targetUserId;
+
+if (!$callerIsAdmin && !$callerIsSelf) {
     send_response('You are not allowed to update this account.', 403);
+}
+
+// When an admin edits another account, it must be inside their department.
+// (department_id is not updatable here, so this also prevents tenant moves.)
+if ($callerIsAdmin && !$callerIsSelf) {
+    $targetDepartmentId = lookupUserDepartmentId($mysqli, $targetUserId);
+    if (!callerActsOnDepartment($authenticatedUser, $targetDepartmentId)) {
+        send_response('You are not allowed to update this account.', 403);
+    }
 }
 
 $currentPasswordStmt = $mysqli->prepare('SELECT passwordHash FROM tbluser WHERE id = ? LIMIT 1');

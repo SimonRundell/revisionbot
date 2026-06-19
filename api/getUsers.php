@@ -24,32 +24,36 @@
  * @version 1.0
  ****************************************************************************/
 
-require_once 'simple_security.php';
-include 'setup.php';
+// Admin only. A department admin sees only their own department's users;
+// the super-admin sees everyone. Never expose password hashes.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$isSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
 
-// Block direct browser access to sensitive user data
-requireAuth();
+// Explicit column list: passwordHash is deliberately excluded.
+$columns = 'id, email, userName, userClass, department_id, userAccess, userStatus, '
+    . 'userLocale, avatar, admin, is_super_admin, userEmailValidated, is_active, '
+    . 'force_pw_change, last_pw_change';
 
-$query = "SELECT * FROM tbluser";
-$stmt = $mysqli->prepare($query);
+if ($isSuper) {
+    $stmt = $mysqli->prepare("SELECT $columns FROM tbluser ORDER BY id ASC");
+} else {
+    $stmt = $mysqli->prepare("SELECT $columns FROM tbluser WHERE department_id = ? ORDER BY id ASC");
+    $callerDept = (int) ($caller['department_id'] ?? 0);
+    $stmt->bind_param('i', $callerDept);
+}
 
 if (!$stmt) {
     log_info("Prepare failed: " . $mysqli->error);
-    send_response("Prepare failed: " . $mysqli->error, 500);
+    send_response("Unable to fetch users.", 500);
 }
 
 if (!$stmt->execute()) {
     log_info("Execute failed: " . $stmt->error);
-    send_response("Execute failed: " . $stmt->error, 500);
+    send_response("Unable to fetch users.", 500);
 }
 
 $result = $stmt->get_result();
-
-if ($result) {
-    $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    $json = json_encode($rows);
-    send_response($json, 200);
-} else {
-    log_info("Query failed: " . $mysqli->error);
-    send_response("Query failed: " . $mysqli->error, 500);
-}
+$rows = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+send_response(json_encode($rows), 200);
+$stmt->close();

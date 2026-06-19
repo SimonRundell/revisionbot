@@ -26,11 +26,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 include 'setup.php';
 
-$authenticatedUser = requireAdmin($mysqli);
+$adminUserId = requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
 $targetUserId = (int) ($receivedData['id'] ?? 0);
 
 if ($targetUserId <= 0) {
     send_response('A valid user id is required.', 400);
+}
+
+// A department admin may only flag users in their own department.
+$targetDepartmentId = lookupUserDepartmentId($mysqli, $targetUserId);
+if (!callerActsOnDepartment($caller, $targetDepartmentId)) {
+    send_response('You are not allowed to manage this account.', 403);
 }
 
 $stmt = $mysqli->prepare('UPDATE tbluser SET force_pw_change = 1 WHERE id = ?');
@@ -43,7 +50,7 @@ if (!$stmt) {
 $stmt->bind_param('i', $targetUserId);
 
 if (!$stmt->execute()) {
-    log_info('Force password change execute failed: ' . $stmt->error . ' by admin ' . $authenticatedUser['id']);
+    log_info('Force password change execute failed: ' . $stmt->error . ' by admin ' . $adminUserId);
     send_response('Unable to require a password change for this account.', 500);
 }
 
@@ -51,7 +58,7 @@ if ($stmt->affected_rows < 1) {
     send_response('User not found.', 404);
 }
 
-log_info('Forced password change for user ' . $targetUserId . ' by admin ' . $authenticatedUser['id']);
+log_info('Forced password change for user ' . $targetUserId . ' by admin ' . $adminUserId);
 send_response('Password change will be required on next login.', 200);
 
 $stmt->close();
