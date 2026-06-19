@@ -21,9 +21,14 @@ import { useBadges } from './utils/useBadges';
 
 function AccountBlock({currentUser, config, setCurrentUser,
                         setShowAccountManager, showAccountManager,
-                        showAdminManager, setShowAdminManager
+                        showAdminManager, setShowAdminManager,
+                        showSchoolManager, setShowSchoolManager,
+                        showDepartmentSettings, setShowDepartmentSettings
                         }) {
     const { highestBadges, badgeTooltip } = useBadges(config, currentUser);
+
+    const isSuperAdmin = Number(currentUser.is_super_admin) === 1;
+    const isDepartmentAdmin = Number(currentUser.admin) === 1 && !isSuperAdmin;
 
     return (
         <div className="account-block">
@@ -50,6 +55,12 @@ function AccountBlock({currentUser, config, setCurrentUser,
             <button onClick={() => setShowAccountManager(!showAccountManager)}>My Profile</button>
             {currentUser.admin === 1 && (
                 <button onClick={() => setShowAdminManager(!showAdminManager)}>Admin</button>
+            )}
+            {isDepartmentAdmin && (
+                <button onClick={() => setShowDepartmentSettings(!showDepartmentSettings)}>Department</button>
+            )}
+            {isSuperAdmin && (
+                <button onClick={() => setShowSchoolManager(!showSchoolManager)}>Schools</button>
             )}
         </div>
     )

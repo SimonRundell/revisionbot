@@ -6,7 +6,7 @@ import SelectLocale from './SelectLocale'
 import AvatarManager from './AvatarManager'
 import AccessControlTree from './AccessControlTree'
 import { handleApiCall, parseApiResponse } from './utils/apiHelpers'
-import { createJsonHeaders } from './utils/apiHeaders'
+import { createJsonHeaders, createApiHeaders } from './utils/apiHeaders'
 
 /****************************************************************************
  * AdminManager Component
@@ -370,9 +370,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 config.api + '/deleteUser.php',
                 jsonData,
                 {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: createJsonHeaders(currentUser),
                 }
             );
 
@@ -541,7 +539,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             };
 
             const response = await axios.post(config.api + '/InsertUser.php', jsonData, {
-                headers: { 'Content-Type': 'application/json' }
+                headers: createJsonHeaders(currentUser)
             });
 
             if (response.data.status_code === 200) {
@@ -915,9 +913,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 config.api + '/bulkUploadUsers.php',
                 formData,
                 {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    },
+                    headers: createApiHeaders(currentUser, { 'Content-Type': 'multipart/form-data' }),
                 }
             );
 
@@ -948,9 +944,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                     config.api + '/getUsers.php',
                     {},
                     {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: createJsonHeaders(currentUser),
                     }
                 );
 

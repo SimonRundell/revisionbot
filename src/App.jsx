@@ -16,6 +16,8 @@ import AnalyticsModule from './AnalyticsModule.jsx';
 import StudentProgress from './StudentProgress.jsx';
 import ResetPassword from './ResetPassword.jsx';
 import ForcePasswordChange from './ForcePasswordChange.jsx';
+import SchoolManager from './SchoolManager.jsx';
+import DepartmentSettings from './DepartmentSettings.jsx';
 
 const AUTH_STORAGE_KEY = 'revisionbot_auth_session';
 const AUTH_TTL_MS = 120 * 60 * 1000;   // 2-hour session lifetime
@@ -75,6 +77,8 @@ function App() {
   const [sendErrorMessage, setSendErrorMessage] = useState(false);
   const [showAccountManager, setShowAccountManager] = useState(false);
   const [showAdminManager, setShowAdminManager] = useState(false);
+  const [showSchoolManager, setShowSchoolManager] = useState(false);
+  const [showDepartmentSettings, setShowDepartmentSettings] = useState(false);
   const [currentView, setCurrentView] = useState('home');
 
   useEffect(() => {
@@ -292,7 +296,11 @@ function App() {
                             setShowAccountManager={setShowAccountManager}
                             showAccountManager={showAccountManager}
                             showAdminManager={showAdminManager}
-                            setShowAdminManager={setShowAdminManager} />
+                            setShowAdminManager={setShowAdminManager}
+                            showSchoolManager={showSchoolManager}
+                            setShowSchoolManager={setShowSchoolManager}
+                            showDepartmentSettings={showDepartmentSettings}
+                            setShowDepartmentSettings={setShowDepartmentSettings} />
 
             <Menu currentView={currentView} setCurrentView={setCurrentView} currentUser={currentUser} />
           </div>
@@ -319,6 +327,22 @@ function App() {
                             setSendErrorMessage={setSendErrorMessage}
                             setShowAdminManager={setShowAdminManager}
                             showAdminManager={showAdminManager} />
+        )}
+
+        {Number(currentUser.is_super_admin) === 1 && (
+            <SchoolManager config={config} currentUser={currentUser}
+                            open={showSchoolManager}
+                            setOpen={setShowSchoolManager}
+                            setSendSuccessMessage={setSendSuccessMessage}
+                            setSendErrorMessage={setSendErrorMessage} />
+        )}
+
+        {Number(currentUser.admin) === 1 && Number(currentUser.is_super_admin) !== 1 && (
+            <DepartmentSettings config={config} currentUser={currentUser}
+                            open={showDepartmentSettings}
+                            setOpen={setShowDepartmentSettings}
+                            setSendSuccessMessage={setSendSuccessMessage}
+                            setSendErrorMessage={setSendErrorMessage} />
         )}
 
       {currentView === 'quiz' && currentUser.admin === 1 && (

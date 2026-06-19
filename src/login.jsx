@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Spin } from 'antd';
 import axios from 'axios';
-import Register from './register';
 import ForgotPassword from './ForgotPassword.jsx';
 
 /****************************************************************************
@@ -23,7 +22,6 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [motdContent, setMotdContent] = useState('Beta Test'); // Default fallback
 
@@ -113,9 +111,6 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
           setSendSuccessMessage={setSendSuccessMessage}
           setSendErrorMessage={setSendErrorMessage}
         />
-      ) : showRegister ? (
-        <Register config={config} setShowRegister={setShowRegister}
-        setSendErrorMessage={setSendErrorMessage} setSendSuccessMessage={setSendSuccessMessage} />
       ) : (
         <>
           {/* Title image */}
@@ -160,11 +155,6 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
                   Forgot password?
                 </button>
               </div>
-              {/* <div className="topgap">
-                <button onClick={() => setShowRegister(true)} className="little-button">
-                  Register
-                </button>
-              </div> */}
             </div>
             <div className="motd" dangerouslySetInnerHTML={{ __html: motdContent }} />
           </div>
