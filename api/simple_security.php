@@ -131,7 +131,39 @@ function decodeAuthToken($token) {
 }
 
 /**
+ * Check whether a column exists on a table.
+ *
+ * Used to keep this auth layer runnable both before and after the
+ * 0.5.0 multi-school migration (department_id / is_super_admin may be absent
+ * on an un-migrated database).
+ *
+ * @param mysqli|PDO $connection
+ * @param string $table  Literal table name (not user input).
+ * @param string $column Literal column name (not user input).
+ * @return bool
+ */
+function tableColumnExists($connection, $table, $column) {
+    $sql = "SHOW COLUMNS FROM `" . $table . "` LIKE '" . $column . "'";
+
+    if ($connection instanceof mysqli) {
+        $result = $connection->query($sql);
+        return $result && $result->num_rows > 0;
+    }
+
+    if ($connection instanceof PDO) {
+        $stmt = $connection->query($sql);
+        return $stmt && $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+    }
+
+    return false;
+}
+
+/**
  * Fetch the currently authenticated user from a database connection.
+ *
+ * After the multi-school migration the returned array also carries
+ * `department_id`, `is_super_admin`, and (resolved) `school_id`. On an
+ * un-migrated database those default to null/0 so callers can rely on the keys.
  *
  * @param mysqli|PDO $connection
  * @return array|null
@@ -149,45 +181,76 @@ function getAuthenticatedUser($connection) {
 
     $userId = (int) $payload['uid'];
 
-    $userClassColumn = 'userClass';
+    // Legacy column rename support: userClass vs userLocation.
+    $userClassColumn = tableColumnExists($connection, 'tbluser', 'userClass')
+        ? 'userClass'
+        : 'userLocation';
 
-    if ($connection instanceof mysqli) {
-        $columnLookupResult = $connection->query("SHOW COLUMNS FROM tbluser LIKE 'userClass'");
-        if (!$columnLookupResult || $columnLookupResult->num_rows === 0) {
-            $userClassColumn = 'userLocation';
-        }
+    // Multi-school columns are only present after the 0.5.0 migration.
+    $hasMultiSchool = tableColumnExists($connection, 'tbluser', 'department_id');
+
+    $columns = 'id, email, userName, ' . $userClassColumn . ' AS userClass, '
+        . 'admin, is_active, force_pw_change, last_pw_change';
+    if ($hasMultiSchool) {
+        $columns .= ', department_id, is_super_admin';
     }
 
-    if ($connection instanceof PDO) {
-        $columnLookupStmt = $connection->query("SHOW COLUMNS FROM tbluser LIKE 'userClass'");
-        if (!$columnLookupStmt || !$columnLookupStmt->fetch(PDO::FETCH_ASSOC)) {
-            $userClassColumn = 'userLocation';
-        }
-    }
+    $user = null;
 
     if ($connection instanceof mysqli) {
-        $stmt = $connection->prepare('SELECT id, email, userName, ' . $userClassColumn . ' AS userClass, admin, is_active, force_pw_change, last_pw_change FROM tbluser WHERE id = ? LIMIT 1');
+        $stmt = $connection->prepare('SELECT ' . $columns . ' FROM tbluser WHERE id = ? LIMIT 1');
         if (!$stmt) {
             return null;
         }
-
         $stmt->bind_param('i', $userId);
         if (!$stmt->execute()) {
             return null;
         }
-
         $result = $stmt->get_result();
-        return $result ? $result->fetch_assoc() : null;
-    }
-
-    if ($connection instanceof PDO) {
-        $stmt = $connection->prepare('SELECT id, email, userName, ' . $userClassColumn . ' AS userClass, admin, is_active, force_pw_change, last_pw_change FROM tbluser WHERE id = :id LIMIT 1');
+        $user = $result ? $result->fetch_assoc() : null;
+    } elseif ($connection instanceof PDO) {
+        $stmt = $connection->prepare('SELECT ' . $columns . ' FROM tbluser WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $user ?: null;
+        $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    return null;
+    if (!$user) {
+        return null;
+    }
+
+    // Normalise the tenancy fields so every caller can trust the keys exist.
+    $user['department_id'] = isset($user['department_id']) && $user['department_id'] !== null
+        ? (int) $user['department_id']
+        : null;
+    $user['is_super_admin'] = (int) ($user['is_super_admin'] ?? 0);
+    $user['school_id'] = null;
+
+    // Resolve the owning school from the department (best effort).
+    if ($hasMultiSchool && $user['department_id'] !== null) {
+        $deptId = $user['department_id'];
+
+        if ($connection instanceof mysqli) {
+            $schoolStmt = $connection->prepare('SELECT school_id FROM tbldepartment WHERE id = ? LIMIT 1');
+            if ($schoolStmt) {
+                $schoolStmt->bind_param('i', $deptId);
+                if ($schoolStmt->execute()) {
+                    $schoolRow = $schoolStmt->get_result()->fetch_assoc();
+                    if ($schoolRow) {
+                        $user['school_id'] = (int) $schoolRow['school_id'];
+                    }
+                }
+            }
+        } elseif ($connection instanceof PDO) {
+            $schoolStmt = $connection->prepare('SELECT school_id FROM tbldepartment WHERE id = :id LIMIT 1');
+            $schoolStmt->execute(['id' => $deptId]);
+            $schoolRow = $schoolStmt->fetch(PDO::FETCH_ASSOC);
+            if ($schoolRow) {
+                $user['school_id'] = (int) $schoolRow['school_id'];
+            }
+        }
+    }
+
+    return $user;
 }
 
 /**
@@ -247,15 +310,21 @@ function requireAuth($connection = null) {
 
 /**
  * Verifies the current session belongs to an admin user.
+ * A department admin (admin = 1) or the super-admin both pass.
  * Call immediately after requireAuth().
  * Exits with HTTP 403 if the caller is not an admin.
  *
  * @param mysqli|PDO $connection Active database connection
- * @return int
+ * @return int The authenticated admin's user id.
  */
 function requireAdmin($connection) {
     $user = getAuthenticatedUser($connection);
-    if (!$user || (int) ($user['admin'] ?? 0) !== 1) {
+    $isAdmin = $user && (
+        (int) ($user['admin'] ?? 0) === 1 ||
+        (int) ($user['is_super_admin'] ?? 0) === 1
+    );
+
+    if (!$isAdmin) {
         http_response_code(403);
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Admin access required.']);
@@ -263,5 +332,63 @@ function requireAdmin($connection) {
     }
 
     return (int) $user['id'];
+}
+
+/**
+ * Verifies the current session belongs to the overall super-admin.
+ * Use for cross-tenant operations (managing schools, departments, keys).
+ * Exits with HTTP 403 if the caller is not a super-admin.
+ *
+ * @param mysqli|PDO $connection Active database connection
+ * @return array The authenticated super-admin user record.
+ */
+function requireSuperAdmin($connection) {
+    $user = getAuthenticatedUser($connection);
+    if (!$user || (int) ($user['is_super_admin'] ?? 0) !== 1) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Super-admin access required.']);
+        exit;
+    }
+
+    return $user;
+}
+
+/**
+ * Return the authenticated caller's department id, or null for the super-admin.
+ *
+ * Tenant-scoped endpoints must derive the department from the token using this
+ * helper and must NEVER trust a department_id supplied in the request body.
+ *
+ * @param mysqli|PDO $connection Active database connection
+ * @return int|null Department id, or null if caller is super-admin / department-less.
+ */
+function getCallerDepartmentId($connection) {
+    $user = getAuthenticatedUser($connection);
+    if (!$user) {
+        return null;
+    }
+
+    return $user['department_id'] ?? null;
+}
+
+/**
+ * Convenience guard: returns the caller's department id, or exits 403 if the
+ * caller is a department-less account (e.g. super-admin) calling an endpoint
+ * that requires a concrete department context.
+ *
+ * @param mysqli|PDO $connection Active database connection
+ * @return int A non-null department id.
+ */
+function requireDepartment($connection) {
+    $departmentId = getCallerDepartmentId($connection);
+    if ($departmentId === null) {
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'No department context for this account.']);
+        exit;
+    }
+
+    return (int) $departmentId;
 }
 ?>

@@ -103,6 +103,24 @@ if ($shouldUpgradeLegacyHash) {
     }
 }
 
+// Resolve the owning school from the department so the client has full
+// tenancy context (department_id and is_super_admin come from SELECT * above).
+$user['school_id'] = null;
+if (array_key_exists('department_id', $user) && $user['department_id'] !== null) {
+    $departmentId = (int) $user['department_id'];
+    $schoolStmt = $mysqli->prepare('SELECT school_id FROM tbldepartment WHERE id = ? LIMIT 1');
+    if ($schoolStmt) {
+        $schoolStmt->bind_param('i', $departmentId);
+        if ($schoolStmt->execute()) {
+            $schoolRow = $schoolStmt->get_result()->fetch_assoc();
+            if ($schoolRow) {
+                $user['school_id'] = (int) $schoolRow['school_id'];
+            }
+        }
+        $schoolStmt->close();
+    }
+}
+
 $user['token'] = generateAuthToken((int) $user['id']);
 unset($user['passwordHash']);
 
