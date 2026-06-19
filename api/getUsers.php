@@ -24,6 +24,9 @@
  * @version 1.0
  ****************************************************************************/
 
+require_once 'simple_security.php';
+include 'setup.php';
+
 // Admin only. A department admin sees only their own department's users;
 // the super-admin sees everyone. Never expose password hashes.
 requireAdmin($mysqli);
