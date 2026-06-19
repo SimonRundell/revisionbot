@@ -2,8 +2,9 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to data export
-requireAuth();
+// Admin only. The subject/topic/question tree is a collective resource, so the
+// export is not department-scoped.
+requireAdmin($mysqli);
 
     // Get export type from request
     $exportType = isset($receivedData['type']) ? $receivedData['type'] : 'all';

@@ -32,6 +32,8 @@ include 'setup.php';
 require_once __DIR__ . '/emailHelper.php';
 
 requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
 
 // Validate inputs
 $userIds = $receivedData['userIds'] ?? [];
@@ -54,13 +56,23 @@ if (count($safeIds) === 0) {
     send_response('No valid user IDs provided.', 400);
 }
 
-// Fetch recipients — only active users to avoid messaging deactivated accounts
+// Fetch recipients — only active users, and (for department admins) only within
+// the caller's own department so they cannot message other tenants.
 $placeholders = implode(',', array_fill(0, count($safeIds), '?'));
-$stmt = $mysqli->prepare(
-    "SELECT id, userName, email FROM tbluser WHERE id IN ($placeholders) AND is_active != 0"
-);
-$types = str_repeat('i', count($safeIds));
-$stmt->bind_param($types, ...$safeIds);
+$recipientQuery = "SELECT id, userName, email FROM tbluser WHERE id IN ($placeholders) AND is_active != 0";
+if (!$callerIsSuper) {
+    $recipientQuery .= ' AND department_id = ?';
+}
+$stmt = $mysqli->prepare($recipientQuery);
+if ($callerIsSuper) {
+    $types = str_repeat('i', count($safeIds));
+    $stmt->bind_param($types, ...$safeIds);
+} else {
+    $callerDept = (int) ($caller['department_id'] ?? 0);
+    $bindValues = array_merge($safeIds, [$callerDept]);
+    $types = str_repeat('i', count($safeIds)) . 'i';
+    $stmt->bind_param($types, ...$bindValues);
+}
 $stmt->execute();
 $result     = $stmt->get_result();
 $recipients = $result->fetch_all(MYSQLI_ASSOC);

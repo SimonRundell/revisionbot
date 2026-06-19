@@ -1,6 +1,14 @@
 <?php
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only (previously unauthenticated). Imported content is owned by the
+// importer's department (NULL for super-admin = super-owned).
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
+$ownerDepartmentId = getCallerDepartmentId($mysqli);
 
     // Validate import data
     if (!isset($receivedData['metadata']) || !isset($receivedData['metadata']['version'])) {
@@ -43,10 +51,10 @@ include 'setup.php';
             }
             $checkStmt->close();
 
-            // Insert new subject
-            $insertQuery = "INSERT INTO tblsubject (subject) VALUES (?)";
+            // Insert new subject (owned by the importer's department)
+            $insertQuery = "INSERT INTO tblsubject (subject, owner_department_id) VALUES (?, ?)";
             $insertStmt = $mysqli->prepare($insertQuery);
-            $insertStmt->bind_param("s", $subject['subject']);
+            $insertStmt->bind_param("si", $subject['subject'], $ownerDepartmentId);
             
             if ($insertStmt->execute()) {
                 $importResults['subjects_imported']++;
@@ -84,10 +92,10 @@ include 'setup.php';
             }
             $checkStmt->close();
 
-            // Insert new topic
-            $insertQuery = "INSERT INTO tbltopic (topic, subjectid) VALUES (?, ?)";
+            // Insert new topic (owned by the importer's department)
+            $insertQuery = "INSERT INTO tbltopic (topic, subjectid, owner_department_id) VALUES (?, ?, ?)";
             $insertStmt = $mysqli->prepare($insertQuery);
-            $insertStmt->bind_param("si", $topic['topic'], $topic['subjectid']);
+            $insertStmt->bind_param("sii", $topic['topic'], $topic['subjectid'], $ownerDepartmentId);
             
             if ($insertStmt->execute()) {
                 $importResults['topics_imported']++;
@@ -124,6 +132,14 @@ include 'setup.php';
                 $exists = $existsStmt->get_result()->num_rows > 0;
                 $existsStmt->close();
 
+                // Add-only: only overwrite an existing question if the importer's
+                // department owns it (super-admin may overwrite anything).
+                $existingOwner = lookupOwnerDepartmentId($mysqli, 'tblquestion', $incomingId);
+                if ($exists && !callerActsOnDepartment($caller, $existingOwner)) {
+                    $importResults['questions_skipped']++;
+                    continue;
+                }
+
                 if ($exists) {
                     $updateStmt = $mysqli->prepare(
                         "UPDATE tblquestion SET question = ?, topicid = ?, attachments = ?, markscheme = ?, question_order = ? WHERE id = ?"
@@ -157,14 +173,15 @@ include 'setup.php';
             }
 
             $insertStmt = $mysqli->prepare(
-                "INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order) VALUES (?, ?, ?, ?, ?)"
+                "INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order, owner_department_id) VALUES (?, ?, ?, ?, ?, ?)"
             );
-            $insertStmt->bind_param("sissi",
+            $insertStmt->bind_param("sissii",
                 $question['question'],
                 $question['topicid'],
                 $attachments_json,
                 $markscheme,
-                $order
+                $order,
+                $ownerDepartmentId
             );
             if ($insertStmt->execute()) {
                 $importResults['questions_imported']++;

@@ -15,19 +15,31 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
 
 $className = trim((string) ($receivedData['className'] ?? ''));
 if ($className === '') {
     send_response('Class name is required.', 400);
 }
 
-$stmt = $mysqli->prepare('INSERT INTO tblClass (className) VALUES (?)');
+// Classes belong to a department: a department admin is pinned to their own;
+// the super-admin must name a target department.
+if ((int) ($caller['is_super_admin'] ?? 0) === 1) {
+    $departmentId = (int) ($receivedData['departmentId'] ?? 0);
+    if ($departmentId <= 0) {
+        send_response('A target department is required.', 400);
+    }
+} else {
+    $departmentId = (int) ($caller['department_id'] ?? 0);
+}
+
+$stmt = $mysqli->prepare('INSERT INTO tblClass (className, department_id) VALUES (?, ?)');
 if (!$stmt) {
     log_info('Create class prepare failed: ' . $mysqli->error);
     send_response('Unable to prepare class creation.', 500);
 }
 
-$stmt->bind_param('s', $className);
+$stmt->bind_param('si', $className, $departmentId);
 if (!$stmt->execute()) {
     $code = (int) ($stmt->errno ?? 0) === 1062 ? 409 : 500;
     log_info('Create class execute failed: ' . $stmt->error);

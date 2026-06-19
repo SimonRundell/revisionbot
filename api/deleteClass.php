@@ -17,6 +17,7 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
 
 $userClassColumn = 'userClass';
 $columnLookupResult = $mysqli->query("SHOW COLUMNS FROM tbluser LIKE 'userClass'");
@@ -29,7 +30,7 @@ if ($classId <= 0) {
     send_response('A valid class id is required.', 400);
 }
 
-$lookupStmt = $mysqli->prepare('SELECT className FROM tblClass WHERE id = ? LIMIT 1');
+$lookupStmt = $mysqli->prepare('SELECT className, department_id FROM tblClass WHERE id = ? LIMIT 1');
 if (!$lookupStmt) {
     log_info('Delete class lookup prepare failed: ' . $mysqli->error);
     send_response('Unable to prepare class lookup.', 500);
@@ -49,17 +50,34 @@ if (!$classRow) {
     send_response('Class not found.', 404);
 }
 
-$className = (string) $classRow['className'];
-
-$assignmentStmt = $mysqli->prepare(
-    'SELECT COUNT(*) AS assignedUsers FROM tbluser WHERE ' . $userClassColumn . ' COLLATE utf8mb4_general_ci = ? COLLATE utf8mb4_general_ci'
-);
-if (!$assignmentStmt) {
-    log_info('Delete class assignment check prepare failed: ' . $mysqli->error);
-    send_response('Unable to check class assignments.', 500);
+$classDepartmentId = $classRow['department_id'] !== null ? (int) $classRow['department_id'] : null;
+if (!callerActsOnDepartment($caller, $classDepartmentId)) {
+    send_response('You are not allowed to manage this class.', 403);
 }
 
-$assignmentStmt->bind_param('s', $className);
+$className = (string) $classRow['className'];
+
+// Count assigned users within the class's own department so an identical label
+// in another tenant does not block deletion.
+if ($classDepartmentId !== null) {
+    $assignmentStmt = $mysqli->prepare(
+        'SELECT COUNT(*) AS assignedUsers FROM tbluser WHERE ' . $userClassColumn . ' COLLATE utf8mb4_general_ci = ? COLLATE utf8mb4_general_ci AND department_id = ?'
+    );
+    if (!$assignmentStmt) {
+        log_info('Delete class assignment check prepare failed: ' . $mysqli->error);
+        send_response('Unable to check class assignments.', 500);
+    }
+    $assignmentStmt->bind_param('si', $className, $classDepartmentId);
+} else {
+    $assignmentStmt = $mysqli->prepare(
+        'SELECT COUNT(*) AS assignedUsers FROM tbluser WHERE ' . $userClassColumn . ' COLLATE utf8mb4_general_ci = ? COLLATE utf8mb4_general_ci'
+    );
+    if (!$assignmentStmt) {
+        log_info('Delete class assignment check prepare failed: ' . $mysqli->error);
+        send_response('Unable to check class assignments.', 500);
+    }
+    $assignmentStmt->bind_param('s', $className);
+}
 if (!$assignmentStmt->execute()) {
     log_info('Delete class assignment check execute failed: ' . $assignmentStmt->error);
     send_response('Unable to check class assignments.', 500);

@@ -16,6 +16,7 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
 
 $userClassColumn = 'userClass';
 $columnLookupResult = $mysqli->query("SHOW COLUMNS FROM tbluser LIKE 'userClass'");
@@ -34,7 +35,7 @@ if ($newClassName === '') {
     send_response('Class name is required.', 400);
 }
 
-$lookupStmt = $mysqli->prepare('SELECT className FROM tblClass WHERE id = ? LIMIT 1');
+$lookupStmt = $mysqli->prepare('SELECT className, department_id FROM tblClass WHERE id = ? LIMIT 1');
 if (!$lookupStmt) {
     log_info('Update class lookup prepare failed: ' . $mysqli->error);
     send_response('Unable to prepare class lookup.', 500);
@@ -54,6 +55,11 @@ if (!$classRow) {
     send_response('Class not found.', 404);
 }
 
+$classDepartmentId = $classRow['department_id'] !== null ? (int) $classRow['department_id'] : null;
+if (!callerActsOnDepartment($caller, $classDepartmentId)) {
+    send_response('You are not allowed to manage this class.', 403);
+}
+
 $oldClassName = (string) $classRow['className'];
 
 $mysqli->begin_transaction();
@@ -71,12 +77,21 @@ try {
     }
     $updateClassStmt->close();
 
-    $updateUsersStmt = $mysqli->prepare('UPDATE tbluser SET ' . $userClassColumn . ' = ? WHERE ' . $userClassColumn . ' = ?');
-    if (!$updateUsersStmt) {
-        throw new Exception('Unable to prepare assigned user update.');
+    // Cascade the rename only to users in the class's own department, so an
+    // identical class label in another tenant is left untouched.
+    if ($classDepartmentId !== null) {
+        $updateUsersStmt = $mysqli->prepare('UPDATE tbluser SET ' . $userClassColumn . ' = ? WHERE ' . $userClassColumn . ' = ? AND department_id = ?');
+        if (!$updateUsersStmt) {
+            throw new Exception('Unable to prepare assigned user update.');
+        }
+        $updateUsersStmt->bind_param('ssi', $newClassName, $oldClassName, $classDepartmentId);
+    } else {
+        $updateUsersStmt = $mysqli->prepare('UPDATE tbluser SET ' . $userClassColumn . ' = ? WHERE ' . $userClassColumn . ' = ?');
+        if (!$updateUsersStmt) {
+            throw new Exception('Unable to prepare assigned user update.');
+        }
+        $updateUsersStmt->bind_param('ss', $newClassName, $oldClassName);
     }
-
-    $updateUsersStmt->bind_param('ss', $newClassName, $oldClassName);
     if (!$updateUsersStmt->execute()) {
         throw new Exception('Unable to update assigned users.');
     }
