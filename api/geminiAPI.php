@@ -33,7 +33,41 @@
  * @updated 2026-05-27 - Disabled thinking mode; gated response log on debug flag
  ****************************************************************************/
 
+require_once 'simple_security.php';
 include 'setup.php';
+require_once 'crypto.php';
+
+    // Authenticate the caller and resolve their department's Gemini key.
+    // Previously this endpoint had no auth and used a single global key; in the
+    // multi-school model every department supplies (and pays for) its own key.
+    requireAuth();
+    $caller = getAuthenticatedUser($mysqli);
+    if (!$caller) {
+        send_response('Authentication required.', 403);
+    }
+
+    $callerDepartmentId = $caller['department_id'] ?? null;
+    if ($callerDepartmentId === null) {
+        // Super-admin (department-less) has no key to bill against.
+        send_response('No department context: AI assessment is unavailable for this account.', 400);
+    }
+
+    $keyStmt = $mysqli->prepare('SELECT gemini_key_cipher, gemini_key_nonce FROM tbldepartment WHERE id = ? LIMIT 1');
+    $keyStmt->bind_param('i', $callerDepartmentId);
+    $keyStmt->execute();
+    $keyRow = $keyStmt->get_result()->fetch_assoc();
+    $keyStmt->close();
+
+    if (!$keyRow || empty($keyRow['gemini_key_cipher']) || empty($keyRow['gemini_key_nonce'])) {
+        send_response('AI assessment is not configured for your department. Please ask an administrator to add a Gemini API key.', 503);
+    }
+
+    try {
+        $departmentGeminiKey = decryptSecret($keyRow['gemini_key_cipher'], $keyRow['gemini_key_nonce']);
+    } catch (Throwable $e) {
+        log_info('Gemini key decryption failed for department ' . $callerDepartmentId . ': ' . $e->getMessage());
+        send_response('AI assessment is temporarily unavailable. Please contact an administrator.', 500);
+    }
 
     // Build the assessment prompt.
     // Security: students are instructed not to embed override instructions in their answers,
@@ -75,8 +109,8 @@ include 'setup.php';
 
     log_info("API Request: " . $prompt);
 
-  // Gemini API Data from config
-    $apiKey = $config['geminiApiKey'];
+  // Gemini API key resolved per-department above; endpoint URL stays global.
+    $apiKey = $departmentGeminiKey;
     $url = $config['geminiApiUrl'];
 
     /**
