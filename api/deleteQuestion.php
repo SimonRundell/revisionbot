@@ -27,14 +27,24 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin delete functions
-requireAuth();
+// Admin only, and add-only: you may delete a question only if your department
+// owns it (super-admin may delete anything).
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
 
     // Check if ID is provided
     if (!isset($receivedData['id']) || empty($receivedData['id'])) {
         log_info("Question delete failed: ID is required");
         send_response("Question ID is required", 400);
         exit;
+    }
+
+    $ownerDepartmentId = lookupOwnerDepartmentId($mysqli, 'tblquestion', (int) $receivedData['id']);
+    if ($ownerDepartmentId === false) {
+        send_response("No question found with the provided ID", 404);
+    }
+    if (!callerActsOnDepartment($caller, $ownerDepartmentId)) {
+        send_response("This question is owned by another department and cannot be deleted here.", 403);
     }
 
     $query = "DELETE FROM tblquestion WHERE id = ?";

@@ -32,7 +32,13 @@
  * @todo Add requireAuth() for production security
  ****************************************************************************/
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only (previously unauthenticated).
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
 
     // Check if questions array is provided
     if (!isset($receivedData['questions']) || !is_array($receivedData['questions']) || empty($receivedData['questions'])) {
@@ -43,6 +49,34 @@ include 'setup.php';
 
     $questions = $receivedData['questions'];
     $updatedCount = 0;
+
+    // Add-only ownership: a department admin may only reorder questions their
+    // department owns. Reject the whole batch if any belong elsewhere.
+    if (!$callerIsSuper) {
+        $callerDept = (int) ($caller['department_id'] ?? 0);
+        $ids = [];
+        foreach ($questions as $questionData) {
+            if (isset($questionData['id'])) {
+                $ids[] = (int) $questionData['id'];
+            }
+        }
+        if (!empty($ids)) {
+            $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+            $ownCheck = $mysqli->prepare(
+                "SELECT COUNT(*) AS c FROM tblquestion WHERE id IN ($placeholders) "
+                . "AND (owner_department_id IS NULL OR owner_department_id <> ?)"
+            );
+            $types = str_repeat('i', count($ids)) . 'i';
+            $params = array_merge($ids, [$callerDept]);
+            $ownCheck->bind_param($types, ...$params);
+            $ownCheck->execute();
+            $foreign = (int) ($ownCheck->get_result()->fetch_assoc()['c'] ?? 0);
+            $ownCheck->close();
+            if ($foreign > 0) {
+                send_response("One or more questions are owned by another department and cannot be reordered here.", 403);
+            }
+        }
+    }
 
     // Begin transaction
     $mysqli->autocommit(false);

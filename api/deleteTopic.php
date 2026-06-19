@@ -29,14 +29,43 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin delete functions
-requireAuth();
+// Admin only.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
 
     // Check if ID is provided
     if (!isset($receivedData['id']) || empty($receivedData['id'])) {
         log_info("Topic delete failed: ID is required");
         send_response("Topic ID is required", 400);
         exit;
+    }
+
+    // Add-only ownership: a department admin may delete a topic only if they
+    // own it AND every question under it is also theirs.
+    if (!$callerIsSuper) {
+        $topicId = (int) $receivedData['id'];
+        $callerDept = (int) ($caller['department_id'] ?? 0);
+
+        $topicOwner = lookupOwnerDepartmentId($mysqli, 'tbltopic', $topicId);
+        if ($topicOwner === false) {
+            send_response("No topic found with the provided ID", 404);
+        }
+        if (!callerActsOnDepartment($caller, $topicOwner)) {
+            send_response("This topic is owned by another department and cannot be deleted here.", 403);
+        }
+
+        $foreignQuestions = $mysqli->prepare(
+            'SELECT COUNT(*) AS c FROM tblquestion WHERE topicid = ? AND (owner_department_id IS NULL OR owner_department_id <> ?)'
+        );
+        $foreignQuestions->bind_param('ii', $topicId, $callerDept);
+        $foreignQuestions->execute();
+        $foreignQuestionCount = (int) ($foreignQuestions->get_result()->fetch_assoc()['c'] ?? 0);
+        $foreignQuestions->close();
+
+        if ($foreignQuestionCount > 0) {
+            send_response("This topic contains questions owned by other departments. Ask the super-admin to delete it.", 403);
+        }
     }
 
     // First delete all questions in this topic

@@ -1,6 +1,12 @@
 <?php
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only (previously unauthenticated).
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
 
     // Check if IDs are provided
     if (!isset($receivedData['ids']) || !is_array($receivedData['ids']) || empty($receivedData['ids'])) {
@@ -21,8 +27,31 @@ include 'setup.php';
         }
     }
 
+    // Normalise to ints for safe binding and ownership checks.
+    $ids = array_map('intval', $ids);
+
     // Create placeholders for the IN clause
     $placeholders = str_repeat('?,', $idCount - 1) . '?';
+
+    // Add-only ownership: a department admin may only delete questions their
+    // department owns. Reject the whole batch if any belong elsewhere.
+    if (!$callerIsSuper) {
+        $callerDept = (int) ($caller['department_id'] ?? 0);
+        $ownCheck = $mysqli->prepare(
+            "SELECT COUNT(*) AS c FROM tblquestion WHERE id IN ($placeholders) "
+            . "AND (owner_department_id IS NULL OR owner_department_id <> ?)"
+        );
+        $ownTypes = str_repeat('i', $idCount) . 'i';
+        $ownParams = array_merge($ids, [$callerDept]);
+        $ownCheck->bind_param($ownTypes, ...$ownParams);
+        $ownCheck->execute();
+        $foreign = (int) ($ownCheck->get_result()->fetch_assoc()['c'] ?? 0);
+        $ownCheck->close();
+        if ($foreign > 0) {
+            send_response("One or more questions are owned by another department and cannot be deleted here.", 403);
+        }
+    }
+
     $query = "DELETE FROM tblquestion WHERE id IN ($placeholders)";
 
     $stmt = $mysqli->prepare($query);

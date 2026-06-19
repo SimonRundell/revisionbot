@@ -27,10 +27,12 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin functions
-requireAuth();
+// Admin only. New content is owned by the creator's department (NULL for the
+// super-admin = super-owned), which governs who may later edit/delete it.
+requireAdmin($mysqli);
+$ownerDepartmentId = getCallerDepartmentId($mysqli);
 
-    $query = "INSERT INTO tblsubject (subject) VALUES (?)";
+    $query = "INSERT INTO tblsubject (subject, owner_department_id) VALUES (?, ?)";
 
 
     $stmt = $mysqli->prepare($query);
@@ -39,7 +41,7 @@ requireAuth();
         log_info("Subject create prepare failed: " . $mysqli->error);
         send_response("Subject create prepare failed: " . $mysqli->error, 500);
     } else {
-        $stmt->bind_param("s", $receivedData['subject']);
+        $stmt->bind_param("si", $receivedData['subject'], $ownerDepartmentId);
                                  
         if (!$stmt->execute()) {
             log_info("Subject creation failed: " . $stmt->error);

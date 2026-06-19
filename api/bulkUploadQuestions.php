@@ -2,8 +2,9 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin bulk functions
-requireAuth();
+// Admin only. Uploaded questions are owned by the uploader's department.
+requireAdmin($mysqli);
+$ownerDepartmentId = getCallerDepartmentId($mysqli);
 
 if (empty($receivedData) && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
     $receivedData = [];
@@ -155,7 +156,7 @@ try {
 
     $currentOrderValue = (int) $currentOrderValue;
 
-    $insertStmt = $mysqli->prepare('INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order) VALUES (?, ?, ?, ?, ?)');
+    $insertStmt = $mysqli->prepare('INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order, owner_department_id) VALUES (?, ?, ?, ?, ?, ?)');
     if (!$insertStmt) {
         throw new Exception('Question insert prepare failed: ' . $mysqli->error);
     }
@@ -165,8 +166,9 @@ try {
     $attachmentsJson = json_encode([]);
     $markschemeText = '';
     $orderValue = 0;
+    $ownerDeptParam = $ownerDepartmentId;
 
-    $insertStmt->bind_param('sissi', $questionText, $topicIdParam, $attachmentsJson, $markschemeText, $orderValue);
+    $insertStmt->bind_param('sissii', $questionText, $topicIdParam, $attachmentsJson, $markschemeText, $orderValue, $ownerDeptParam);
 
     $createdCount = 0;
 

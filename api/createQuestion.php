@@ -31,8 +31,9 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin functions
-requireAuth();
+// Admin only. New question is owned by the creator's department (add-only tree).
+requireAdmin($mysqli);
+$ownerDepartmentId = getCallerDepartmentId($mysqli);
 
     // Get the next order number for this topic
     $orderQuery = "SELECT COALESCE(MAX(question_order), 0) + 1 as next_order FROM tblquestion WHERE topicid = ?";
@@ -43,8 +44,8 @@ requireAuth();
     $nextOrder = $orderResult->fetch_assoc()['next_order'];
     $orderStmt->close();
 
-    $query = "INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order) 
-    VALUES (?, ?, ?, ?, ?)";
+    $query = "INSERT INTO tblquestion (question, topicid, attachments, markscheme, question_order, owner_department_id)
+    VALUES (?, ?, ?, ?, ?, ?)";
 
     $stmt = $mysqli->prepare($query);
 
@@ -53,10 +54,10 @@ requireAuth();
         send_response("Question create prepare failed: " . $mysqli->error, 500);
     } else {
         $attachments_json = json_encode($receivedData['attachments'] ?? []);
-    
-    $stmt->bind_param("sissi", $receivedData['question'],
-         $receivedData['topicid'], 
-         $attachments_json, $receivedData['markscheme'], $nextOrder);
+
+    $stmt->bind_param("sissii", $receivedData['question'],
+         $receivedData['topicid'],
+         $attachments_json, $receivedData['markscheme'], $nextOrder, $ownerDepartmentId);
 
         if (!$stmt->execute()) {
             log_info("Question creation failed: " . $stmt->error);

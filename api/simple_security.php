@@ -424,6 +424,42 @@ function lookupUserDepartmentId($connection, $userId) {
 }
 
 /**
+ * Look up the owning department of a shared-tree row (subject/topic/question).
+ *
+ * Drives the add-only edit rule: reads ignore ownership, but edits/deletes
+ * must be authorised against the owner.
+ *
+ * @param mysqli $connection
+ * @param string $table One of tblsubject, tbltopic, tblquestion.
+ * @param int $id Row id.
+ * @return int|null|false Department id, null if super-owned, false if not found.
+ */
+function lookupOwnerDepartmentId($connection, $table, $id) {
+    $allowed = ['tblsubject', 'tbltopic', 'tblquestion'];
+    if (!in_array($table, $allowed, true)) {
+        return false;
+    }
+
+    $stmt = $connection->prepare("SELECT owner_department_id FROM `" . $table . "` WHERE id = ? LIMIT 1");
+    if (!$stmt) {
+        return false;
+    }
+    $id = (int) $id;
+    $stmt->bind_param('i', $id);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return false;
+    }
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$row) {
+        return false;
+    }
+    return $row['owner_department_id'] === null ? null : (int) $row['owner_department_id'];
+}
+
+/**
  * Convenience guard: returns the caller's department id, or exits 403 if the
  * caller is a department-less account (e.g. super-admin) calling an endpoint
  * that requires a concrete department context.

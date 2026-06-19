@@ -26,10 +26,11 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin functions
-requireAuth();
+// Admin only. New topic is owned by the creator's department (add-only tree).
+requireAdmin($mysqli);
+$ownerDepartmentId = getCallerDepartmentId($mysqli);
 
-    $query = "INSERT INTO tbltopic (topic, subjectid) VALUES (?, ?)";
+    $query = "INSERT INTO tbltopic (topic, subjectid, owner_department_id) VALUES (?, ?, ?)";
 
 
     $stmt = $mysqli->prepare($query);
@@ -38,7 +39,7 @@ requireAuth();
         log_info("Topic create prepare failed: " . $mysqli->error);
         send_response("Topic create prepare failed: " . $mysqli->error, 500);
     } else {
-        $stmt->bind_param("si", $receivedData['topic'], $receivedData['subjectid']);
+        $stmt->bind_param("sii", $receivedData['topic'], $receivedData['subjectid'], $ownerDepartmentId);
 
         if (!$stmt->execute()) {
             log_info("Topic creation failed: " . $stmt->error);

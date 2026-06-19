@@ -30,14 +30,53 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to admin delete functions
-requireAuth();
+// Admin only.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$callerIsSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
 
     // Check if ID is provided
     if (!isset($receivedData['id']) || empty($receivedData['id'])) {
         log_info("Subject delete failed: ID is required");
         send_response("Subject ID is required", 400);
         exit;
+    }
+
+    // Add-only ownership: a department admin may delete a subject only if they
+    // own it AND every descendant topic/question is also theirs. This protects
+    // shared-tree content authored by other departments from cascade deletion.
+    if (!$callerIsSuper) {
+        $subjectId = (int) $receivedData['id'];
+        $callerDept = (int) ($caller['department_id'] ?? 0);
+
+        $subjectOwner = lookupOwnerDepartmentId($mysqli, 'tblsubject', $subjectId);
+        if ($subjectOwner === false) {
+            send_response("No subject found with the provided ID", 404);
+        }
+        if (!callerActsOnDepartment($caller, $subjectOwner)) {
+            send_response("This subject is owned by another department and cannot be deleted here.", 403);
+        }
+
+        $foreignTopics = $mysqli->prepare(
+            'SELECT COUNT(*) AS c FROM tbltopic WHERE subjectid = ? AND (owner_department_id IS NULL OR owner_department_id <> ?)'
+        );
+        $foreignTopics->bind_param('ii', $subjectId, $callerDept);
+        $foreignTopics->execute();
+        $foreignTopicCount = (int) ($foreignTopics->get_result()->fetch_assoc()['c'] ?? 0);
+        $foreignTopics->close();
+
+        $foreignQuestions = $mysqli->prepare(
+            'SELECT COUNT(*) AS c FROM tblquestion q JOIN tbltopic t ON t.id = q.topicid '
+            . 'WHERE t.subjectid = ? AND (q.owner_department_id IS NULL OR q.owner_department_id <> ?)'
+        );
+        $foreignQuestions->bind_param('ii', $subjectId, $callerDept);
+        $foreignQuestions->execute();
+        $foreignQuestionCount = (int) ($foreignQuestions->get_result()->fetch_assoc()['c'] ?? 0);
+        $foreignQuestions->close();
+
+        if ($foreignTopicCount > 0 || $foreignQuestionCount > 0) {
+            send_response("This subject contains topics or questions owned by other departments. Ask the super-admin to delete it.", 403);
+        }
     }
 
     // First get all topics for this subject
