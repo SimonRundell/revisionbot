@@ -63,6 +63,16 @@ function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccess
     const [editQuestionMarkScheme, setEditQuestionMarkScheme] = useState('');
     const [editQuestionFiles, setEditQuestionFiles] = useState([]);
 
+    // Ownership helpers for the add-only shared tree. The tree is readable by
+    // all departments, but a department admin may edit/delete only content their
+    // own department owns; the super-admin manages everything. The backend
+    // enforces this too (403); these checks just keep the UI honest.
+    // owner_department_id arrives from the API as a string.
+    const isSuper = Number(currentUser?.is_super_admin) === 1;
+    const callerDeptId = currentUser?.department_id != null ? Number(currentUser.department_id) : null;
+    const canManage = (item) => isSuper ||
+        (item?.owner_department_id != null && Number(item.owner_department_id) === callerDeptId);
+
 useEffect(() => {
     // Fetch subjects from the server when the component mounts
     const apiCall = () => axios.post(config.api + '/getSubjects.php', {}, {
@@ -375,7 +385,12 @@ const handleCreateQuestion = async () => {
 };
 
 const handleEditQuestion = (question) => {
-    // console.log('Editing question:', question);
+    // Add-only guard: never open the editor for content owned by another
+    // department (the backend would reject the save anyway).
+    if (!canManage(question)) {
+        setSendErrorMessage('This question is owned by another department and is read-only.');
+        return;
+    }
     setEditingQuestion(question);
     setEditQuestion(question.question || '');
     setEditQuestionTopic(question.topicid || '');
@@ -1148,13 +1163,17 @@ const handleImportFile = async (event) => {
                         {subjects.map(subject => (
                             <div key={subject.id} className="subject-item">
                                 <span className="subject-name">{subject.subject}</span>
-                                <button 
-                                    onClick={() => handleDeleteSubject(subject)}
-                                    className="delete-btn small"
-                                    title="Delete subject"
-                                >
-                                    🗑️
-                                </button>
+                                {canManage(subject) ? (
+                                    <button
+                                        onClick={() => handleDeleteSubject(subject)}
+                                        className="delete-btn small"
+                                        title="Delete subject"
+                                    >
+                                        🗑️
+                                    </button>
+                                ) : (
+                                    <span className="ownership-lock" title="Owned by another department — read-only">🔒</span>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -1198,13 +1217,17 @@ const handleImportFile = async (event) => {
                         {topics.map(topic => (
                             <div key={topic.id} className="topic-item">
                                 <span className="topic-name">{topic.topic}</span>
-                                <button 
-                                    onClick={() => handleDeleteTopic(topic)}
-                                    className="delete-btn small"
-                                    title="Delete topic"
-                                >
-                                    🗑️
-                                </button>
+                                {canManage(topic) ? (
+                                    <button
+                                        onClick={() => handleDeleteTopic(topic)}
+                                        className="delete-btn small"
+                                        title="Delete topic"
+                                    >
+                                        🗑️
+                                    </button>
+                                ) : (
+                                    <span className="ownership-lock" title="Owned by another department — read-only">🔒</span>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -1259,28 +1282,28 @@ const handleImportFile = async (event) => {
                     <div>&nbsp;</div>
                     <ul>
                         {questions.map((question, index) => {
-                            // console.log('Rendering question:', question);
+                            const owned = canManage(question);
                             return (
-                            <li 
-                                key={question.id} 
+                            <li
+                                key={question.id}
                                 className="question-item"
                             >
                                 <div className="question-item-content">
                                     {!showBulkActions && (
                                         <div className="reorder-controls">
-                                            <button 
+                                            <button
                                                 onClick={() => handleMoveUp(index)}
                                                 className="reorder-btn"
-                                                disabled={index === 0}
-                                                title="Move up"
+                                                disabled={index === 0 || !owned}
+                                                title={owned ? 'Move up' : 'Owned by another department'}
                                             >
                                                 ↑
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleMoveDown(index)}
                                                 className="reorder-btn"
-                                                disabled={index === questions.length - 1}
-                                                title="Move down"
+                                                disabled={index === questions.length - 1 || !owned}
+                                                title={owned ? 'Move down' : 'Owned by another department'}
                                             >
                                                 ↓
                                             </button>
@@ -1292,18 +1315,21 @@ const handleImportFile = async (event) => {
                                             checked={selectedQuestions.includes(question.id)}
                                             onChange={(e) => handleQuestionSelect(question.id, e.target.checked)}
                                             className="question-checkbox"
+                                            disabled={!owned}
+                                            title={owned ? '' : 'Owned by another department — read-only'}
                                         />
                                     )}
-                                    <div 
-                                        onClick={() => !showBulkActions && handleEditQuestion(question)}
-                                        className={`question-link ${showBulkActions ? 'bulk-mode' : ''}`}
-                                        title={showBulkActions ? 'Bulk selection mode' : 'Click to edit question'}
+                                    <div
+                                        onClick={() => !showBulkActions && owned && handleEditQuestion(question)}
+                                        className={`question-link ${showBulkActions ? 'bulk-mode' : ''} ${owned ? '' : 'read-only'}`}
+                                        title={showBulkActions ? 'Bulk selection mode' : (owned ? 'Click to edit question' : 'Owned by another department — read-only')}
                                     >
                                         <span className="question-id">Q{question.id}</span>
+                                        {!owned && <span className="ownership-lock" title="Owned by another department — read-only">🔒</span>}
                                         <RichTextContent value={firstthreesentances(question.question)} className="question-text question-text-preview" />
                                     </div>
-                                    {!showBulkActions && (
-                                        <button 
+                                    {!showBulkActions && (owned ? (
+                                        <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleDeleteQuestion(question);
@@ -1313,7 +1339,9 @@ const handleImportFile = async (event) => {
                                         >
                                             🗑️
                                         </button>
-                                    )}
+                                    ) : (
+                                        <span className="ownership-lock" title="Owned by another department — read-only">🔒</span>
+                                    ))}
                                 </div>
                             </li>
                             );
