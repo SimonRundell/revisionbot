@@ -68,13 +68,20 @@ function SchoolManager({ config, currentUser, open, setOpen,
         }
     }, [config.api, headers, setSendErrorMessage]);
 
+    // Load schools when the drawer opens. Only async work happens here; the
+    // selection/department list is cleared on close (handleClose) rather than
+    // synchronously on the open prop change.
     useEffect(() => {
         if (open) {
-            setSelectedSchool(null);
-            setDepartments([]);
             loadSchools();
         }
     }, [open, loadSchools]);
+
+    const handleClose = () => {
+        setSelectedSchool(null);
+        setDepartments([]);
+        setOpen(false);
+    };
 
     useEffect(() => {
         if (selectedSchool) loadDepartments(selectedSchool.id);
@@ -182,7 +189,7 @@ function SchoolManager({ config, currentUser, open, setOpen,
             <Drawer
                 title="Schools & Departments"
                 closable={{ 'aria-label': 'Close Button' }}
-                onClose={() => setOpen(false)}
+                onClose={handleClose}
                 open={open}
                 width={'80%'}
             >

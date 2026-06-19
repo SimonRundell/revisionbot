@@ -54,12 +54,19 @@ function DepartmentSettings({ config, currentUser, open, setOpen,
         }
     }, [config.api, currentUser, setSendErrorMessage]);
 
+    // Load the department's status when the drawer opens. The effect only kicks
+    // off async work; local input is cleared on close (see handleClose) rather
+    // than synchronously here, so state is never "adjusted on a prop change".
     useEffect(() => {
         if (open) {
-            setKeyInput('');
             loadDepartment();
         }
     }, [open, loadDepartment]);
+
+    const handleClose = () => {
+        setKeyInput('');
+        setOpen(false);
+    };
 
     /**
      * Save (or replace) the department's Gemini key.
@@ -97,7 +104,7 @@ function DepartmentSettings({ config, currentUser, open, setOpen,
         <Drawer
             title="Department Settings"
             closable={{ 'aria-label': 'Close Button' }}
-            onClose={() => setOpen(false)}
+            onClose={handleClose}
             open={open}
             width={520}
         >
