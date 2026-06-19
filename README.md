@@ -5,8 +5,13 @@ by Simon Rundell for CodeMonkey.design
 
 A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
+> **Multi-school (0.5.0):** revisionBot is now multi-tenant. See
+> [docs/MULTI_SCHOOL.md](docs/MULTI_SCHOOL.md) for the architecture, roles, and
+> the step-by-step migration runbook for existing 0.4.x databases.
+
 ## Features
 
+- **Multi-School Tenancy**: Schools contain departments; each department supplies its own encrypted Gemini API key, manages its own users/classes/analytics, and is insulated from other departments. A single super-admin onboards schools and their admins. The subject/topic/question tree is a shared, add-only resource readable by all departments
 - **Student Interface**: Interactive question answering with AI feedback and randomized question selection; previously answered questions visually marked with a green ✓ badge while remaining retryable
 - **Rich Text Editing**: Questions, mark schemes, student answers, and teacher feedback support bold, italic, underline, subscript, superscript, ordered/unordered lists, code, blockquotes, undo, redo, and Tab-key indentation
 - **AI Assessment**: Integration with Google's Gemini 2.5 Flash for intelligent immediate feedback
