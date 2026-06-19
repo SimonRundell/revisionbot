@@ -12,8 +12,40 @@ SET time_zone = "+00:00";
 --
 -- Database: `u2440325118_aibot`
 --
--- Schema version: 0.4.9 (June 2026)
+-- Schema version: 0.5.0 (June 2026) - multi-school / multi-tenant
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tblschool`
+--
+
+CREATE TABLE `tblschool` (
+  `id` int(11) NOT NULL,
+  `school_name` varchar(255) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbldepartment`
+--
+-- Each department supplies its own Gemini API key, stored encrypted at rest.
+--
+
+CREATE TABLE `tbldepartment` (
+  `id` int(11) NOT NULL,
+  `school_id` int(11) NOT NULL,
+  `department_name` varchar(255) NOT NULL,
+  `gemini_key_cipher` longtext DEFAULT NULL COMMENT 'base64 sodium ciphertext of the department Gemini API key',
+  `gemini_key_nonce` varchar(64) DEFAULT NULL COMMENT 'base64 sodium nonce for gemini_key_cipher',
+  `gemini_key_last4` varchar(8) DEFAULT NULL COMMENT 'last 4 chars of plaintext key, for admin display only',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -42,7 +74,8 @@ CREATE TABLE `tblquestion` (
   `question` longtext DEFAULT NULL,
   `markscheme` longtext DEFAULT NULL COMMENT 'Answer, from which the AI should work',
   `attachments` longtext DEFAULT NULL COMMENT 'json list of base64 encoded files (images, etc) for attachment to the question',
-  `question_order` int(11) DEFAULT 0
+  `question_order` int(11) DEFAULT 0,
+  `owner_department_id` int(11) DEFAULT NULL COMMENT 'Owning department; NULL = super-owned. Reads ignore this; only edits/deletes check it (add-only shared tree).'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- --------------------------------------------------------
@@ -54,6 +87,7 @@ CREATE TABLE `tblquestion` (
 CREATE TABLE `tblresponse` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
+  `department_id` int(11) DEFAULT NULL COMMENT 'Denormalised from owning user for tenant filtering',
   `question_id` int(11) NOT NULL,
   `subject_id` int(11) NOT NULL,
   `topic_id` int(11) NOT NULL,
@@ -85,7 +119,8 @@ CREATE TABLE `tblresponse` (
 
 CREATE TABLE `tblsubject` (
   `id` int(11) NOT NULL,
-  `subject` varchar(255) NOT NULL
+  `subject` varchar(255) NOT NULL,
+  `owner_department_id` int(11) DEFAULT NULL COMMENT 'Owning department; NULL = super-owned. Reads ignore this; only edits/deletes check it.'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- --------------------------------------------------------
@@ -97,7 +132,8 @@ CREATE TABLE `tblsubject` (
 CREATE TABLE `tbltopic` (
   `id` int(11) NOT NULL,
   `subjectid` int(11) NOT NULL,
-  `topic` varchar(255) DEFAULT NULL
+  `topic` varchar(255) DEFAULT NULL,
+  `owner_department_id` int(11) DEFAULT NULL COMMENT 'Owning department; NULL = super-owned. Reads ignore this; only edits/deletes check it.'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- --------------------------------------------------------
@@ -112,11 +148,13 @@ CREATE TABLE `tbluser` (
   `passwordHash` varchar(255) NOT NULL,
   `userName` varchar(255) DEFAULT NULL,
   `userClass` varchar(255) DEFAULT NULL,
+  `department_id` int(11) DEFAULT NULL COMMENT 'Department the user belongs to; NULL only for super-admin',
   `userAccess` longtext NOT NULL COMMENT '{"1":"all"}',
   `userStatus` varchar(255) DEFAULT NULL,
   `userLocale` varchar(255) DEFAULT NULL,
   `avatar` longtext DEFAULT NULL,
-  `admin` tinyint(4) NOT NULL DEFAULT 0 COMMENT '1 = admin',
+  `admin` tinyint(4) NOT NULL DEFAULT 0 COMMENT '1 = department admin',
+  `is_super_admin` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = overall admin over all schools/departments',
   `userEmailValidated` tinyint(4) NOT NULL DEFAULT 0 COMMENT '1 = validated, 0 = default',
   `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '0 = deactivated, 1 = active',
   `force_pw_change` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = user must change password on next login',
@@ -132,6 +170,7 @@ CREATE TABLE `tbluser` (
 CREATE TABLE `tbluser_stats` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
+  `department_id` int(11) DEFAULT NULL COMMENT 'Denormalised from owning user for tenant filtering',
   `subject_id` int(11) NOT NULL,
   `topic_id` int(11) DEFAULT NULL,
   `total_questions_attempted` int(11) DEFAULT 0,
@@ -251,6 +290,52 @@ ALTER TABLE `tbluser_stats`
   ADD CONSTRAINT `fk_stats_subject` FOREIGN KEY (`subject_id`) REFERENCES `tblsubject` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_stats_topic` FOREIGN KEY (`topic_id`,`subject_id`) REFERENCES `tbltopic` (`id`, `subjectid`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_stats_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`) ON DELETE CASCADE;
+
+--
+-- Multi-school: keys, AUTO_INCREMENT and constraints for the new tables/columns
+--
+
+ALTER TABLE `tblschool`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_school_name` (`school_name`);
+
+ALTER TABLE `tbldepartment`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_dept_per_school` (`school_id`,`department_name`),
+  ADD KEY `idx_dept_school` (`school_id`);
+
+ALTER TABLE `tblschool`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `tbldepartment`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `tbldepartment`
+  ADD CONSTRAINT `fk_dept_school` FOREIGN KEY (`school_id`) REFERENCES `tblschool` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `tbluser`
+  ADD KEY `idx_user_department` (`department_id`),
+  ADD CONSTRAINT `fk_user_department` FOREIGN KEY (`department_id`) REFERENCES `tbldepartment` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `tblsubject`
+  ADD KEY `idx_subject_owner` (`owner_department_id`),
+  ADD CONSTRAINT `fk_subject_owner` FOREIGN KEY (`owner_department_id`) REFERENCES `tbldepartment` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `tbltopic`
+  ADD KEY `idx_topic_owner` (`owner_department_id`),
+  ADD CONSTRAINT `fk_topic_owner` FOREIGN KEY (`owner_department_id`) REFERENCES `tbldepartment` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `tblquestion`
+  ADD KEY `idx_question_owner` (`owner_department_id`),
+  ADD CONSTRAINT `fk_question_owner` FOREIGN KEY (`owner_department_id`) REFERENCES `tbldepartment` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `tblresponse`
+  ADD KEY `idx_response_department` (`department_id`),
+  ADD CONSTRAINT `fk_response_department` FOREIGN KEY (`department_id`) REFERENCES `tbldepartment` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `tbluser_stats`
+  ADD KEY `idx_stats_department` (`department_id`),
+  ADD CONSTRAINT `fk_stats_department` FOREIGN KEY (`department_id`) REFERENCES `tbldepartment` (`id`) ON DELETE SET NULL;
 
 COMMIT;
 
