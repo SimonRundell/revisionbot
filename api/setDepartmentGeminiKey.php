@@ -6,15 +6,15 @@
  * The key is never echoed back; only a success flag and last-4 are returned.
  *
  * Authorisation:
- * - Super-admin may set the key for any department.
  * - A department admin may set the key only for their own department.
+ * - The super-admin is intentionally excluded: the platform operator never
+ *   handles tenant API keys. Schools supply and pay for their own.
  *
  * @requires simple_security.php - Security validation
  * @requires setup.php - Database connection
  * @requires crypto.php - Encryption helpers
- * @input receivedData['department_id'] - Target department (super-admin only;
- *         ignored for department admins, who are pinned to their own).
- * @input receivedData['gemini_key'] - Plaintext Gemini API key
+ * @input receivedData['gemini_key'] - Plaintext Gemini API key (department is
+ *         always taken from the caller's token, never the request body).
  * @output Success message with last4, or error
  * @version 1.0
  ****************************************************************************/
@@ -28,24 +28,19 @@ if (!$caller) {
     send_response('Authentication required.', 403);
 }
 
-$isSuper = (int) ($caller['is_super_admin'] ?? 0) === 1;
-$isAdmin = (int) ($caller['admin'] ?? 0) === 1;
-
-if (!$isSuper && !$isAdmin) {
-    send_response('Admin access required.', 403);
+// Only a department admin may set their OWN department's key. The super-admin
+// (platform operator) is deliberately excluded: schools supply and pay for
+// their own AI keys, so the operator never handles them. The department is
+// always derived from the token and never accepted from the request body.
+if ((int) ($caller['is_super_admin'] ?? 0) === 1) {
+    send_response('Super-admin accounts cannot manage department API keys. Each department sets its own.', 403);
 }
 
-// Department is derived from the token for department admins; only the
-// super-admin may target an arbitrary department.
-if ($isSuper) {
-    $departmentId = (int) ($receivedData['department_id'] ?? 0);
-} else {
-    $departmentId = (int) ($caller['department_id'] ?? 0);
+if ((int) ($caller['admin'] ?? 0) !== 1 || empty($caller['department_id'])) {
+    send_response('Department admin access required.', 403);
 }
 
-if ($departmentId <= 0) {
-    send_response('A valid department is required.', 400);
-}
+$departmentId = (int) $caller['department_id'];
 
 $geminiKey = trim((string) ($receivedData['gemini_key'] ?? ''));
 if ($geminiKey === '') {

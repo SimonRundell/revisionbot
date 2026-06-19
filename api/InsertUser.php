@@ -38,28 +38,21 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to registration
-blockDirectAccess();
+// Admin only. Self-registration is disabled: AI assessment incurs cost, so
+// schools administer all accounts. Resolve the new user's department and the
+// permitted admin flag from the caller's identity:
+// - super-admin: must name a department_id (onboarding a school's admin);
+// - department admin: new user pinned to the caller's own department.
+requireAdmin($mysqli);
+$caller = getAuthenticatedUser($mysqli);
+$requestedAdmin = (int) ($receivedData['admin'] ?? 0);
 
-    // Resolve which department the new user belongs to, and whether the
-    // requested admin flag is permitted, from the caller's identity:
-    // - super-admin: must name a department_id, may set any admin flag;
-    // - department admin: new user pinned to the caller's department;
-    // - unauthenticated self-registration: department_id required in payload,
-    //   admin flag forced to 0 (no self-granted privileges).
-    $caller = getAuthenticatedUser($mysqli);
-    $requestedAdmin = (int) ($receivedData['admin'] ?? 0);
-
-    if ($caller && (int) ($caller['is_super_admin'] ?? 0) === 1) {
+    if ((int) ($caller['is_super_admin'] ?? 0) === 1) {
         $departmentId = (int) ($receivedData['department_id'] ?? 0);
-        $adminFlag = $requestedAdmin;
-    } elseif ($caller && (int) ($caller['admin'] ?? 0) === 1) {
-        $departmentId = (int) ($caller['department_id'] ?? 0);
         $adminFlag = $requestedAdmin;
     } else {
-        // Self-registration (or non-admin caller): no privilege escalation.
-        $departmentId = (int) ($receivedData['department_id'] ?? 0);
-        $adminFlag = 0;
+        $departmentId = (int) ($caller['department_id'] ?? 0);
+        $adminFlag = $requestedAdmin;
     }
 
     if ($departmentId <= 0) {
