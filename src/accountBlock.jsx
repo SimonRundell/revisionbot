@@ -35,7 +35,7 @@ function AccountBlock({currentUser, config, setCurrentUser,
             <div className="account-user-summary">
                 <div className="account-user-main">
                     <span>{currentUser.userName}</span>
-                    <img src={currentUser.avatar} alt="avatar" className="avatar-menubar" />
+                    <img src={currentUser.avatar || '/images/default_avatar.png'} alt="avatar" className="avatar-menubar" />
                 </div>
                 {currentUser.admin !== 1 && highestBadges.length > 0 && (
                     <div className="account-badge-strip">
