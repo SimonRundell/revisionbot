@@ -11,3 +11,30 @@ AuthType None
 	Order allow,deny
 	Allow from all
 </IfModule>
+
+# ---------------------------------------------------------------------------
+# Block sensitive files.
+# Dotfiles (.config.json, .config.live.json, .htaccess, etc.), logs,
+# Composer manifests, SQL dumps and backups must never be served.
+# No mod_php directives here: DreamHost runs PHP via FastCGI.
+# ---------------------------------------------------------------------------
+<FilesMatch "(^\.|\.(log|txt|sql|bak|old|orig|swp|dist|lock|md)$|^composer\.json$)">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order deny,allow
+		Deny from all
+	</IfModule>
+</FilesMatch>
+
+# Belt and braces: mod_rewrite works independently of the authz modules,
+# so these return 404 even if the auth rules above get overridden.
+# Also hides the vendor/ and CLI-only tools/ folders from the web.
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteRule (^|/)\. - [R=404,L]
+	RewriteRule ^(vendor|tools)(/|$) - [R=404,L]
+	RewriteRule \.(log|txt|sql|bak|old|orig|swp|dist|lock|md)$ - [R=404,L]
+	RewriteRule ^composer\.json$ - [R=404,L]
+</IfModule>
