@@ -1,6 +1,21 @@
 <?php
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+$authenticatedUser = requireAuth($mysqli);
+
+// Only the owner of the response (or an admin) may attach AI feedback to it
+$ownerStmt = $mysqli->prepare('SELECT user_id FROM tblresponse WHERE id = ? LIMIT 1');
+$ownerResponseId = (int) ($receivedData['responseId'] ?? 0);
+$ownerStmt->bind_param('i', $ownerResponseId);
+$ownerStmt->execute();
+$ownerRow = $ownerStmt->get_result()->fetch_assoc();
+$ownerStmt->close();
+if (!$ownerRow) {
+    send_response('Response not found.', 404);
+}
+requireSelfOrAdmin($authenticatedUser, $ownerRow['user_id']);
 
 // Extract the AI-suggested RAG rating from the feedback HTML
 $aiFeedback = $receivedData['aiFeedback'];

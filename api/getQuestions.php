@@ -6,7 +6,7 @@
  * Returns questions ordered by question_order for proper sequencing.
  * 
  * Security:
- * - Protected by blockDirectAccess()
+ * - Protected by requireAuth() (any logged-in user)
  * - Filters by topic ID
  * - Includes question text, markscheme, and attachments
  * 
@@ -22,7 +22,7 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 // Block direct browser access
-blockDirectAccess();
+requireAuth($mysqli);
 
 $query = "SELECT * FROM tblquestion WHERE topicid = ? ORDER BY question_order ASC, id ASC";
 $stmt = $mysqli->prepare($query);

@@ -1,6 +1,11 @@
 <?php
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only
+requireAuth();
+requireAdmin($mysqli);
 
     // Validate import data
     if (!isset($receivedData['metadata']) || !isset($receivedData['metadata']['version'])) {

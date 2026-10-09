@@ -33,7 +33,11 @@
  * @updated 2026-05-27 - Disabled thinking mode; gated response log on debug flag
  ****************************************************************************/
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Logged-in users only (each call spends Gemini quota)
+requireAuth($mysqli);
 
     // Build the assessment prompt.
     // Security: students are instructed not to embed override instructions in their answers,

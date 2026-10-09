@@ -1,6 +1,11 @@
 <?php
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only
+requireAuth();
+requireAdmin($mysqli);
 
     // Check if IDs are provided
     if (!isset($receivedData['ids']) || !is_array($receivedData['ids']) || empty($receivedData['ids'])) {

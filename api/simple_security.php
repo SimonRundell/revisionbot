@@ -4,6 +4,8 @@
  * Blocks obvious direct browser access while allowing legitimate API calls
  */
 
+require_once __DIR__ . '/cors.php'; // always first
+
 /**
  * Build a stable signing secret from existing private config values.
  *
@@ -230,12 +232,14 @@ function blockDirectAccess() {
 function requireAuth($connection = null) {
     blockDirectAccess();
 
+    // Endpoints call requireAuth() after including setup.php, so fall back to its connection.
     if ($connection === null) {
-        return ['token' => getBearerToken()];
+        global $mysqli;
+        $connection = $mysqli ?? null;
     }
 
-    $user = getAuthenticatedUser($connection);
-    if (!$user) {
+    $user = $connection ? getAuthenticatedUser($connection) : null;
+    if (!$user || (int) ($user['is_active'] ?? 1) !== 1) {
         http_response_code(403);
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Authentication required.']);
@@ -264,4 +268,21 @@ function requireAdmin($connection) {
 
     return (int) $user['id'];
 }
-?>
+
+/**
+ * Allow the request only when the caller is the given user or an admin.
+ * Exits with HTTP 403 otherwise.
+ *
+ * @param array $user Authenticated user row returned by requireAuth().
+ * @param int $targetUserId The user id the request is acting on.
+ * @return void
+ */
+function requireSelfOrAdmin($user, $targetUserId) {
+    $isAdmin = (int) ($user['admin'] ?? 0) === 1;
+    if (!$isAdmin && (int) ($user['id'] ?? 0) !== (int) $targetUserId) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'You are not allowed to access this user.']);
+        exit;
+    }
+}

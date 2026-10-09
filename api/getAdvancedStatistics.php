@@ -16,6 +16,11 @@ log_info("Analytics request: " . json_encode($receivedData));
 log_info("Request type: " . $requestType);
 log_info("Raw input: " . file_get_contents('php://input'));
 
+// Only 'studentProgress' (self-scoped inside) is available to students; the rest is admin analytics
+if ($requestType !== 'studentProgress') {
+    requireAdmin($mysqli);
+}
+
 switch ($requestType) {
     case 'departments':
         getDepartments();

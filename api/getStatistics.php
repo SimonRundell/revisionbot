@@ -35,7 +35,12 @@
  * @todo Add requireAuth() for admin-only access
  ****************************************************************************/
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only
+requireAuth();
+requireAdmin($mysqli);
 
 try {
     // Get overall statistics

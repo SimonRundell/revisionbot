@@ -29,6 +29,7 @@ include 'setup.php';
 
 // Block direct browser access to admin functions
 requireAuth();
+requireAdmin($mysqli);
 
     $query = "INSERT INTO tblsubject (subject) VALUES (?)";
 

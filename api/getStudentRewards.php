@@ -29,12 +29,13 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-requireAuth();
+$authenticatedUser = requireAuth();
 
 $userId = isset($receivedData['userId']) ? (int)$receivedData['userId'] : 0;
 if ($userId <= 0) {
     send_response('Valid userId is required', 400);
 }
+requireSelfOrAdmin($authenticatedUser, $userId);
 
 $latestAttemptsQuery = "
     SELECT

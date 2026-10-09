@@ -12,8 +12,20 @@ SET time_zone = "+00:00";
 --
 -- Database: `u2440325118_aibot`
 --
--- Schema version: 0.4.9 (June 2026)
+-- Schema version: 0.5.1 (June 2026)
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tblClass`
+-- Note: name is case-sensitive on Linux hosts, the API queries `tblClass`.
+--
+
+CREATE TABLE `tblClass` (
+  `id` int(11) NOT NULL,
+  `className` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- --------------------------------------------------------
 
@@ -146,6 +158,13 @@ CREATE TABLE `tbluser_stats` (
 --
 
 --
+-- Indexes for table `tblClass`
+--
+ALTER TABLE `tblClass`
+  ADD PRIMARY KEY (`id`) USING BTREE,
+  ADD UNIQUE KEY `unique_class_name` (`className`);
+
+--
 -- Indexes for table `tblpasswordreset`
 --
 ALTER TABLE `tblpasswordreset`
@@ -203,6 +222,9 @@ ALTER TABLE `tbluser_stats`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+ALTER TABLE `tblClass`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `tblpasswordreset`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;

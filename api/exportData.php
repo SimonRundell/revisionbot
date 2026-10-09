@@ -4,6 +4,7 @@ include 'setup.php';
 
 // Block direct browser access to data export
 requireAuth();
+requireAdmin($mysqli);
 
     // Get export type from request
     $exportType = isset($receivedData['type']) ? $receivedData['type'] : 'all';

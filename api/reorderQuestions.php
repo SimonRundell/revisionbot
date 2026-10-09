@@ -32,7 +32,12 @@
  * @todo Add requireAuth() for production security
  ****************************************************************************/
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only
+requireAuth();
+requireAdmin($mysqli);
 
     // Check if questions array is provided
     if (!isset($receivedData['questions']) || !is_array($receivedData['questions']) || empty($receivedData['questions'])) {

@@ -36,6 +36,7 @@ require_once __DIR__ . '/emailHelper.php';
 
 // Require admin authentication
 requireAuth();
+requireAdmin($mysqli);
 
 // Validate required fields
 if (empty($receivedData['email']) || empty($receivedData['userName']) || empty($receivedData['password'])) {

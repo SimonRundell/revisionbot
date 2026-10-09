@@ -32,6 +32,7 @@ include 'setup.php';
 
 // Block direct browser access to admin delete functions
 requireAuth();
+requireAdmin($mysqli);
 
     // Check if ID is provided
     if (!isset($receivedData['id']) || empty($receivedData['id'])) {

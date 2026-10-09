@@ -6,7 +6,7 @@
  * Returns topics sorted alphabetically for consistent UI display.
  * 
  * Security:
- * - Protected by blockDirectAccess()
+ * - Protected by requireAuth() (any logged-in user)
  * - Filters by subject ID to prevent unauthorized access
  * - Available to all authenticated users
  * 
@@ -22,7 +22,7 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 // Block direct browser access
-blockDirectAccess();
+requireAuth($mysqli);
 
 $query = "SELECT * FROM tbltopic WHERE subjectid = ? ORDER BY topic ASC";
 $stmt = $mysqli->prepare($query);

@@ -14,7 +14,7 @@
  * - Admin flag (default: false)
  * 
  * Security:
- * - Protected by blockDirectAccess()
+ * - Protected by requireAuth() and requireAdmin()
  * - Email uniqueness enforced by database
  * - Password already hashed on client side
  * - No email validation required (handled separately)
@@ -38,8 +38,9 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access to registration
-blockDirectAccess();
+// Account creation is admin only (public self-registration is disabled in the UI)
+requireAuth($mysqli);
+requireAdmin($mysqli);
 
     $query = "INSERT INTO tbluser (email, passwordHash, userName, userClass, userStatus, userLocale, avatar, admin, userAccess)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";

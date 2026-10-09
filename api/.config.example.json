@@ -5,6 +5,7 @@
     "password": "your_database_password",
     "dbname": "your_database_name",
     "api": "http://localhost",
+    "allowedOrigins": [],
     "smtpServer": "your.smtp.server.com",
     "smtpPort": 587,
     "smtpUser": "your_email@yourdomain.com",

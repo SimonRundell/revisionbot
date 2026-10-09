@@ -29,6 +29,7 @@ include 'setup.php';
 
 // Block direct browser access to sensitive user data
 requireAuth();
+requireAdmin($mysqli);
 
 $query = "SELECT * FROM tbluser";
 $stmt = $mysqli->prepare($query);

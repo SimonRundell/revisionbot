@@ -824,7 +824,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             userName: editForm.name,
                             changedBy: 'administrator'
                         }, {
-                            headers: { 'Content-Type': 'application/json' }
+                            headers: createJsonHeaders(currentUser)
                         });
                         // console.log('Password change notification sent successfully');
                     } catch (notificationError) {

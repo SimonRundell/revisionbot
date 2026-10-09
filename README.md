@@ -1,7 +1,7 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.5.0** — June 2026
+**Version 0.5.1** — June 2026
 
 A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
@@ -73,10 +73,10 @@ A comprehensive web-based educational revision platform featuring AI-powered fee
 
 1. Copy the example configuration file:
    ```bash
-   cp src/.config.example.json src/.config.json
+   cp public/.config.example.json public/.config.json
    ```
 
-2. Edit `src/.config.json` with your API base URL
+2. Edit `public/.config.json` with your API base URL
 
 3. Install Node.js dependencies:
    ```bash
@@ -174,16 +174,22 @@ All API endpoints are now protected against direct browser access while maintain
 - `deleteClass.php` - Admin: delete unassigned classes from `tblClass`
 - `sendAdminMessage.php` - Admin: send personalised email to selected users
 
-#### 🟡 **BASIC SECURITY (blockDirectAccess)**
-*Blocks casual browsing but allows legitimate API calls*
+#### 🟡 **LOGGED-IN USERS (requireAuth)**
+*Any valid, active account. Ownership is checked where data belongs to a user.*
 
-- `getLogin.php` - User authentication
-- `getSubjects.php` - Subject listings
-- `getTopics.php` - Topic listings
-- `getQuestions.php` - Question data
-- `submitResponse.php` - Student answer submission (supports multimodal with graphics)
-- `geminiAPI.php` - AI assessment (supports multimodal text + image analysis)
-- `InsertUser.php` - User registration
+- `getSubjects.php`, `getTopics.php`, `getQuestions.php` - Question data
+- `submitResponse.php` - Student answer submission (own userId only, admins any)
+- `geminiAPI.php` - AI assessment (spends Gemini quota)
+- `updateResponseWithAI.php` - Attach AI feedback (owner of the response or admin)
+- `getUserResponses.php`, `getStudentRewards.php` - Own data only, admins any
+- `getAdvancedStatistics.php` - `studentProgress` for own id only, all other types admin only
+- `updateUser.php` - Own account only for students (they cannot change `admin`, `userAccess` or email); admins any
+- `sendPasswordChangeNotification.php` - Students may only notify their own address
+
+#### 🟢 **PUBLIC (no token)**
+- `getLogin.php`, `requestPasswordReset.php`, `validateResetToken.php`, `resetPassword.php`
+
+Account creation (`InsertUser.php`) is admin only. Public self-registration is disabled in the UI.
 
 ### Protection Features
 
@@ -206,9 +212,12 @@ All API endpoints are now protected against direct browser access while maintain
 ### Security Implementation
 
 **Simple Security Helper:** `simple_security.php`
-- `blockDirectAccess()` - Basic protection
-- `requireAuth()` - Signed bearer-token validation
-- `requireAdmin()` - Admin-only signed bearer-token validation
+- `blockDirectAccess()` - Basic protection (POST with JSON or multipart only)
+- `requireAuth()` - Signed bearer-token validation against the database (rejects unknown, expired and deactivated users)
+- `requireAdmin()` - Admin-only check, call after `requireAuth()`
+- `requireSelfOrAdmin()` - Caller must own the record or be an admin
+
+**CORS:** `api/cors.php` is the single CORS handler, loaded by `setup.php` and `simple_security.php`. It reflects `localhost` on any port, plus any origin listed in `allowedOrigins` in `api/.config.json`. No wildcard is ever sent. With an empty list, production must be same-origin.
 - `isLegitimateApiCall()` - Validation logic
 
 ### Password and Account-State Notes
@@ -891,3 +900,7 @@ Three independent refactors to reduce duplication and simplify the codebase with
 - 🛡️ **Secure architecture** with protected endpoints
 
 **Your AI Revision Bot is now a comprehensive, secure, and feature-rich educational platform with advanced visual analytics! 🚀📈**
+
+## Licence
+
+Released under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Licence (CC BY-NC-SA 4.0). See [LICENSE.md](LICENSE.md) for a summary and a link to the full text.

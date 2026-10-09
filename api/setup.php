@@ -22,11 +22,9 @@
  * @updated 2025-11-17 - Enhanced documentation and security
  ****************************************************************************/
 
-// Configure CORS headers for cross-origin requests
-header("Access-Control-Allow-Origin: *"); 
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With");
-header("Content-Type: application/json");
+// CORS headers, JSON content type and OPTIONS preflight handling live in one shared file
+require_once __DIR__ . '/cors.php';
+
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
@@ -39,12 +37,6 @@ ini_set('display_startup_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 error_reporting(E_ALL);
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    // Return 200 OK for preflight requests
-    http_response_code(200);
-    exit;
-}
 
 
 // Read connection information from a secure location

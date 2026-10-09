@@ -30,7 +30,8 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 // Block direct browser access to user response data
-requireAuth();
+$authenticatedUser = requireAuth();
+requireSelfOrAdmin($authenticatedUser, $receivedData['userId'] ?? 0);
 
 // Get user responses with AI feedback - simplified JOIN
 $query = "SELECT 

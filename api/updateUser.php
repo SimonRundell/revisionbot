@@ -113,6 +113,20 @@ $query = $passwordChanged
                              avatar=?,
                              userAccess=? WHERE id=?";
 
+// Privilege guard: only admins may change the admin flag, access list or email.
+// Self-service callers keep their stored values for those fields.
+if ((int) ($authenticatedUser['admin'] ?? 0) !== 1) {
+    $storedStmt = $mysqli->prepare('SELECT email, admin, userAccess FROM tbluser WHERE id = ? LIMIT 1');
+    $storedStmt->bind_param('i', $targetUserId);
+    $storedStmt->execute();
+    $storedRow = $storedStmt->get_result()->fetch_assoc();
+    $storedStmt->close();
+
+    $emailLower = strtolower((string) $storedRow['email']);
+    $receivedData['admin'] = (int) $storedRow['admin'];
+    $userAccess = (string) $storedRow['userAccess'];
+}
+
 $stmt = $mysqli->prepare($query);
 
 if (!$stmt) {

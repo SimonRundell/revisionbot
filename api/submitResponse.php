@@ -36,8 +36,9 @@
 require_once 'simple_security.php';
 include 'setup.php';
 
-// Block direct browser access
-blockDirectAccess();
+// Logged-in users only, and only as themselves (admins may submit for anyone)
+$authenticatedUser = requireAuth($mysqli);
+requireSelfOrAdmin($authenticatedUser, $receivedData['userId'] ?? 0);
 
 // Check if user already has a response for this question (for attempt numbering)
 $checkStmt = $mysqli->prepare("SELECT MAX(attempt_number) as max_attempt FROM tblresponse WHERE user_id = ? AND question_id = ?");

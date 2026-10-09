@@ -32,7 +32,12 @@
  * @todo Add requireAuth() for production security
  ****************************************************************************/
 
+require_once 'simple_security.php';
 include 'setup.php';
+
+// Admin only
+requireAuth();
+requireAdmin($mysqli);
 
 // Update response with teacher feedback and rating
 $query = "UPDATE tblresponse 

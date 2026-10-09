@@ -33,6 +33,7 @@ include 'setup.php';
 
 // Block direct browser access to admin update functions
 requireAuth();
+requireAdmin($mysqli);
 
     // Check if ID is provided
     if (!isset($receivedData['id']) || empty($receivedData['id'])) {

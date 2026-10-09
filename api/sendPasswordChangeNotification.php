@@ -8,7 +8,7 @@ include 'setup.php';
 require_once __DIR__ . '/emailHelper.php';
 
 // Block direct browser access
-requireAuth();
+$authenticatedUser = requireAuth();
 
 // Get POST data
 $input = file_get_contents('php://input');
@@ -31,6 +31,11 @@ foreach ($requiredFields as $field) {
 $email = $data['email'];
 $userName = $data['userName'];
 $changedBy = $data['changedBy']; // 'user' or 'administrator'
+
+// Non-admins may only trigger a notification to their own address
+if ((int) ($authenticatedUser['admin'] ?? 0) !== 1 && strcasecmp($email, (string) $authenticatedUser['email']) !== 0) {
+    send_response('You are not allowed to notify that address.', 403);
+}
 
 // Send password change notification
 if (sendPasswordChangeNotification($email, $userName, $changedBy)) {

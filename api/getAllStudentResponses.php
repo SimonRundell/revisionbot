@@ -31,6 +31,7 @@ include 'setup.php';
 
 // Block direct browser access to sensitive response data
 requireAuth();
+requireAdmin($mysqli);
 
 // Admin endpoint to get all student responses
 $query = "SELECT 

@@ -51,6 +51,7 @@ require_once __DIR__ . '/emailHelper.php';
 
 // Block direct browser access to admin bulk functions
 requireAuth();
+requireAdmin($mysqli);
 
 // For file uploads, we need to handle form data differently
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {

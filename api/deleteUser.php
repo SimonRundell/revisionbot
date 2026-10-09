@@ -30,6 +30,7 @@ include 'setup.php';
 
 // Block direct browser access to admin delete functions
 requireAuth();
+requireAdmin($mysqli);
 
 $query = "DELETE FROM tbluser WHERE id = ?";
 $stmt = $mysqli->prepare($query);

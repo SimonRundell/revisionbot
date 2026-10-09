@@ -4,6 +4,7 @@ include 'setup.php';
 
 // Block direct browser access to admin bulk functions
 requireAuth();
+requireAdmin($mysqli);
 
 if (empty($receivedData) && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
     $receivedData = [];

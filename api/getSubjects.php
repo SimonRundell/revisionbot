@@ -6,7 +6,7 @@
  * Used to populate subject selection dropdowns in student and admin interfaces.
  * 
  * Security:
- * - Protected by blockDirectAccess()
+ * - Protected by requireAuth() (any logged-in user)
  * - No sensitive data exposed
  * - Available to all authenticated users
  * 
@@ -21,7 +21,7 @@ require_once 'simple_security.php';
 include 'setup.php';
 
 // Block direct browser access
-blockDirectAccess();
+requireAuth($mysqli);
 
 $query = "SELECT * FROM tblsubject";
 $stmt = $mysqli->prepare($query);

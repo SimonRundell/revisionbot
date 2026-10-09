@@ -107,7 +107,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                             userName: name,
                             changedBy: 'user'
                         }, {
-                            headers: { 'Content-Type': 'application/json' }
+                            headers: createJsonHeaders(currentUser)
                         });
                         console.log('Password change notification sent successfully');
                     } catch (notificationError) {

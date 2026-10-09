@@ -66,7 +66,10 @@ function AdminSubjects({config, currentUser, setSendErrorMessage, setSendSuccess
 useEffect(() => {
     // Fetch subjects from the server when the component mounts
     const apiCall = () => axios.post(config.api + '/getSubjects.php', {}, {
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+        }
     });
 
     handleApiCall(
