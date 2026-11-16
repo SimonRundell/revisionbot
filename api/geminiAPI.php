@@ -144,6 +144,13 @@ requireAuth($mysqli);
      * vs $0.60/M for standard output — approximately 6× more expensive.
      * Gemini 2.5 Flash defaults to thinking ON, so this must be set explicitly.
      */
+    // Gemini 2.5 uses thinkingBudget (0 = off). Gemini 3.x rejects thinkingBudget: 0
+    // with HTTP 400 INVALID_ARGUMENT and uses thinkingLevel instead ("minimal" = lowest).
+    $isLegacyThinking = (bool) preg_match('/models\/gemini-2\./', $url);
+    $thinkingConfig = $isLegacyThinking
+        ? ["thinkingBudget" => 0]
+        : ["thinkingLevel" => "minimal"];
+
     $data = [
         "contents" => [
             [
@@ -151,9 +158,7 @@ requireAuth($mysqli);
             ]
         ],
         "generationConfig" => [
-            "thinkingConfig" => [
-                "thinkingBudget" => 0
-            ]
+            "thinkingConfig" => $thinkingConfig
         ]
     ];
 
@@ -163,14 +168,21 @@ requireAuth($mysqli);
         'http' => [
             'method' => 'POST',
             'header' => 'Content-Type: application/json',
-            'content' => json_encode($data)
+            'content' => json_encode($data),
+            'ignore_errors' => true // keep the response body even on a 4xx/5xx so we can log/surface it
         ]
     ]);
-    
+
+    error_log('geminiAPI request URL: ' . $url . ' | parts: ' . count($parts) . ' | payload bytes: ' . strlen(json_encode($data)));
+
     $response = file_get_contents($url . '?key=' . $apiKey, false, $context);
-    
+
+    // $http_response_header is set by file_get_contents() for http(s) streams
+    $statusLine = $http_response_header[0] ?? 'unknown status';
+    error_log('geminiAPI response status: ' . $statusLine . ' | body: ' . substr((string) $response, 0, 4000));
+
     if ($response === false) {
-        echo json_encode(["error" => "Failed to make API request"]);
+        send_response(["error" => "Failed to make API request"], 502);
     } else {
         // Log raw API response to file only in debug mode.
         // IMPORTANT: response contains full student answers — must not be written
@@ -188,6 +200,7 @@ requireAuth($mysqli);
         } else {
             // Log the full response for debugging
             log_info("Unexpected API Response: " . $response);
+            error_log('geminiAPI unexpected response: ' . $response);
             send_response("Unexpected response format: ". $response, 500);
         }
     }

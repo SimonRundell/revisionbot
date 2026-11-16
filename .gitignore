@@ -39,6 +39,7 @@ config.json
 api/.config.json
 public/.config.json
 api/.config.live.json
+/data/u24*.sql
 
 # Deployment scripts and credentials (contain or reference sensitive data)
 deploy.config.json
