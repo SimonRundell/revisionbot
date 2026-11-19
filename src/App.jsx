@@ -273,14 +273,14 @@ function App() {
     { currentUser && currentUser.force_pw_change !== 1 && (
       <div className="App">
 
-        <div className="app-header">
+        <header className="app-header">
           {/* Logo Section */}
           <div className="app-logo-section">
             <div className="app-title-image">
               <img src="/images/logo_bw_long_2.png" alt="AI Exam Revision Robot" />
             </div>
-            <div className="app-robot">
-              <img src="/images/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
+            <div className="app-robot" aria-hidden="true">
+              <img src="/images/airevisionbot_bw_transparent_background.png" alt="" />
             </div>
           </div>
 
@@ -296,7 +296,7 @@ function App() {
 
             <Menu currentView={currentView} setCurrentView={setCurrentView} currentUser={currentUser} />
           </div>
-        </div>
+        </header>
 
         {showSessionWarning && (
           <div className="session-expiry-banner" role="status" aria-live="polite">
@@ -321,6 +321,7 @@ function App() {
                             showAdminManager={showAdminManager} />
         )}
 
+      <main>
       {currentView === 'quiz' && currentUser.admin === 1 && (
         <AdminSubjects config={config} currentUser={currentUser}
                        setSendErrorMessage={setSendErrorMessage}
@@ -382,10 +383,11 @@ function App() {
           setSendSuccessMessage={setSendSuccessMessage}
         />
       )}
+      </main>
 
       </div>
       )}
-	<CMFloatAd color='#ffffff' bgColor='#242424'/>
+	<CMFloatAd color='var(--color-text-primary)' bgColor='var(--color-ground-elevated)'/>
     </>
   )
 }

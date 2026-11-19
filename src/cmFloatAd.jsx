@@ -2,7 +2,7 @@
  * CMFloatAd
  *
  * Floating branding banner – hover to expand full contact details.
- * Modified for Exeter College by Simon Rundell, Dept of ITDD.
+ * Modified for Exeter College by Simon Rundell, Faculty of Cybersecurity and Digital Technologies.
  *
  * @param {Object} props
  * @param {string} [props.color='#334155']   - Text / icon colour.
@@ -75,7 +75,7 @@ export default function CMFloatAd({ color = '#334155', bgColor = '#f8fafc' }) {
         <img alt="cm-logo" src={CM_LOGO} height="40" width="85" style={{ flexShrink: 0 }} />
         {!isMobile && (
           <span>
-            &nbsp;&nbsp;&copy; {currentYear} Designed and Created by Simon Rundell, Dept of ITDD,
+            &nbsp;&nbsp;&copy; {currentYear} Designed and Created by Simon Rundell, Faculty of Cybersecurity and Digital Technologies,
             Exeter College, Hele Road, Exeter EX4 4JS. | Tel: 01392 400500 | eMail:{' '}
             <a href="mailto:simonrundell@exe-coll.ac.uk" style={{ color, textDecoration: 'none' }}>
               simonrundell@exe-coll.ac.uk
@@ -84,7 +84,7 @@ export default function CMFloatAd({ color = '#334155', bgColor = '#f8fafc' }) {
         )}
         {isMobile && isHovered && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: 'xx-small', lineHeight: '1.2' }}>
-            <span>&copy; {currentYear} Simon Rundell, Dept of ITDD</span>
+            <span>&copy; {currentYear} Simon Rundell, Faculty of Cybersecurity and Digital Technologies</span>
             <span>Exeter College, Hele Road, Exeter EX4 4JS.</span>
             <span>Tel: 01392 400500</span>
             <a href="mailto:simonrundell@exe-coll.ac.uk" style={{ color, textDecoration: 'none' }}>

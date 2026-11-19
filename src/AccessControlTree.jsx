@@ -187,7 +187,7 @@ function AccessControlTree ({
         <div className="access-control-tree">
             <div className="access-control-header">
                 <h4>Subject & Topic Access Control</h4>
-                <p style={{ fontSize: '12px', color: '#666', margin: '5px 0' }}>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '5px 0' }}>
                     Select which subjects and topics Student user can access. Admin users can access everything by default.
                 </p>
             </div>
@@ -196,11 +196,13 @@ function AccessControlTree ({
                 {subjects.map(subject => (
                     <div key={subject.id} className="subject-node">
                         <div className="subject-header">
-                            <button 
+                            <button
                                 className="expand-button"
                                 onClick={() => toggleSubjectExpansion(subject.id)}
+                                aria-expanded={expandedSubjects.has(subject.id)}
+                                aria-label={`${expandedSubjects.has(subject.id) ? 'Collapse' : 'Expand'} ${subject.subject} topics`}
                             >
-                                {expandedSubjects.has(subject.id) ? '▼' : '▶'}
+                                <span aria-hidden="true">{expandedSubjects.has(subject.id) ? '▼' : '▶'}</span>
                             </button>
                             
                             <label className="tree-checkbox-label">

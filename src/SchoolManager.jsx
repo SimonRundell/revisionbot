@@ -194,8 +194,8 @@ function SchoolManager({ config, currentUser, open, setOpen,
                 width={'80%'}
             >
                 {isLoading && (
-                    <div className="central-overlay-spinner">
-                        <div className="spinner-text">&nbsp;&nbsp;<Spin size="large" /> Processing...</div>
+                    <div className="central-overlay-spinner" role="status" aria-live="polite">
+                        <div className="spinner-text"><Spin size="large" /> Processing...</div>
                     </div>
                 )}
 
@@ -208,13 +208,14 @@ function SchoolManager({ config, currentUser, open, setOpen,
                             value={newSchoolName}
                             onChange={(e) => setNewSchoolName(e.target.value)}
                             placeholder="New school name"
+                            aria-label="New school name"
                         />
                         <button onClick={handleCreateSchool} className="leftgap">Add School</button>
                     </div>
 
                     <table border="1" className="admin-user-table topgap">
                         <thead>
-                            <tr><th>School</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th scope="col">School</th><th scope="col">Status</th><th scope="col">Actions</th></tr>
                         </thead>
                         <tbody>
                             {schools.length === 0 && (
@@ -229,6 +230,7 @@ function SchoolManager({ config, currentUser, open, setOpen,
                                                 className="full-width-input"
                                                 value={editingSchoolName}
                                                 onChange={(e) => setEditingSchoolName(e.target.value)}
+                                                aria-label={`School name for ${school.school_name}`}
                                             />
                                         ) : school.school_name}
                                     </td>
@@ -262,13 +264,14 @@ function SchoolManager({ config, currentUser, open, setOpen,
                                     value={newDeptName}
                                     onChange={(e) => setNewDeptName(e.target.value)}
                                     placeholder="New department name"
+                                    aria-label="New department name"
                                 />
                                 <button onClick={handleCreateDepartment} className="leftgap">Add Department</button>
                             </div>
 
                             <table border="1" className="admin-user-table topgap">
                                 <thead>
-                                    <tr><th>Department</th><th>AI key</th><th>Status</th><th>Actions</th></tr>
+                                    <tr><th scope="col">Department</th><th scope="col">AI key</th><th scope="col">Status</th><th scope="col">Actions</th></tr>
                                 </thead>
                                 <tbody>
                                     {departments.length === 0 && (
@@ -299,24 +302,24 @@ function SchoolManager({ config, currentUser, open, setOpen,
             {adminModalDept && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span className="close" onClick={() => setAdminModalDept(null)}>&times;</span>
+                        <button type="button" className="close" onClick={() => setAdminModalDept(null)} aria-label="Close">&times;</button>
                         <h2>Add Admin to {adminModalDept.department_name}</h2>
                         <table border="1" className="edit-modal-table">
                             <tbody>
                                 <tr>
-                                    <td>Name *</td>
-                                    <td><input type="text" className="full-width-input" value={adminForm.name}
+                                    <td><label htmlFor="school-admin-name">Name *</label></td>
+                                    <td><input id="school-admin-name" type="text" className="full-width-input" value={adminForm.name}
                                         onChange={(e) => setAdminForm(p => ({ ...p, name: e.target.value }))} /></td>
                                 </tr>
                                 <tr>
-                                    <td>Email *</td>
-                                    <td><input type="email" className="full-width-input" value={adminForm.email}
+                                    <td><label htmlFor="school-admin-email">Email *</label></td>
+                                    <td><input id="school-admin-email" type="email" className="full-width-input" value={adminForm.email}
                                         onChange={(e) => setAdminForm(p => ({ ...p, email: e.target.value }))} /></td>
                                 </tr>
                                 <tr>
-                                    <td>Password *</td>
-                                    <td><input type="password" className="full-width-input" value={adminForm.password}
-                                        onChange={(e) => setAdminForm(p => ({ ...p, password: e.target.value }))} /></td>
+                                    <td><label htmlFor="school-admin-password">Password *</label></td>
+                                    <td><input id="school-admin-password" type="password" className="full-width-input" value={adminForm.password}
+                                        onChange={(e) => setAdminForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" /></td>
                                 </tr>
                             </tbody>
                         </table>

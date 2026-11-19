@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Spin, Switch } from 'antd';
 import { parseApiResponse } from './utils/apiHelpers';
@@ -46,7 +46,57 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
     const [autoRefreshMs, setAutoRefreshMs] = useState(30000);
     const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
-    
+    const reviewModalRef = useRef(null);
+    const lastFocusedElementRef = useRef(null);
+
+    /**
+     * Focus management for the response review modal — same pattern used in
+     * StudentInterface.jsx/PastAnswersViewer.jsx (focus on open, Tab trap,
+     * Escape to close, restore focus to the triggering row on close).
+     */
+    useEffect(() => {
+        if (!selectedResponse) {
+            return;
+        }
+
+        const modalNode = reviewModalRef.current;
+        modalNode?.focus();
+
+        const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setSelectedResponse(null);
+                return;
+            }
+            if (event.key !== 'Tab' || !modalNode) {
+                return;
+            }
+
+            const focusable = Array.from(modalNode.querySelectorAll(focusableSelector));
+            if (focusable.length === 0) {
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            lastFocusedElementRef.current?.focus?.();
+        };
+    }, [selectedResponse]);
+
     // Get unique values for filter dropdowns
     const uniqueStudents = [...new Set(allResponses.map(r => r.studentName))].sort();
     const uniqueSubjects = [...new Set(allResponses.map(r => r.subjectName))].sort();
@@ -181,6 +231,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
      * @param {Object} response - The student response object containing answer, AI feedback, and existing teacher feedback
      */
     const handleResponseClick = (response) => {
+        lastFocusedElementRef.current = document.activeElement;
         setSelectedResponse(response);
         setTeacherFeedback({
             comment: response.teacherComment || '',
@@ -257,10 +308,10 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
     const getRatingColor = (rating) => {
         switch(rating) {
-            case 'R': return '#dc3545';
-            case 'A': return '#ffc107';
-            case 'G': return '#28a745';
-            default: return '#6c757d';
+            case 'R': return 'var(--color-danger)';
+            case 'A': return 'var(--color-warning)';
+            case 'G': return 'var(--color-success)';
+            default: return 'var(--color-text-muted)';
         }
     };
 
@@ -338,11 +389,11 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
     return (
         <>
-            {isLoading && <div className="central-overlay-spinner">            
-                <div className="spinner-text">&nbsp;&nbsp;
+            {isLoading && <div className="central-overlay-spinner" role="status" aria-live="polite">
+                <div className="spinner-text">
                     <Spin size="large" />
                     Loading student responses...
-                </div> 
+                </div>
             </div>}
 
             <div className="admin-dashboard">
@@ -388,7 +439,19 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                 </div>
 
                 <div className="dashboard-filters">
-                    <div className="filters-header" onClick={() => setFiltersOpen(o => !o)}>
+                    <div
+                        className="filters-header"
+                        onClick={() => setFiltersOpen(o => !o)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                setFiltersOpen(o => !o);
+                            }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={filtersOpen}
+                    >
                         <span className="filters-header-title">Filters</span>
                         {!filtersOpen && (() => {
                             const parts = [];
@@ -403,7 +466,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                 ? <span className="filters-active-summary">{parts.join(' · ')}</span>
                                 : null;
                         })()}
-                        <span className={`filters-toggle-arrow${filtersOpen ? ' open' : ''}`}>▼</span>
+                        <span className={`filters-toggle-arrow${filtersOpen ? ' open' : ''}`} aria-hidden="true">▼</span>
                     </div>
                     <div className={`filters-body${filtersOpen ? ' open' : ''}`}>
                     <table className="filter-table">
@@ -528,10 +591,19 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                         </div>
                     ) : (
                         filteredResponses.map(response => (
-                            <div 
-                                key={response.responseId} 
+                            <div
+                                key={response.responseId}
                                 className="admin-response-item"
                                 onClick={() => handleResponseClick(response)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        handleResponseClick(response);
+                                    }
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Review response from ${response.studentName}: ${response.subjectName} > ${response.topicName}`}
                             >
                                 <div className="response-student">
                                     <div className="student-name">{response.studentName}</div>
@@ -554,9 +626,10 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                             <span className="attempt-badge"> • Attempt #{response.attemptNumber}</span>
                                         )}
                                         {response.teacherRating && (
-                                            <span 
-                                                className="teacher-rating-badge" 
+                                            <span
+                                                className="teacher-rating-badge"
                                                 style={{backgroundColor: getRatingColor(response.teacherRating)}}
+                                                aria-label={`Teacher rating: ${getRatingText(response.teacherRating)}`}
                                             >
                                                 {response.teacherRating}
                                             </span>
@@ -566,7 +639,7 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                         )}
                                     </div>
                                 </div>
-                                <div className="response-arrow">→</div>
+                                <div className="response-arrow" aria-hidden="true">→</div>
                             </div>
                         ))
                     )}
@@ -574,13 +647,14 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
 
                 {/* Response Review Modal */}
                 {selectedResponse && (
-                    <div className="answer-modal">
-                        <div className="answer-modal-content">
+                    <div className="answer-modal" role="dialog" aria-modal="true" aria-labelledby="response-review-title">
+                        <div className="answer-modal-content" ref={reviewModalRef} tabIndex={-1}>
                             <div className="answer-modal-header">
-                                <h2>Student Response Review</h2>
-                                <button 
+                                <h2 id="response-review-title">Student Response Review</h2>
+                                <button
                                     className="close-modal"
                                     onClick={() => setSelectedResponse(null)}
+                                    aria-label="Close"
                                 >
                                     ×
                                 </button>
@@ -665,9 +739,9 @@ function AdminDashboard ({ config, currentUser, setSendErrorMessage, setSendSucc
                                                 className="rating-select"
                                             >
                                                 <option value="">Select Rating</option>
-                                                <option value="R" style={{color: '#dc3545'}}>🔴 Red - Needs Improvement</option>
-                                                <option value="A" style={{color: '#ffc107'}}>🟡 Amber - Good Progress</option>
-                                                <option value="G" style={{color: '#28a745'}}>🟢 Green - Excellent</option>
+                                                <option value="R" style={{color: 'var(--color-danger)'}}>🔴 Red - Needs Improvement</option>
+                                                <option value="A" style={{color: 'var(--color-warning)'}}>🟡 Amber - Good Progress</option>
+                                                <option value="G" style={{color: 'var(--color-success)'}}>🟢 Green - Excellent</option>
                                             </select>
                                             {teacherFeedback.rating && (
                                                 <div className="current-rating" style={{color: getRatingColor(teacherFeedback.rating)}}>

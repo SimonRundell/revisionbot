@@ -100,13 +100,15 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
   
   return (
     <>
-      {isLoading && <div className="central-overlay-spinner">            
-          <div className="spinner-text">&nbsp;&nbsp;
+      <h1 className="sr-only">AI Revision Bot — Sign In</h1>
+
+      {isLoading && <div className="central-overlay-spinner" role="status" aria-live="polite">
+          <div className="spinner-text">
               <Spin size="large" />
               Logging in...
-            </div> 
+            </div>
           </div>}
-    
+
       {showForgotPassword ? (
         <ForgotPassword
           config={config}
@@ -125,32 +127,36 @@ const Login = ({ config, setCurrentUser, setSendSuccessMessage, setSendErrorMess
           </div>
           
           <div className="login-container">
-            {/* Robot image positioned over the login box */}
-            <div className="login-robot">
-              <img src="/images/airevisionbot_bw_transparent_background.png" alt="AI Robot" />
+            {/* Robot image positioned over the login box — decorative, the title image above already conveys the brand name */}
+            <div className="login-robot" aria-hidden="true">
+              <img src="/images/airevisionbot_bw_transparent_background.png" alt="" />
             </div>
-            
+
             <div className="login-header">
             </div>
             <div className="login-form">
               <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>eMail</label>
+                <label htmlFor="login-email">eMail</label>
                 <input
+                  id="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
+                  autoComplete="username"
                 />
               </div>
               <div className='form-group'>
-                <label>Password</label>
+                <label htmlFor="login-password">Password</label>
                 <div className="password-field">
                   <input
+                    id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"

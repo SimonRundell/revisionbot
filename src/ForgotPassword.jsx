@@ -47,8 +47,8 @@ function ForgotPassword({ config, onBack, setSendSuccessMessage, setSendErrorMes
 
     return (
         <div className="auth-shell">
-            {isLoading && <div className="central-overlay-spinner">
-                <div className="spinner-text">&nbsp;&nbsp;
+            {isLoading && <div className="central-overlay-spinner" role="status" aria-live="polite">
+                <div className="spinner-text">
                     <Spin size="large" />
                     Sending reset link...
                 </div>
@@ -62,12 +62,14 @@ function ForgotPassword({ config, onBack, setSendSuccessMessage, setSendErrorMes
 
                 <form onSubmit={handleSubmit} className="auth-form-stack">
                     <div className="form-group">
-                        <label>Email</label>
+                        <label htmlFor="forgot-password-email">Email</label>
                         <input
+                            id="forgot-password-email"
                             type="email"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                             placeholder="Email"
+                            autoComplete="username"
                             required
                         />
                     </div>

@@ -103,15 +103,15 @@ function ResetPassword({ config, setSendSuccessMessage, setSendErrorMessage }) {
 
     return (
         <div className="auth-shell">
-            {(isLoading || isSubmitting) && <div className="central-overlay-spinner">
-                <div className="spinner-text">&nbsp;&nbsp;
+            {(isLoading || isSubmitting) && <div className="central-overlay-spinner" role="status" aria-live="polite">
+                <div className="spinner-text">
                     <Spin size="large" />
                     {isLoading ? 'Validating link...' : 'Updating password...'}
                 </div>
             </div>}
 
             <div className="auth-card">
-                <h2>Set New Password</h2>
+                <h1>Set New Password</h1>
 
                 {!isLoading && tokenValid ? (
                     <>
@@ -121,23 +121,27 @@ function ResetPassword({ config, setSendSuccessMessage, setSendErrorMessage }) {
 
                         <form onSubmit={handleSubmit} className="auth-form-stack">
                             <div className="form-group">
-                                <label>New Password</label>
+                                <label htmlFor="reset-password-new">New Password</label>
                                 <input
+                                    id="reset-password-new"
                                     type="password"
                                     value={password}
                                     onChange={(event) => setPassword(event.target.value)}
                                     placeholder="Minimum 8 characters"
+                                    autoComplete="new-password"
                                     required
                                 />
                             </div>
 
                             <div className="form-group">
-                                <label>Confirm Password</label>
+                                <label htmlFor="reset-password-confirm">Confirm Password</label>
                                 <input
+                                    id="reset-password-confirm"
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(event) => setConfirmPassword(event.target.value)}
                                     placeholder="Repeat your new password"
+                                    autoComplete="new-password"
                                     required
                                 />
                             </div>

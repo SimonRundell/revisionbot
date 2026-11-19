@@ -140,8 +140,8 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
 
     return (
 <>
-        {isLoading && <div className="central-overlay-spinner">
-                <div className="spinner-text">&nbsp;&nbsp;
+        {isLoading && <div className="central-overlay-spinner" role="status" aria-live="polite">
+                <div className="spinner-text">
                     <Spin size="large" />
                     Processing...
                 </div>
@@ -156,7 +156,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                 <tbody>
                     {currentUser.admin !== 1 && highestBadges.length > 0 && (
                         <tr>
-                            <td>Achievements</td>
+                            <th scope="row">Achievements</th>
                             <td>
                                 <div className="account-badge-strip">
                                     {highestBadges.map((badge) => (
@@ -173,31 +173,31 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                         </tr>
                     )}
                     <tr>
-                        <td>Name</td>
-                        <td><input type="text" value={name} onChange={e => setName(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student profile name cannot be changed" : ""} /></td>
+                        <td><label htmlFor="account-name">Name</label></td>
+                        <td><input id="account-name" type="text" value={name} onChange={e => setName(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student profile name cannot be changed" : ""} /></td>
                     </tr>
                     <tr>
-                        <td>Email/Login</td>
-                        <td><input type="text" value={eMail} onChange={e => setEmail(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student email cannot be changed" : ""} /></td>
+                        <td><label htmlFor="account-email">Email/Login</label></td>
+                        <td><input id="account-email" type="text" value={eMail} onChange={e => setEmail(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student email cannot be changed" : ""} /></td>
                     </tr>
                     <tr>
-                        <td>New Password</td>
-                        <td><input type="password" value={password} onChange={e => setPassword(e.target.value)} /></td>
+                        <td><label htmlFor="account-password">New Password</label></td>
+                        <td><input id="account-password" type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" /></td>
                     </tr>
                     <tr>
-                        <td>Department</td>
-                        <td><input type="text" value={department} onChange={e => setDepartment(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student department cannot be changed" : ""} /></td>
+                        <td><label htmlFor="account-department">Department</label></td>
+                        <td><input id="account-department" type="text" value={department} onChange={e => setDepartment(e.target.value)} disabled={admin === 0} title={admin === 0 ? "Student department cannot be changed" : ""} /></td>
                     </tr>
                     <tr>
-                        <td>Locale</td>
-                        <td><SelectLocale config={config} userLocale={locale} setUserLocale={setLocale} 
+                        <td><span id="account-locale-label">Locale</span></td>
+                        <td><SelectLocale config={config} userLocale={locale} setUserLocale={setLocale}
                             setSendErrorMessage={setSendErrorMessage}
                             setSendSuccessMessage={setSendSuccessMessage}/></td>
                     </tr>
                     <tr>
-                        <td>Avatar</td>
+                        <td><span id="account-avatar-label">Avatar</span></td>
                         <td>
-                            <AvatarManager 
+                            <AvatarManager
                                 currentAvatar={avatar}
                                 onAvatarChange={handleAvatarChange}
                                 setSendErrorMessage={setSendErrorMessage}
@@ -208,7 +208,7 @@ function AccountManager({config, currentUser, setCurrentUser, setSendSuccessMess
                     <tr>
                         <td colSpan={2}>
                             <button onClick={updateAccount}>Update Account</button>
-                            &nbsp;&nbsp;
+                            {' '}
                             <button onClick={onClose}>Close</button>
                         </td>
                     </tr>

@@ -80,38 +80,42 @@ function ForcePasswordChange({
 
     return (
         <div className="auth-shell force-change-shell">
-            {isLoading && <div className="central-overlay-spinner">
-                <div className="spinner-text">&nbsp;&nbsp;
+            {isLoading && <div className="central-overlay-spinner" role="status" aria-live="polite">
+                <div className="spinner-text">
                     <Spin size="large" />
                     Updating password...
                 </div>
             </div>}
 
             <div className="auth-card">
-                <h2>Password Change Required</h2>
+                <h1>Password Change Required</h1>
                 <p className="auth-copy">
                     Your account has been marked to require a new password before you can continue.
                 </p>
 
                 <form onSubmit={handleSubmit} className="auth-form-stack">
                     <div className="form-group">
-                        <label>New Password</label>
+                        <label htmlFor="force-pw-new">New Password</label>
                         <input
+                            id="force-pw-new"
                             type="password"
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
                             placeholder="Minimum 8 characters"
+                            autoComplete="new-password"
                             required
                         />
                     </div>
 
                     <div className="form-group">
-                        <label>Confirm Password</label>
+                        <label htmlFor="force-pw-confirm">Confirm Password</label>
                         <input
+                            id="force-pw-confirm"
                             type="password"
                             value={confirmPassword}
                             onChange={(event) => setConfirmPassword(event.target.value)}
                             placeholder="Repeat your new password"
+                            autoComplete="new-password"
                             required
                         />
                     </div>

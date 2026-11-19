@@ -13,11 +13,12 @@
 
 function Menu({ currentView, setCurrentView, currentUser }) {
     return (
-        <div className="menu">
+        <nav className="menu" aria-label="Main">
             {currentUser?.admin === 1 && (
                 <button
                     onClick={() => setCurrentView('quiz')}
                     className={currentView === 'quiz' ? 'active' : ''}
+                    aria-current={currentView === 'quiz' ? 'page' : undefined}
                 >
                     Quiz Builder
                 </button>
@@ -25,6 +26,7 @@ function Menu({ currentView, setCurrentView, currentUser }) {
             <button
                 onClick={() => setCurrentView('student')}
                 className={currentView === 'student' ? 'active' : ''}
+                aria-current={currentView === 'student' ? 'page' : undefined}
             >
                 Questions
             </button>
@@ -32,6 +34,7 @@ function Menu({ currentView, setCurrentView, currentUser }) {
                 <button
                     onClick={() => setCurrentView('progress')}
                     className={currentView === 'progress' ? 'active' : ''}
+                    aria-current={currentView === 'progress' ? 'page' : undefined}
                 >
                     My Progress
                 </button>
@@ -39,6 +42,7 @@ function Menu({ currentView, setCurrentView, currentUser }) {
             <button
                 onClick={() => setCurrentView('dashboard')}
                 className={currentView === 'dashboard' ? 'active' : ''}
+                aria-current={currentView === 'dashboard' ? 'page' : undefined}
             >
                 Dashboard
             </button>
@@ -46,11 +50,12 @@ function Menu({ currentView, setCurrentView, currentUser }) {
                 <button
                     onClick={() => setCurrentView('analytics')}
                     className={currentView === 'analytics' ? 'active' : ''}
+                    aria-current={currentView === 'analytics' ? 'page' : undefined}
                 >
                     Analytics
                 </button>
             )}
-        </div>
+        </nav>
     )
 }
 

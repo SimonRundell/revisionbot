@@ -1,0 +1,127 @@
+/****************************************************************
+ * tokens.css
+ * Single source of truth for the steampunk design system:
+ * color, type, spacing, radius, elevation and motion tokens.
+ *
+ * Every text/background color pairing below has been checked
+ * against the WCAG 2.1 contrast formula before being added here.
+ * Ratios are noted inline. Pairings not listed here must be
+ * verified individually before use (see graphicdesign.md Phase 7).
+ * This file is dark-theme-only by design decision (no light-mode
+ * token set) — see graphicdesign.md §8.
+ ****************************************************************/
+
+:root {
+  color-scheme: dark;
+
+  /* ---- Grounds (base surfaces) ---- */
+  --color-ground-sunken: #0d0a07;   /* page background, behind panels */
+  --color-ground-primary: #15110d;  /* default app background */
+  --color-ground-elevated: #211a14; /* cards, panels, menu bar */
+  --color-ground-raised: #2a2117;   /* modals, dropdowns, popovers */
+
+  /* ---- Brass (primary metal) ---- */
+  --color-brass-100: #f6e7c1;
+  --color-brass-300: #e8c877; /* on ground-primary: 11.6:1 */
+  --color-brass-500: #c99a3b; /* primary accent / button face */
+  --color-brass-600: #a97c2c;
+  --color-brass-700: #8a6424; /* border on parchment: 4.4:1 (UI component use) */
+
+  /* ---- Copper (secondary metal) ---- */
+  --color-copper-300: #e8a06a;
+  --color-copper-500: #c1702f;
+  --color-copper-700: #93531f;
+
+  /* ---- Verdigris (secondary accent: links, secondary actions) ---- */
+  --color-verdigris-300: #8fd9c4;
+  --color-verdigris-500: #4fae93;
+  --color-verdigris-700: #2f6f5e;
+
+  /* ---- Parchment (paper surfaces: cards that hold body copy) ---- */
+  --color-surface-paper: #f3e9d2;
+  --color-surface-paper-elevated: #ece0c4;
+
+  /* ---- Text ---- */
+  --color-text-primary: #f3e9d2;      /* on ground-primary: 15.6:1 */
+  --color-text-muted: #a89a7c;        /* on ground-primary: 6.8:1 */
+  --color-text-inverse: #15110d;      /* on brass-500: 7.3:1; use for text on light/brass fills */
+  --color-text-on-paper: #2a2117;     /* on surface-paper: 13.1:1 */
+  --color-text-on-paper-muted: #5c4f3d; /* on surface-paper: 6.6:1 */
+
+  /* ---- Status (always paired with icon/text label, never color alone) ---- */
+  --color-success: #4caf87; /* on ground-primary: 7.0:1 */
+  --color-warning: #d9a441; /* on ground-primary: 8.4:1 */
+  --color-danger: #e0636f;  /* on ground-primary: 5.5:1 */
+  --color-info: #7fb0d0;    /* on ground-primary: 8.1:1 */
+
+  /* ---- Focus (never color alone; pick the variant that matches the surface behind it) ---- */
+  --color-focus-ring: #ffd27a;          /* for controls on dark grounds: 13.2:1 vs ground-primary */
+  --color-focus-ring-on-paper: #5b3a1a; /* for controls on parchment surfaces: 8.4:1 vs surface-paper */
+
+  /* ---- Typography ---- */
+  --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --font-body: 'Spectral', Georgia, 'Times New Roman', serif;
+
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px — minimum body size */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.375rem;   /* 22px */
+  --text-2xl: 1.75rem;   /* 28px */
+  --text-3xl: 2.5rem;    /* 40px */
+  --text-display: 3.5rem;/* 56px — brand lockup only */
+
+  --line-height-tight: 1.2;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.7;
+
+  /* ---- Spacing (4px base unit) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* ---- Radius ---- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* ---- Borders ---- */
+  --border-width-thin: 1px;
+  --border-width-base: 2px;
+  --border-width-thick: 3px;
+
+  /* ---- Elevation (warm shadows, not default Material gray) ---- */
+  --shadow-sm: 0 2px 4px rgba(10, 6, 2, 0.4);
+  --shadow-md: 0 6px 16px rgba(10, 6, 2, 0.45);
+  --shadow-lg: 0 20px 50px rgba(5, 3, 1, 0.5);
+  --shadow-inset-pressed: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-emboss:
+    0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+
+  /* ---- Motion ---- */
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-slow: 420ms;
+  --easing-mechanical: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Respect user motion preference everywhere — required by WCAG 2.1 AA (2.3.3 / plan §3.6) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

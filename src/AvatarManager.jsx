@@ -77,20 +77,33 @@ function AvatarManager  ({ currentAvatar, onAvatarChange, setSendErrorMessage, s
   return (
     <div className="avatar-manager">
       <div className="avatar-container">
-        <img 
-          className={className}
-          src={avatarPreview} 
-          alt="Avatar" 
-          style={{ 
-            width: `${size}px`, 
-            height: `${size}px`, 
-            borderRadius: '50%', 
-            objectFit: 'cover',
-            cursor: 'pointer',
-            border: '2px solid #ddd'
-          }}
+        <button
+          type="button"
           onClick={openLightbox}
-        />
+          aria-label="View avatar in full size"
+          style={{
+            padding: 0,
+            border: 'none',
+            background: 'none',
+            boxShadow: 'none',
+            borderRadius: '50%',
+            minHeight: 0,
+            cursor: 'pointer',
+          }}
+        >
+          <img
+            className={className}
+            src={avatarPreview}
+            alt=""
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid var(--color-brass-700)'
+            }}
+          />
+        </button>
         <div className="avatar-controls">
           <div className="file-input-wrapper" style={{ marginBottom: '5px' }}>
             <input 
@@ -123,7 +136,7 @@ function AvatarManager  ({ currentAvatar, onAvatarChange, setSendErrorMessage, s
           <button key="close" onClick={() => setIsModalOpen(false)}>
             Close
           </button>,
-          <button key="reset" onClick={resetAvatar} style={{ marginLeft: '8px', backgroundColor: '#dc3545', color: 'white' }}>
+          <button key="reset" onClick={resetAvatar} style={{ marginLeft: '8px', backgroundColor: 'var(--color-danger)', color: 'var(--color-text-inverse)' }}>
             Reset to Default
           </button>
         ]}
@@ -140,7 +153,7 @@ function AvatarManager  ({ currentAvatar, onAvatarChange, setSendErrorMessage, s
               objectFit: 'cover'
             }}
           />
-          <div style={{ marginTop: '15px', color: '#666', fontSize: '14px' }}>
+          <div style={{ marginTop: '15px', color: 'var(--color-text-muted)', fontSize: '14px' }}>
             Click the avatar image to view in full size
           </div>
         </div>

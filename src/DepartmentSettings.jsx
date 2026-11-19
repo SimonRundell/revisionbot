@@ -109,8 +109,8 @@ function DepartmentSettings({ config, currentUser, open, setOpen,
             width={520}
         >
             {isLoading && (
-                <div className="central-overlay-spinner">
-                    <div className="spinner-text">&nbsp;&nbsp;<Spin size="large" /> Processing...</div>
+                <div className="central-overlay-spinner" role="status" aria-live="polite">
+                    <div className="spinner-text"><Spin size="large" /> Processing...</div>
                 </div>
             )}
 
@@ -119,15 +119,15 @@ function DepartmentSettings({ config, currentUser, open, setOpen,
                     <table border="1" className="edit-modal-table">
                         <tbody>
                             <tr>
-                                <td>School</td>
+                                <th scope="row">School</th>
                                 <td>{department.school_name}</td>
                             </tr>
                             <tr>
-                                <td>Department</td>
+                                <th scope="row">Department</th>
                                 <td>{department.department_name}</td>
                             </tr>
                             <tr>
-                                <td>AI key status</td>
+                                <th scope="row">AI key status</th>
                                 <td>
                                     {department.hasGeminiKey
                                         ? `Configured (ending ••••${department.gemini_key_last4 ?? ''})`
@@ -149,6 +149,7 @@ function DepartmentSettings({ config, currentUser, open, setOpen,
                             value={keyInput}
                             onChange={(e) => setKeyInput(e.target.value)}
                             placeholder="Paste your Gemini API key"
+                            aria-label="Gemini API key"
                             autoComplete="off"
                         />
                         <div className="form-group-button">

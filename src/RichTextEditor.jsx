@@ -15,6 +15,7 @@ function ToolbarButton({ editor, onClick, label, iconClass, isActive, disabled =
       onClick={onClick}
       disabled={disabled || !editor}
       aria-label={label}
+      aria-pressed={typeof isActive === 'boolean' ? isActive : undefined}
       title={label}
     >
       <i className={iconClass} aria-hidden="true" />
@@ -191,7 +192,7 @@ function RichTextEditor({ value, onChange, placeholder, minHeight = 180, theme =
           disabled={!editor?.can().chain().focus().redo().run()}
         />
       </div>
-      {blockedMsg && <div className="rich-text-blocked-msg">{blockedMsg}</div>}
+      {blockedMsg && <div className="rich-text-blocked-msg" role="alert">{blockedMsg}</div>}
       <EditorContent editor={editor} />
     </div>
   );

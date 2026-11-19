@@ -131,38 +131,46 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
 
             <div className="login-container">
 
+                <h2 className="login-header">Register</h2>
                 <div className="login-form">
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label>eMail</label>
+                            <label htmlFor="register-email">eMail</label>
                             <input
+                                id="register-email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Email"
+                                autoComplete="email"
                             />
                         </div>
                         <div className='form-group'>
-                            <label>Password</label>
+                            <label htmlFor="register-password">Password</label>
                             <input
+                                id="register-password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
+                                autoComplete="new-password"
                             />
                         </div>
                         <div className='form-group'>
-                            <label>Full Name</label>
+                            <label htmlFor="register-fullname">Full Name</label>
                             <input
+                                id="register-fullname"
                                 type="text"
                                 value={userName}
                                 onChange={(e) => setUserName(e.target.value)}
                                 placeholder="Full Name"
+                                autoComplete="name"
                             />
                         </div>
                         <div className='form-group'>
-                            <label>Class</label>
+                            <label htmlFor="register-class">Class</label>
                             <input
+                                id="register-class"
                                 type="text"
                                 value={userClass}
                                 onChange={(e) => setUserClass(e.target.value)}
@@ -170,7 +178,7 @@ function Register({ config, setShowRegister, setSendErrorMessage, setSendSuccess
                             />
                         </div>
                         <div className='form-group'>
-                            <label>Locale</label>
+                            <label id="register-locale-label">Locale</label>
                             <SelectLocale config={config} userLocale={userLocale} setUserLocale={setUserLocale} setSendErrorMessage={setSendErrorMessage} setSendSuccessMessage={setSendSuccessMessage} />
                         </div>
                         <div className='form-group-button'>

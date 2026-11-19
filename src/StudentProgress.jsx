@@ -46,7 +46,8 @@ function RagSummary({ stats }) {
     <div className="rag-summary-card">
       <h3 className="rag-summary-title">Overall RAG Rating</h3>
 
-      <div className="rag-summary-bar">
+      {/* Decorative — the legend below states the same label/count/percent as text */}
+      <div className="rag-summary-bar" aria-hidden="true">
         {segments.map(({ label, pct, colour }) =>
           pct > 0 ? (
             <div
@@ -135,8 +136,9 @@ function StudentProgressChart({ data }) {
     return Array.from(weekMap.values()).sort((a, b) => a.week.localeCompare(b.week));
   }, [data]);
 
+  const weekly = buildWeeklyCounts();
+
   useEffect(() => {
-    const weekly = buildWeeklyCounts();
     if (weekly.length === 0) return;
 
     const canvas = canvasRef.current;
@@ -229,7 +231,35 @@ function StudentProgressChart({ data }) {
 
   return (
     <div className="progress-chart-container">
-      <canvas ref={canvasRef} style={{ display: 'block', margin: '0 auto' }} />
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label="Weekly RAG distribution bar chart. The data behind it is in the table below."
+        style={{ display: 'block', margin: '0 auto' }}
+      />
+      {weekly.length > 0 && (
+        <table className="sr-only">
+          <caption>Weekly RAG distribution — number of red, amber and green rated responses per week</caption>
+          <thead>
+            <tr>
+              <th scope="col">Week</th>
+              <th scope="col">Red</th>
+              <th scope="col">Amber</th>
+              <th scope="col">Green</th>
+            </tr>
+          </thead>
+          <tbody>
+            {weekly.map((row) => (
+              <tr key={row.week}>
+                <th scope="row">{row.week}</th>
+                <td>{row.red}</td>
+                <td>{row.amber}</td>
+                <td>{row.green}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <div className="chart-legend">
         <div className="legend-items">
           <span className="legend-item"><span style={{ color: '#ff4d4f', fontSize: '16px', fontWeight: 'bold' }}>■</span> Red</span>
@@ -347,8 +377,9 @@ function StudentProgress({ userId, config, currentUser, setSendErrorMessage }) {
       </div>
 
       {isLoading && (
-        <div className="past-answers-loading">
+        <div className="past-answers-loading" role="status" aria-live="polite">
           <Spin size="large" />
+          <span className="sr-only">Loading progress…</span>
         </div>
       )}
 

@@ -3,14 +3,15 @@
  * Styles for the main application layout and components.
 *****************************************************************/
 
+@import './styles/tokens.css';
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: var(--font-body);
+  line-height: var(--line-height-base);
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--color-text-primary);
+  background-color: var(--color-ground-primary);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,15 +19,33 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: var(--line-height-tight);
+  font-weight: 700;
+  color: var(--color-brass-300);
+  margin: 0 0 var(--space-4) 0;
+}
+
+h1 { font-size: var(--text-display); }
+h2 { font-size: var(--text-3xl); }
+h3 { font-size: var(--text-2xl); }
+h4, h5, h6 {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+}
+
 a {
-  font-weight: 300;
-  color: #a7a7aa;
-  text-decoration: none;
+  font-weight: 500;
+  color: var(--color-verdigris-300);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 a:hover {
-  color: red;
-  font-weight:bold;
+  color: var(--color-brass-300);
 }
 
 body {
@@ -35,68 +54,158 @@ body {
   place-items: top;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-ground-sunken);
+}
+
+/* Visually hide content while keeping it in the accessibility tree —
+   use for page-identifying headings that don't need a visible title. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  border: var(--border-width-base) solid var(--color-brass-700);
   padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  color: white;
+  font-size: var(--text-base);
+  font-weight: 600;
+  font-family: var(--font-body);
+  background: linear-gradient(180deg, var(--color-brass-300) 0%, var(--color-brass-500) 55%, var(--color-brass-600) 100%);
+  color: var(--color-text-inverse);
   cursor: pointer;
-  transition: border-color 0.25s;
+  box-shadow: var(--shadow-emboss), var(--shadow-sm);
+  transition: transform var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard);
+  min-height: 44px;
 }
 
 button:hover {
-  border-color: #646cff;
+  background: linear-gradient(180deg, var(--color-brass-100) 0%, var(--color-brass-300) 55%, var(--color-brass-500) 100%);
+  transform: translateY(-1px);
 }
 
-button:focus,
+button:active {
+  box-shadow: var(--shadow-inset-pressed);
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+  transform: none;
+}
+
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Explicit primary/secondary button variants. Styled as complete, standalone
+   boxes (not just color overrides on the bare `button` selector) because
+   both classes are also used on <a download> attachment links elsewhere —
+   an anchor doesn't inherit the `button {}` base rule's box styling. */
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.6em 1.2em;
+  border-radius: var(--radius-md);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--color-brass-300) 0%, var(--color-brass-500) 55%, var(--color-brass-600) 100%);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-emboss), var(--shadow-sm);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text-primary);
+  box-shadow: none;
+}
+
+.btn-secondary:hover {
+  background: rgba(201, 154, 59, 0.12);
 }
 
 input, select, textarea {
   font: inherit;
-  font-size: 1em;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
   padding: 0.6em 0.8em;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: #ffffff;
-  color: #000000;
+  border-radius: var(--radius-md);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  background-color: var(--color-surface-paper);
+  color: var(--color-text-on-paper);
   box-sizing: border-box;
   width: 100%;
+  min-height: 44px;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-on-paper-muted);
+}
+
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--color-focus-ring-on-paper);
+  outline-offset: 1px;
 }
 
 /* Steampunk Menu Styles */
 .menu {
   display: flex;
   flex-direction: row; /* Horizontal layout */
-  gap: 3px;
+  gap: var(--space-2);
   align-items: center;
   flex-wrap: nowrap;
 }
 
 .menu button {
   position: relative;
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  font-weight: 500;
-  font-size: 13px;
+  background: rgba(21, 17, 13, 0.35);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  color: var(--color-brass-100);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
   padding: 10px 16px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-  backdrop-filter: blur(5px);
-  position: relative;
+  transition: background var(--duration-base) var(--easing-standard),
+    border-color var(--duration-base) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-mechanical);
   overflow: hidden;
   min-width: 120px;
+  min-height: 44px;
   text-align: center;
 }
 
@@ -107,30 +216,44 @@ input, select, textarea {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s;
+  background: linear-gradient(90deg, transparent, rgba(232, 200, 119, 0.18), transparent);
+  transition: left var(--duration-slow) var(--easing-standard);
 }
 
 .menu button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(201, 154, 59, 0.22);
+  border-color: var(--color-brass-500);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .menu button:hover::before {
   left: 100%;
 }
 
+.menu button:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Active/current nav item — marked by fill + border + a leading gear glyph,
+   never by color alone (WCAG 2.1 AA 1.4.1). aria-current is set in menu.jsx. */
 .menu button.active {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.8);
-  color: #ffffff;
-  font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-  box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.1),
-    0 0 10px rgba(255, 255, 255, 0.2);
+  background: var(--color-brass-500);
+  border-color: var(--color-brass-300);
+  color: var(--color-text-inverse);
+  font-weight: 700;
+  box-shadow: var(--shadow-inset-pressed);
+}
+
+.menu button.active::before {
+  content: '\2699';  /* gear glyph */
+  position: static;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  background: none;
+  margin-right: 6px;
+  font-size: var(--text-sm);
 }
 
 .menu button.active::after {
@@ -139,8 +262,8 @@ input, select, textarea {
   bottom: -2px;
   left: 0;
   right: 0;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.8);
+  height: var(--border-width-thick);
+  background: var(--color-brass-300);
 }
 
 /******************************************* 
@@ -168,14 +291,19 @@ input, select, textarea {
 .auth-card {
   width: min(480px, 92vw);
   padding: 28px;
-  border-radius: 18px;
-  background: rgba(18, 18, 18, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  border-radius: var(--radius-lg);
+  background: var(--color-ground-raised);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-card h1,
+.auth-card h2 {
+  font-size: var(--text-2xl);
 }
 
 .auth-copy {
-  color: rgba(255, 255, 255, 0.74);
+  color: var(--color-text-muted);
   margin-bottom: 18px;
 }
 
@@ -192,7 +320,8 @@ input, select, textarea {
 }
 
 .secondary-button {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--color-brass-300);
 }
 
 .login-link-row {
@@ -204,27 +333,31 @@ input, select, textarea {
 .link-button {
   border: none;
   background: transparent;
-  color: #d5d7dc;
+  color: var(--color-verdigris-300);
   padding: 0;
+  min-height: auto;
+  box-shadow: none;
 }
 
 .link-button:hover {
   border-color: transparent;
-  color: #ffffff;
+  color: var(--color-brass-300);
+  background: transparent;
+  transform: none;
 }
 
 .account-block {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 3px;
+    gap: var(--space-2);
   flex-wrap: nowrap;
     justify-content: flex-start;
     margin-left: 0;
-    color: #ffffff;
+    color: var(--color-brass-100);
+    font-family: var(--font-body);
     font-weight: 500;
-    font-size: 18px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    font-size: var(--text-lg);
     position: relative;
 }
 
@@ -234,8 +367,8 @@ input, select, textarea {
     border-radius: 50%;
     margin-left: 10px;
     margin-right: 10px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: var(--border-width-base) solid var(--color-brass-500);
+    box-shadow: var(--shadow-sm);
 }
 
 .account-user-summary {
@@ -262,28 +395,29 @@ input, select, textarea {
   width: 30px;
   height: 30px;
   object-fit: contain;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  background: rgba(0, 0, 0, 0.25);
   padding: 1px;
 }
 
 .account-block button {
   position: relative;
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  font-weight: 500;
-  font-size: 13px;
+  background: rgba(21, 17, 13, 0.35);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  color: var(--color-brass-100);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
   padding: 10px 16px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-  backdrop-filter: blur(5px);
-  position: relative;
+  transition: background var(--duration-base) var(--easing-standard),
+    border-color var(--duration-base) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-mechanical);
   overflow: hidden;
   min-width: 120px;
+  min-height: 44px;
   text-align: center;
 }
 
@@ -294,19 +428,23 @@ input, select, textarea {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s;
+  background: linear-gradient(90deg, transparent, rgba(232, 200, 119, 0.18), transparent);
+  transition: left var(--duration-slow) var(--easing-standard);
 }
 
 .account-block button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(201, 154, 59, 0.22);
+  border-color: var(--color-brass-500);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .account-block button:hover::before {
   left: 100%;
+}
+
+.account-block button:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .avatar {
@@ -329,28 +467,29 @@ input, select, textarea {
 .motd {
   font-size: 0.8em;
   margin: 20px 0 0 0;
-  color: #ffffff;
+  color: var(--color-text-primary);
   text-align: left;
 }
 
 .motd h2 {
   margin-top: 0;
-  color: #ffffff;
+  color: var(--color-brass-300);
 }
 
 .login-container {
   margin: 0 auto;
   width: 50vw;
-  margin-top: 40px; 
+  margin-top: 40px;
   min-width: 320px;
   max-width: 500px;
   z-index: 99;
   position: relative;
   box-sizing: border-box;
   padding: 2rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #333;
+  border: var(--border-width-base) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-ground-raised);
+  box-shadow: var(--shadow-lg);
 }
 
 
@@ -358,12 +497,12 @@ input, select, textarea {
 .app-header {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #2d3436 0%, #636e72 50%, #2d3436 100%);
-  color: #ddd;
-  border-bottom: 3px solid #74b9ff;
+  background: linear-gradient(135deg, var(--color-ground-sunken) 0%, var(--color-ground-elevated) 50%, var(--color-ground-sunken) 100%);
+  color: var(--color-text-primary);
+  border-bottom: var(--border-width-thick) solid var(--color-brass-500);
   position: relative;
   min-height: 400px;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
 }
 
 /* Logo Section at Top */
@@ -373,8 +512,8 @@ input, select, textarea {
   align-items: center;
   position: relative;
   padding: 20px;
-  background: radial-gradient(ellipse at center, rgba(116, 185, 255, 0.1) 0%, transparent 70%);
-  border-bottom: 2px solid rgba(116, 185, 255, 0.3);
+  background: radial-gradient(ellipse at center, rgba(201, 154, 59, 0.12) 0%, transparent 70%);
+  border-bottom: var(--border-width-base) solid var(--color-brass-700);
 }
 
 .app-title-image {
@@ -423,25 +562,24 @@ input, select, textarea {
   transform: scaleX(-1); /* Flip robot horizontally to face the menu */
 }
 
-/* Steampunk Horizontal Menu Bar */
+/* Steampunk Horizontal Menu Bar — riveted brass rail */
 .steampunk-menu-bar {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: center;
   justify-content: flex-start;
   padding: 50px;
   padding-right: 200px; /* Extra space for robot */
   position: relative;
-  background: transparent;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  border-bottom: 3px solid #2d3436;
-  box-shadow: 
-    inset 0 2px 4px rgba(255, 255, 255, 0.1),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.3),
-    0 4px 8px rgba(0, 0, 0, 0.2);
-  position: relative;
+  background: linear-gradient(180deg, var(--color-ground-elevated) 0%, var(--color-ground-primary) 100%);
+  border-top: var(--border-width-thin) solid var(--color-brass-700);
+  border-bottom: var(--border-width-thick) solid var(--color-ground-sunken);
+  box-shadow:
+    inset 0 2px 4px rgba(232, 200, 119, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
 /* Account bar positioned below menu */
@@ -454,14 +592,14 @@ input, select, textarea {
 .session-expiry-banner {
   margin: 12px 20px 0 20px;
   padding: 10px 14px;
-  border: 1px solid #ffd666;
-  border-left: 6px solid #faad14;
-  background: #fffbe6;
-  color: #8c6d1f;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border: var(--border-width-thin) solid var(--color-warning);
+  border-left: 6px solid var(--color-warning);
+  background: var(--color-surface-paper);
+  color: var(--color-text-on-paper);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .steampunk-menu-bar::before {
@@ -471,9 +609,9 @@ input, select, textarea {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.3) 50%, 
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(232, 200, 119, 0.4) 50%,
     transparent 100%);
 }
 
@@ -484,11 +622,11 @@ input, select, textarea {
   left: 20px;
   right: 20px;
   height: 1px;
-  background: repeating-linear-gradient(90deg, 
-    transparent 0px, 
-    transparent 8px, 
-    rgba(45, 52, 54, 0.3) 8px, 
-    rgba(45, 52, 54, 0.3) 12px);
+  background: repeating-linear-gradient(90deg,
+    transparent 0px,
+    transparent 8px,
+    rgba(0, 0, 0, 0.4) 8px,
+    rgba(0, 0, 0, 0.4) 12px);
   transform: translateY(-50%);
   z-index: 1;
 }
@@ -529,6 +667,10 @@ input, select, textarea {
     
 *******************************************/
 
+/* Data tables render as a parchment ledger — a self-contained light card
+   regardless of whether the table sits on the dark page background or
+   inside a dark .modal-content, so text color here is explicit, never
+   inherited from the ancestor (see graphicdesign.md Phase 5 notes). */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -538,39 +680,40 @@ table {
 
 th, td {
   padding: 4px 6px;
-  border: 1px solid #ddd;
+  border: var(--border-width-thin) solid var(--color-brass-700);
   vertical-align: top;
+  color: var(--color-text-on-paper);
 }
 
 th {
-  background-color: #f4f4f4;
-  color: #333;
+  background-color: var(--color-surface-paper-elevated);
+  color: var(--color-text-on-paper);
 }
 
 tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: var(--color-surface-paper-elevated);
 }
 
 tbody tr:nth-child(odd) {
-  background-color: #fff;
+  background-color: var(--color-surface-paper);
 }
 
 tbody tr:hover {
-  background-color: #f1f1f1;
+  background-color: rgba(201, 154, 59, 0.22);
 }
 
 thead {
-  background-color: #333;
-  color: white;
+  background-color: var(--color-ground-sunken);
+  color: var(--color-brass-100);
 }
 
 thead th {
-  background-color: #333;
-  color: white;
+  background-color: var(--color-ground-sunken);
+  color: var(--color-brass-100);
 }
 
 tbody tr td {
-  border: 1px solid #ddd;
+  border: var(--border-width-thin) solid var(--color-brass-700);
 }
 
 .smallpad {
@@ -586,46 +729,71 @@ tbody tr td {
 *******************************************/
 
 .modal {
-  display: block; 
-  position: fixed; 
-  z-index: 10000; 
+  display: block;
+  position: fixed;
+  z-index: 10000;
   left: 0;
   top: 0;
-  width: 100%; 
-  height: 100%; 
+  width: 100%;
+  height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.5); /* Adjusted for semi-transparency */
+  background-color: rgba(13, 10, 7, 0.82);
 }
 .modal-content {
-  background-color: #fefefe;
-  margin: 3% auto; 
+  background-color: var(--color-ground-raised);
+  margin: 3% auto;
   padding: 20px;
-  border: 1px solid #888;
-  width: 80%; 
-  max-width: 600px; 
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  color: #000000;
-  font-size: 0.8em;
+  border: var(--border-width-base) solid var(--color-brass-700);
+  width: 80%;
+  max-width: 600px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text-primary);
+  font-size: 1em;
+}
+
+.modal-content:focus-visible {
+  outline: none;
 }
 
 .close {
-  color: #aaa;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--color-text-muted);
   float: right;
   font-size: 28px;
   font-weight: bold;
+  line-height: 1;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .close:hover,
 .close:focus {
-  color: black;
+  color: var(--color-text-primary);
+  background: var(--color-brass-700);
+  border-radius: 50%;
   text-decoration: none;
   cursor: pointer;
+  transform: none;
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 
 .modal-content h2 {
   margin-top: 0;
+  font-family: var(--font-display);
+  color: var(--color-brass-300);
 }
 
 .modal-content ul {
@@ -635,7 +803,7 @@ tbody tr td {
 
 .modal-content ul li {
   padding: 5px 0;
-  border-bottom: 1px solid #ddd;
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
 }
 
 .modal-content ul li:last-child {
@@ -685,15 +853,17 @@ tbody tr td {
 
 .password-reminder {
   position: relative;
-  font-size: 12px;
-  color: #ccc;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
   top: -15px;
 }
 
 .login-header {
-  font-size: 1.5em;
-  font-weight: bold;
-  text-align:center;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-brass-300);
+  text-align: center;
 }
 
 .login-form {
@@ -710,6 +880,21 @@ tbody tr td {
   display: flex;
   flex-direction: column;
   margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+/* Scoped rather than a blanket `.form-group label` rule, in case a future
+   screen reuses .form-group on a light/parchment surface where brass text
+   would fail contrast — see graphicdesign.md Phase 5 notes. */
+.auth-card .form-group label,
+.login-container .form-group label,
+.modal-content .form-group label {
+  color: var(--color-brass-300);
 }
 
 .form-group-button {
@@ -737,16 +922,25 @@ tbody tr td {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
   padding: 0.25rem;
   background: none;
   border: none;
-  color: #555;
+  box-shadow: none;
+  color: var(--color-text-on-paper-muted);
   cursor: pointer;
 }
 
-.password-toggle:hover,
+.password-toggle:hover {
+  color: var(--color-text-on-paper);
+  background: none;
+  transform: none;
+}
+
 .password-toggle:focus-visible {
-  color: #000;
+  outline: 3px solid var(--color-focus-ring-on-paper);
+  outline-offset: 1px;
 }
 
 /************************************************
@@ -785,9 +979,22 @@ TWEAKS
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(13, 10, 7, 0.72);
   }
-  
+
+  .spinner-text {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--color-ground-raised);
+    border: var(--border-width-base) solid var(--color-brass-700);
+    color: var(--color-text-primary);
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+  }
+
   .central-overlay-spinner .spinner-content {
     padding: 20px;
     border-radius: 10px;
@@ -797,19 +1004,23 @@ TWEAKS
 .little-button {
   display: inline-block;
   padding: 4px 10px;
-  font-size: 0.8em;
-  background-color: #8e8e8e;
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 12px;
+  font-size: var(--text-sm);
+  background-color: var(--color-ground-elevated);
+  color: var(--color-brass-100);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-full);
   text-decoration: none;
   cursor: pointer;
   margin-left: 10px;
+  min-height: 32px;
+  box-shadow: none;
 }
 
 .little-button:hover {
-  background-color: #333;
-  border-color: #888;
+  background-color: var(--color-brass-700);
+  border-color: var(--color-brass-500);
+  color: var(--color-brass-100);
+  transform: none;
 }
 /************************************************
 
@@ -846,7 +1057,7 @@ FILE INPUT STYLING
 }
 
 .file-input-button:hover {
-  border-color: #646cff;
+  border-color: var(--color-brass-500);
 }
 
 .file-input-button:focus,
@@ -927,26 +1138,26 @@ ADMIN SUBJECTS STYLING
 
 .no-topics-message {
   margin-top: 20px;
-  color: #666;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
 .create-new-option {
   font-weight: bold;
-  color: #0066cc;
+  color: var(--color-verdigris-300);
 }
 
 .uploaded-files-list {
   margin-top: 10px;
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-paper);
 }
 
 .uploaded-files-list h4 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: var(--color-text-on-paper);
   font-size: 14px;
 }
 
@@ -955,7 +1166,7 @@ ADMIN SUBJECTS STYLING
   justify-content: space-between;
   align-items: center;
   padding: 5px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
 }
 
 .uploaded-file-item:last-child {
@@ -963,32 +1174,33 @@ ADMIN SUBJECTS STYLING
 }
 
 .uploaded-file-item .attachment-file-details h4 {
-  color: #333;
+  color: var(--color-text-on-paper);
 }
 
 .uploaded-file-item .attachment-file-meta {
-  color: #666;
+  color: var(--color-text-on-paper-muted);
 }
 
 .file-info {
-  color: #333;
+  color: var(--color-text-on-paper);
   font-size: 12px;
   flex-grow: 1;
 }
 
 .remove-file-btn {
-  background-color: #ff4444;
-  color: white;
+  background-color: var(--color-danger);
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 3px;
   padding: 2px 6px;
   font-size: 12px;
   cursor: pointer;
   margin-left: 10px;
+  min-height: 28px;
 }
 
 .remove-file-btn:hover {
-  background-color: #cc0000;
+  background-color: #c23c4a;
 }
 
 .file-upload-info {
@@ -996,7 +1208,7 @@ ADMIN SUBJECTS STYLING
 }
 
 .file-upload-info small {
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 11px;
   line-height: 1.3;
 }
@@ -1015,7 +1227,7 @@ ADMIN SUBJECTS STYLING
 
 .question-link {
   cursor: pointer;
-  color: #646cff;
+  color: var(--color-brass-500);
   transition: color 0.25s, background-color 0.25s;
   padding: 8px 12px;
   border-radius: 4px;
@@ -1060,21 +1272,26 @@ ADMIN SUBJECTS STYLING
 }
 
 .question-link:hover {
-  color: #535bf2;
-  background-color: rgba(100, 108, 255, 0.1);
+  color: var(--color-brass-600);
+  background-color: rgba(201, 154, 59, 0.1);
   text-decoration: none;
+}
+
+.question-link:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .question-link.bulk-mode {
   cursor: default;
-  color: #fff;
+  color: var(--color-text-primary);
   background-color: rgba(255, 255, 255, 0.02);
 }
 
 .question-link.bulk-mode:hover {
   background-color: rgba(255, 255, 255, 0.05);
   text-decoration: none;
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 /* Question Item Layout */
@@ -1123,31 +1340,32 @@ ADMIN SUBJECTS STYLING
 }
 
 .bulk-upload-questions-button {
-  background-color: #0e4fdb;
-  border: none;
-  color: #fff;
-  border-radius: 4px;
+  background: linear-gradient(180deg, var(--color-verdigris-300) 0%, var(--color-verdigris-500) 55%, var(--color-verdigris-700) 100%);
+  border: var(--border-width-base) solid var(--color-verdigris-700);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md);
   padding: 0.6em 1.2em;
   font-size: 0.9em;
   transition: background-color 0.2s;
 }
 
 .bulk-upload-questions-button:hover {
-  background-color: #464db6;
+  background: linear-gradient(180deg, var(--color-verdigris-300) 0%, var(--color-verdigris-500) 100%);
 }
 
-/* Random Question Button */
+/* Random Question Button — brass/copper, replacing the old stock violet
+   SaaS gradient (#667eea/#764ba2) flagged in the original design audit. */
 .random-question-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  color: white;
+  background: linear-gradient(135deg, var(--color-brass-300) 0%, var(--color-copper-500) 100%);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  color: var(--color-text-inverse);
   padding: 12px 24px;
   font-size: 1.1em;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-md);
   margin-bottom: 20px;
   display: inline-flex;
   align-items: center;
@@ -1156,13 +1374,13 @@ ADMIN SUBJECTS STYLING
 
 .random-question-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, var(--color-copper-500) 0%, var(--color-brass-300) 100%);
 }
 
 .random-question-btn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Bulk Actions */
@@ -1182,35 +1400,38 @@ ADMIN SUBJECTS STYLING
 }
 
 .bulk-toggle-btn {
-  background-color: #4a4a4a;
-  color: white;
-  border: none;
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-primary);
+  border: var(--border-width-thin) solid var(--color-brass-700);
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 12px;
+  min-height: 32px;
 }
 
 .bulk-toggle-btn:hover {
-  background-color: #5a5a5a;
+  background-color: var(--color-brass-700);
 }
 
 .bulk-delete-btn {
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--color-danger);
+  color: var(--color-text-inverse);
   border: none;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 12px;
+  min-height: 32px;
 }
 
 .bulk-delete-btn:hover:not(:disabled) {
-  background-color: #c82333;
+  background-color: #c23c4a;
 }
 
 .bulk-delete-btn:disabled {
-  background-color: #6c757d;
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-muted);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -1244,16 +1465,16 @@ ADMIN SUBJECTS STYLING
 .topics-management-section {
   margin: 15px 0;
   padding: 10px;
-  border: 1px solid #333;
-  border-radius: 4px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-sm);
   background-color: rgba(255, 255, 255, 0.01);
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 .subjects-management-section h3,
 .topics-management-section h3 {
   font-size: 0.9em;
-  color: #fcfcfc;
+  color: var(--color-text-primary);
   margin: 0 0 8px 0;
   font-weight: normal;
 }
@@ -1271,9 +1492,9 @@ ADMIN SUBJECTS STYLING
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
-  background-color: rgba(100, 108, 255, 0.05);
-  border-radius: 4px;
-  border: 1px solid #fcfcfc;
+  background-color: rgba(201, 154, 59, 0.08);
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-brass-700);
   font-size: 0.8em;
 
 }
@@ -1281,7 +1502,7 @@ ADMIN SUBJECTS STYLING
 .subject-name,
 .topic-name {
   font-weight: normal;
-  color: #fcfcfc;
+  color: var(--color-text-primary);
 }
 
 .subject-item .delete-btn.small,
@@ -1294,8 +1515,7 @@ ADMIN SUBJECTS STYLING
 .subject-item:hover,
 .topic-item:hover {
   opacity: 1;
-  /* border: 1px solid #ff0000; */
-  background-color: #433d97;
+  background-color: var(--color-brass-700);
 }
 
 /* Delete Modal Styles */
@@ -1320,30 +1540,31 @@ ADMIN SUBJECTS STYLING
   display: block;
   margin-top: 5px;
   font-style: italic;
-  color: #ccc;
+  color: var(--color-text-muted);
 }
 
 .cascade-warning {
-  background-color: rgba(255, 193, 7, 0.1);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  background-color: rgba(217, 164, 65, 0.12);
+  border: 1px solid var(--color-warning);
   padding: 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   margin-top: 10px;
 }
 
 .delete-confirm-btn {
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--color-danger);
+  color: var(--color-text-inverse);
   border: none;
   padding: 10px 20px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: bold;
+  min-height: 44px;
 }
 
 .delete-confirm-btn:hover {
-  background-color: #c82333;
-  border-color: #bd2130;
+  background-color: #c23c4a;
+  border-color: #c23c4a;
 }
 
 /* Reorder Controls */
@@ -1356,12 +1577,12 @@ ADMIN SUBJECTS STYLING
 }
 
 .reorder-btn {
-  background-color: #4a4a4a;
-  color: white;
-  border: none;
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-primary);
+  border: var(--border-width-thin) solid var(--color-brass-700);
   border-radius: 3px;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   font-size: 12px;
   cursor: pointer;
   display: flex;
@@ -1373,24 +1594,30 @@ ADMIN SUBJECTS STYLING
 }
 
 .reorder-btn:hover:not(:disabled) {
-  background-color: #646cff;
+  background-color: var(--color-brass-500);
+  color: var(--color-text-inverse);
+}
+
+.reorder-btn:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .reorder-btn:disabled {
-  background-color: #333;
-  color: #666;
+  background-color: var(--color-ground-sunken);
+  color: var(--color-text-muted);
   cursor: not-allowed;
   opacity: 0.5;
 }
 
 .reorder-btn:active:not(:disabled) {
-  background-color: #535bf2;
+  background-color: var(--color-brass-600);
   transform: scale(0.95);
 }
 
 /* Question item hover effect */
 .question-item:hover .question-item-content {
-  background-color: rgba(100, 108, 255, 0.05);
+  background-color: rgba(201, 154, 59, 0.05);
 }
 
 /* Quiz Builder Header */
@@ -1402,25 +1629,26 @@ ADMIN SUBJECTS STYLING
 }
 
 .statistics-toggle-btn {
-  background-color: #4a4a4a;
-  color: white;
-  border: none;
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-primary);
+  border: var(--border-width-thin) solid var(--color-brass-700);
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 14px;
+  min-height: 44px;
 }
 
 .statistics-toggle-btn:hover {
-  background-color: #5a5a5a;
+  background-color: var(--color-brass-700);
 }
 
 /* Statistics Section */
 .statistics-section {
   margin: 20px 0;
   padding: 20px;
-  border: 1px solid #444;
-  border-radius: 8px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
   background-color: rgba(255, 255, 255, 0.02);
 }
 
@@ -1434,21 +1662,21 @@ ADMIN SUBJECTS STYLING
 .stat-card {
   text-align: center;
   padding: 15px;
-  background-color: rgba(100, 108, 255, 0.1);
+  background-color: rgba(201, 154, 59, 0.1);
   border-radius: 8px;
-  border: 1px solid rgba(100, 108, 255, 0.3);
+  border: 1px solid rgba(201, 154, 59, 0.3);
 }
 
 .stat-number {
   font-size: 2em;
   font-weight: bold;
-  color: #646cff;
+  color: var(--color-brass-500);
   margin-bottom: 5px;
 }
 
 .stat-label {
   font-size: 0.9em;
-  color: #ccc;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1472,17 +1700,17 @@ ADMIN SUBJECTS STYLING
   padding: 10px 15px;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
-  border-left: 3px solid #646cff;
+  border-left: 3px solid var(--color-brass-500);
 }
 
 .breakdown-subject {
   font-weight: 500;
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .breakdown-stats {
   font-size: 0.9em;
-  color: #ccc;
+  color: var(--color-text-muted);
 }
 
 /* Recent Questions */
@@ -1505,17 +1733,17 @@ ADMIN SUBJECTS STYLING
   padding: 10px 15px;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
-  border-left: 3px solid #28a745;
+  border-left: 3px solid var(--color-success);
 }
 
 .recent-id {
   font-weight: bold;
-  color: #646cff;
+  color: var(--color-brass-500);
   min-width: 50px;
 }
 
 .recent-text {
-  color: #fff;
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1523,7 +1751,7 @@ ADMIN SUBJECTS STYLING
 
 .recent-location {
   font-size: 0.8em;
-  color: #888;
+  color: var(--color-text-muted);
   text-align: right;
   min-width: 150px;
 }
@@ -1531,8 +1759,8 @@ ADMIN SUBJECTS STYLING
 /* Export/Import Section */
 .export-import-section {
   margin: 20px 0;
-  border: 1px solid #444;
-  border-radius: 8px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
   background-color: rgba(255, 255, 255, 0.02);
   overflow: hidden;
   font-size: 0.7em;
@@ -1545,28 +1773,34 @@ ADMIN SUBJECTS STYLING
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
   transition: background-color 0.2s;
+  min-height: 44px;
 }
 
 .export-import-header:hover {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
+.export-import-header:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: -3px;
+}
+
 .export-import-header h3 {
   margin: 0;
-  color: #fff;
+  color: var(--color-brass-300);
 }
 
 .export-import-toggle {
   font-size: 1.2em;
-  color: #888;
+  color: var(--color-text-muted);
   transition: transform 0.3s ease, color 0.2s;
 }
 
 .export-import-toggle.expanded {
   transform: rotate(180deg);
-  color: #646cff;
+  color: var(--color-brass-500);
 }
 
 .export-import-content {
@@ -1589,8 +1823,8 @@ BACKUP DATA SECTION STYLING
 
 .backup-data-section {
   margin: 30px 0 0;
-  border: 1px solid #444;
-  border-radius: 8px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
   background-color: rgba(255, 255, 255, 0.02);
   overflow: hidden;
   font-size: 0.7em;
@@ -1601,33 +1835,36 @@ BACKUP DATA SECTION STYLING
   padding: 15px 20px;
   background-color: rgba(255, 255, 255, 0.05);
   border: none;
+  box-shadow: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
   transition: background-color 0.2s;
   color: inherit;
+  min-height: 44px;
 }
 
 .backup-data-header:hover {
   background-color: rgba(255, 255, 255, 0.08);
+  transform: none;
 }
 
 .backup-data-title {
   font-size: 1.2em;
-  color: #fff;
+  color: var(--color-brass-300);
 }
 
 .backup-data-toggle {
   font-size: 1.2em;
-  color: #888;
+  color: var(--color-text-muted);
   transition: transform 0.3s ease, color 0.2s;
 }
 
 .backup-data-toggle.expanded {
   transform: rotate(180deg);
-  color: #646cff;
+  color: var(--color-brass-500);
 }
 
 .backup-data-content {
@@ -1644,7 +1881,7 @@ BACKUP DATA SECTION STYLING
 
 .backup-description {
   margin-bottom: 15px;
-  color: #ccc;
+  color: var(--color-text-muted);
   line-height: 1.4;
 }
 
@@ -1664,8 +1901,8 @@ BACKUP DATA SECTION STYLING
 .export-controls,
 .import-controls {
   padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   background-color: rgba(255, 255, 255, 0.02);
 }
 
@@ -1677,29 +1914,31 @@ BACKUP DATA SECTION STYLING
 }
 
 .export-btn {
-  background-color: #28a745;
-  color: white;
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
   border: none;
   padding: 10px 15px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
   transition: background-color 0.2s;
+  min-height: 44px;
 }
 
 .export-btn:hover {
-  background-color: #218838;
+  background-color: #3f9672;
 }
 
 .export-btn:disabled {
-  background-color: #6c757d;
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
 
 .import-info {
   display: block;
   margin-top: 10px;
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.9em;
   line-height: 1.4;
 }
@@ -1940,7 +2179,7 @@ LARGE DESKTOP STYLES
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
-  border-bottom: 2px solid #333;
+  border-bottom: var(--border-width-base) solid var(--color-brass-700);
   padding-bottom: 16px;
 }
 
@@ -1952,9 +2191,9 @@ LARGE DESKTOP STYLES
 }
 
 .student-progress-tile {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 14px;
   text-align: center;
 }
@@ -1962,12 +2201,12 @@ LARGE DESKTOP STYLES
 .student-progress-value {
   font-size: 1.7rem;
   font-weight: 700;
-  color: #d8e1ff;
+  color: var(--color-brass-300);
 }
 
 .student-progress-label {
   margin-top: 4px;
-  color: #a7a7aa;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
@@ -1978,9 +2217,9 @@ LARGE DESKTOP STYLES
 .student-badge-track {
   margin-bottom: 20px;
   padding: 14px;
-  background: #1b1b1b;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
 }
 
 .student-badge-track h3 {
@@ -1998,9 +2237,9 @@ LARGE DESKTOP STYLES
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  background: #242424;
-  border: 1px solid #3a3a3a;
-  border-radius: 8px;
+  background: var(--color-ground-raised);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 10px 8px;
 }
 
@@ -2011,20 +2250,20 @@ LARGE DESKTOP STYLES
 }
 
 .student-badge-item span {
-  color: #cfcfcf;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
 .student-badge-empty {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
 /* RAG summary card — shown above badge tracks on My Progress page */
 .rag-summary-card {
-  background: #1b1b1b;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 16px 18px;
   margin-bottom: 16px;
 }
@@ -2033,7 +2272,7 @@ LARGE DESKTOP STYLES
   margin: 0 0 12px;
   font-size: 1rem;
   font-weight: 600;
-  color: #d8e1ff;
+  color: var(--color-brass-300);
 }
 
 .rag-summary-bar {
@@ -2073,28 +2312,28 @@ LARGE DESKTOP STYLES
 }
 
 .rag-summary-legend-label {
-  color: #cfcfcf;
+  color: var(--color-text-muted);
 }
 
 .rag-summary-legend-count {
   font-weight: 700;
-  color: #d8e1ff;
+  color: var(--color-brass-300);
 }
 
 .rag-summary-legend-pct {
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.82rem;
 }
 
 .rag-summary-pending .rag-summary-legend-label,
 .rag-summary-pending .rag-summary-legend-count {
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .rag-summary-note {
   margin: 0;
   font-size: 0.78rem;
-  color: #666;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -2211,7 +2450,7 @@ LARGE DESKTOP STYLES
   align-items: center;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #333;
+  border-bottom: var(--border-width-base) solid var(--color-brass-700);
 }
 
 .navigation-breadcrumb {
@@ -2219,23 +2458,23 @@ LARGE DESKTOP STYLES
   align-items: center;
   margin-bottom: 30px;
   font-size: 16px;
-  color: #ccc;
+  color: var(--color-text-muted);
 }
 
 .breadcrumb-active {
-  color: #646cff;
+  color: var(--color-brass-500);
   cursor: pointer;
   text-decoration: underline;
 }
 
 .breadcrumb-current {
-  color: #fff;
+  color: var(--color-text-primary);
   font-weight: bold;
 }
 
 .breadcrumb-separator {
   margin: 0 10px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .items-grid {
@@ -2246,29 +2485,29 @@ LARGE DESKTOP STYLES
 }
 
 .subject-card, .topic-card {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .subject-card:hover, .topic-card:hover {
-  border-color: #646cff;
+  border-color: var(--color-brass-500);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(201, 154, 59, 0.2);
 }
 
 .subject-card h3, .topic-card h3 {
   margin: 0 0 10px 0;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 18px;
 }
 
 .subject-card p, .topic-card p {
   margin: 0 0 15px 0;
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 14px;
   line-height: 1.4;
 }
@@ -2278,7 +2517,7 @@ LARGE DESKTOP STYLES
   flex-direction: column;
   gap: 5px;
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-muted);
 }
 
 .questions-list {
@@ -2291,22 +2530,27 @@ LARGE DESKTOP STYLES
 .question-item {
   display: flex;
   align-items: center;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 15px 20px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .question-item:hover {
-  border-color: #646cff;
-  background: #222;
+  border-color: var(--color-brass-500);
+  background: var(--color-ground-raised);
+}
+
+.question-item:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .question-number {
-  background: #646cff;
-  color: white;
+  background: var(--color-brass-500);
+  color: var(--color-text-inverse);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -2323,7 +2567,7 @@ LARGE DESKTOP STYLES
 }
 
 .question-text {
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 16px;
   line-height: 1.4;
   margin-bottom: 5px;
@@ -2334,12 +2578,12 @@ LARGE DESKTOP STYLES
 }
 
 .attachment-indicator {
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
 .question-status {
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 24px;
   font-weight: bold;
 }
@@ -2355,7 +2599,7 @@ LARGE DESKTOP STYLES
 /* Styling for previously answered questions */
 .question-answered {
   opacity: 0.8;
-  background: #1f2937;
+  background: var(--color-ground-raised);
 }
 
 .question-answered:hover {
@@ -2363,7 +2607,8 @@ LARGE DESKTOP STYLES
 }
 
 .question-answered .question-number {
-  background: #10b981;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
   position: relative;
 }
 
@@ -2371,8 +2616,8 @@ LARGE DESKTOP STYLES
   position: absolute;
   top: -8px;
   right: -8px;
-  background: #10b981;
-  color: white;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -2381,7 +2626,7 @@ LARGE DESKTOP STYLES
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
-  border: 2px solid #1a1a1a;
+  border: 2px solid var(--color-ground-elevated);
 }
 
 /************************************************
@@ -2397,7 +2642,7 @@ ANSWER MODAL STYLING
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(13, 10, 7, 0.82);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2405,15 +2650,20 @@ ANSWER MODAL STYLING
 }
 
 .answer-modal-content {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 12px;
+  background: var(--color-ground-raised);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
   width: 90%;
   max-width: 1000px;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.answer-modal-content:focus-visible {
+  outline: none;
 }
 
 .answer-modal-header {
@@ -2421,59 +2671,68 @@ ANSWER MODAL STYLING
   justify-content: space-between;
   align-items: center;
   padding: 20px 30px;
-  border-bottom: 1px solid #333;
-  background: #242424;
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
+  background: var(--color-ground-elevated);
 }
 
 .answer-modal-header h2 {
   margin: 0;
-  color: #fff;
+  font-family: var(--font-display);
+  color: var(--color-brass-300);
 }
 
 .close-modal {
   background: transparent;
   border: none;
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 24px;
   cursor: pointer;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: none;
 }
 
 .close-modal:hover {
-  color: #fff;
-  background: #333;
+  color: var(--color-text-primary);
+  background: var(--color-brass-700);
   border-radius: 50%;
+  transform: none;
+}
+
+.close-modal:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .answer-modal-body {
   flex-grow: 1;
   overflow-y: auto;
   padding: 30px;
-  font-size: 0.6em;
+  font-size: 1em;
 }
 
 .question-section {
   margin-bottom: 30px;
-  font-size: 0.6em;
+  font-size: 1em;
 }
 
 .question-section h3 {
   margin: 0 0 15px 0;
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 18px;
 }
 
 .question-content {
-  background: #242424;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 20px;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.6;
   font-size: 18px;
   margin-bottom: 20px;
@@ -2483,8 +2742,8 @@ ANSWER MODAL STYLING
   display: inline-block;
   align-self: flex-start;
   padding: 4px 8px;
-  background: #333;
-  color: #999;
+  background: var(--color-ground-sunken);
+  color: var(--color-text-muted);
   font-size: 12px;
   border-radius: 8px;
   /* width: 33%; */
@@ -2507,9 +2766,9 @@ ANSWER MODAL STYLING
 }
 
 .attachment-item {
-  background: #242424;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 15px;
   margin-bottom: 15px;
 }
@@ -2523,7 +2782,7 @@ ANSWER MODAL STYLING
 
 .attachment-item h4 {
   margin: 0 0 10px 0;
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -2595,13 +2854,13 @@ ANSWER MODAL STYLING
 
 .attachment-file-details h4 {
   margin: 0;
-  color: #f0f0f0;
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
 .attachment-file-meta {
   display: block;
-  color: #9a9a9a;
+  color: var(--color-text-muted);
   font-size: 12px;
   margin-top: 4px;
 }
@@ -2620,7 +2879,7 @@ ANSWER MODAL STYLING
 
 .answer-section h3 {
   margin: 0 0 15px 0;
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 18px;
 }
 
@@ -2633,10 +2892,15 @@ ANSWER MODAL STYLING
 }
 
 .rich-text-editor {
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #242424;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
+  background: var(--color-ground-elevated);
   overflow: hidden;
+}
+
+.rich-text-editor:focus-within {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 1px;
 }
 
 .rich-text-blocked-msg {
@@ -2654,22 +2918,24 @@ ANSWER MODAL STYLING
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
-  border-bottom: 1px solid #333;
-  background: #1c1c1c;
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
+  background: var(--color-ground-sunken);
 }
 
 .rich-text-toolbar-button {
   min-width: 44px;
+  min-height: 44px;
   padding: 6px 10px;
-  border: 1px solid #4a4a4a;
-  border-radius: 6px;
-  background: #2a2a2a;
-  color: #f4f4f4;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-sm);
+  background: var(--color-ground-elevated);
+  color: var(--color-text-primary);
   font-size: 13px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-shadow: none;
 }
 
 .rich-text-toolbar-button i {
@@ -2678,8 +2944,14 @@ ANSWER MODAL STYLING
 
 .rich-text-toolbar-button:hover:not(:disabled),
 .rich-text-toolbar-button.is-active {
-  border-color: #646cff;
-  background: rgba(100, 108, 255, 0.18);
+  border-color: var(--color-brass-500);
+  background: rgba(201, 154, 59, 0.18);
+  transform: none;
+}
+
+.rich-text-toolbar-button:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .rich-text-toolbar-button:disabled {
@@ -2690,7 +2962,7 @@ ANSWER MODAL STYLING
 .rich-text-editor .ProseMirror {
   min-height: var(--rich-text-min-height, 180px);
   padding: 15px;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.6;
   outline: none;
   white-space: pre-wrap;
@@ -2752,7 +3024,7 @@ ANSWER MODAL STYLING
 
 .rich-text-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: #8d8d8d;
+  color: var(--color-text-muted);
   float: left;
   height: 0;
   pointer-events: none;
@@ -2767,9 +3039,9 @@ ANSWER MODAL STYLING
 
 .rich-text-editor .ProseMirror pre,
 .rich-text-render pre {
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-sunken);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 12px;
   overflow-x: auto;
 }
@@ -2786,8 +3058,8 @@ ANSWER MODAL STYLING
 .rich-text-render blockquote {
   margin: 1rem 0;
   padding-left: 12px;
-  border-left: 3px solid #646cff;
-  color: #ddd;
+  border-left: 3px solid var(--color-brass-500);
+  color: var(--color-text-muted);
 }
 
 .rich-text-render {
@@ -2815,21 +3087,21 @@ ANSWER MODAL STYLING
 .answer-textarea {
   width: 100%;
   min-height: 200px;
-  background: #242424;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 15px;
-  color: #fff;
+  color: var(--color-text-primary);
   font-family: inherit;
   font-size: 16px;
   line-height: 1.5;
   resize: vertical;
 }
 
-.answer-textarea:focus {
-  outline: none;
-  border-color: #646cff;
-  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+.answer-textarea:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--color-brass-500);
 }
 
 .answer-modal-footer {
@@ -2837,8 +3109,8 @@ ANSWER MODAL STYLING
   justify-content: flex-end;
   gap: 15px;
   padding: 20px 30px;
-  border-top: 1px solid #333;
-  background: #242424;
+  border-top: var(--border-width-thin) solid var(--color-brass-700);
+  background: var(--color-ground-elevated);
 }
 
 /************************************************
@@ -2861,15 +3133,20 @@ ANSWER MODAL STYLING
 }
 
 .ai-feedback-content {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 12px;
+  background: var(--color-ground-raised);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
   width: 90%;
   max-width: 1000px;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.ai-feedback-content:focus-visible {
+  outline: none;
 }
 
 .ai-feedback-header {
@@ -2877,48 +3154,57 @@ ANSWER MODAL STYLING
   justify-content: space-between;
   align-items: center;
   padding: 20px 30px;
-  border-bottom: 1px solid #333;
-  background: #242424;
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
+  background: var(--color-ground-elevated);
 }
 
 .ai-feedback-header h2 {
   margin: 0;
-  color: #646cff;
+  font-family: var(--font-display);
+  color: var(--color-brass-300);
 }
 
 .close-feedback {
   background: transparent;
   border: none;
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 24px;
   cursor: pointer;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: none;
 }
 
 .close-feedback:hover {
-  color: #fff;
-  background: #333;
+  color: var(--color-text-primary);
+  background: var(--color-brass-700);
   border-radius: 50%;
+  transform: none;
+}
+
+.close-feedback:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .ai-feedback-body {
   flex-grow: 1;
   overflow-y: auto;
   padding: 30px;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.4;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
   font-weight: 400;
 }
 
 .ai-feedback-body h4 {
-  color: #646cff;
+  color: var(--color-brass-300);
   margin: 20px 0 10px 0;
   font-size: 16px;
 }
@@ -2940,8 +3226,8 @@ ANSWER MODAL STYLING
   display: flex;
   justify-content: center;
   padding: 20px 30px;
-  border-top: 1px solid #333;
-  background: #242424;
+  border-top: var(--border-width-thin) solid var(--color-brass-700);
+  background: var(--color-ground-elevated);
 }
 
 /************************************************
@@ -2968,7 +3254,7 @@ ANSWER MODAL STYLING
 .no-responses-message {
   text-align: center;
   padding: 40px 20px;
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 16px;
   line-height: 1.6;
 }
@@ -2983,22 +3269,27 @@ ANSWER MODAL STYLING
 .past-response-item {
   display: flex;
   align-items: center;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 15px 20px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .past-response-item:hover {
-  border-color: #646cff;
-  background: #222;
+  border-color: var(--color-brass-500);
+  background: var(--color-ground-raised);
+}
+
+.past-response-item:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .response-number {
-  background: #28a745;
-  color: white;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -3016,27 +3307,27 @@ ANSWER MODAL STYLING
 }
 
 .response-subject-topic {
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 14px;
   margin-bottom: 5px;
   font-weight: 500;
 }
 
 .response-question-preview {
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 16px;
   line-height: 1.4;
   margin-bottom: 8px;
 }
 
 .response-date {
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
 .attempt-badge {
-  background: #ffc107;
-  color: #000;
+  background: var(--color-warning);
+  color: var(--color-text-inverse);
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 10px;
@@ -3045,7 +3336,7 @@ ANSWER MODAL STYLING
 }
 
 .response-arrow {
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 24px;
   font-weight: bold;
   transition: transform 0.3s ease;
@@ -3056,11 +3347,11 @@ ANSWER MODAL STYLING
 }
 
 .past-answer-display {
-  background: #242424;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 20px;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.6;
   margin-bottom: 20px;
   white-space: pre-wrap;
@@ -3072,25 +3363,25 @@ ANSWER MODAL STYLING
 
 .feedback-section h3 {
   margin: 0 0 15px 0;
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 20px;
 }
 
 .ai-feedback-display {
-  background: #242424;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 20px;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.4;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   font-weight: 400;
   margin-bottom: 20px;
 }
 
 .ai-feedback-display h4 {
-  color: #646cff;
+  color: var(--color-brass-300);
   margin: 20px 0 10px 0;
   font-size: 18px;
 }
@@ -3109,8 +3400,8 @@ ANSWER MODAL STYLING
 }
 
 .response-metadata {
-  background: rgba(100, 108, 255, 0.1);
-  border: 1px solid rgba(100, 108, 255, 0.3);
+  background: rgba(201, 154, 59, 0.1);
+  border: 1px solid rgba(201, 154, 59, 0.3);
   border-radius: 8px;
   padding: 15px;
   margin-top: 20px;
@@ -3133,7 +3424,7 @@ ANSWER MODAL STYLING
  *************************************************/
 
 .teacher-rating-badge {
-  color: #000000;
+  color: var(--color-text-inverse);
   padding: 3px 3px;
   border-radius: 50%;
   font-size: 10px;
@@ -3145,21 +3436,21 @@ ANSWER MODAL STYLING
 }
 
 .teacher-comment-indicator {
-  color: #646cff;
+  color: var(--color-brass-500);
   font-weight: 500;
 }
 
 .teacher-feedback-section {
   margin-top: 30px;
-  background: rgba(40, 167, 69, 0.1);
-  border: 1px solid rgba(40, 167, 69, 0.3);
-  border-radius: 8px;
+  background: rgba(79, 174, 147, 0.1);
+  border: 1px solid rgba(79, 174, 147, 0.3);
+  border-radius: var(--radius-lg);
   padding: 20px;
 }
 
 .teacher-feedback-section h3 {
   margin: 0 0 20px 0;
-  color: #28a745;
+  color: var(--color-verdigris-300);
   font-size: 18px;
 }
 
@@ -3177,15 +3468,15 @@ ANSWER MODAL STYLING
 
 .rating-section label {
   font-weight: bold;
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .rating-select {
   padding: 8px 12px;
-  border: 1px solid #333;
-  border-radius: 4px;
-  background: #242424;
-  color: #fff;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-sm);
+  background: var(--color-ground-elevated);
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
@@ -3203,15 +3494,15 @@ ANSWER MODAL STYLING
 
 .comment-section label {
   font-weight: bold;
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .teacher-comment-textarea {
   padding: 12px;
-  border: 1px solid #333;
-  border-radius: 4px;
-  background: #242424;
-  color: #fff;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-sm);
+  background: var(--color-ground-elevated);
+  color: var(--color-text-primary);
   font-family: inherit;
   font-size: 14px;
   line-height: 1.4;
@@ -3219,19 +3510,19 @@ ANSWER MODAL STYLING
   min-height: 120px;
 }
 
-.teacher-comment-textarea:focus {
-  outline: none;
-  border-color: #28a745;
-  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+.teacher-comment-textarea:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--color-verdigris-500);
 }
 
 .existing-feedback-info {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 10px;
   font-size: 12px;
-  color: #ccc;
+  color: var(--color-text-muted);
 }
 
 /************************************************
@@ -3242,15 +3533,15 @@ ANSWER MODAL STYLING
 
 .teacher-feedback-section-student {
   margin-top: 30px;
-  background: rgba(40, 167, 69, 0.1);
-  border: 1px solid rgba(40, 167, 69, 0.3);
-  border-radius: 8px;
+  background: rgba(79, 174, 147, 0.1);
+  border: 1px solid rgba(79, 174, 147, 0.3);
+  border-radius: var(--radius-lg);
   padding: 20px;
 }
 
 .teacher-feedback-section-student h3 {
   margin: 0 0 15px 0;
-  color: #28a745;
+  color: var(--color-verdigris-300);
   font-size: 20px;
   display: flex;
   align-items: center;
@@ -3263,11 +3554,11 @@ ANSWER MODAL STYLING
 }
 
 .teacher-comment-display {
-  background: #242424;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
   padding: 15px;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.6;
   margin-bottom: 10px;
   white-space: pre-wrap;
@@ -3276,13 +3567,13 @@ ANSWER MODAL STYLING
 
 .teacher-feedback-meta {
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-muted);
   margin-top: 10px;
 }
 
 .teacher-feedback-notification {
-  background: linear-gradient(45deg, #28a745, #20c997);
-  color: white;
+  background: linear-gradient(45deg, var(--color-verdigris-700), var(--color-verdigris-500));
+  color: var(--color-text-inverse);
   padding: 2px 8px;
   border-radius: 12px;
   font-size: 11px;
@@ -3315,7 +3606,7 @@ ANSWER MODAL STYLING
   gap: 12px;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #333;
+  border-bottom: var(--border-width-base) solid var(--color-brass-700);
 }
 
 .dashboard-toolbar {
@@ -3330,14 +3621,14 @@ ANSWER MODAL STYLING
   display: flex;
   gap: 20px;
   font-size: 14px;
-  color: #ccc;
+  color: var(--color-text-muted);
 }
 
 .dashboard-stats span {
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .dashboard-refresh-controls {
@@ -3351,16 +3642,16 @@ ANSWER MODAL STYLING
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #ddd;
+  color: var(--color-text-primary);
 }
 
 .dashboard-refresh-interval {
   min-width: 160px;
   padding: 8px 10px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  background-color: #1f1f1f;
-  color: #fff;
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-primary);
 }
 
 .dashboard-refresh-interval:disabled {
@@ -3369,29 +3660,29 @@ ANSWER MODAL STYLING
 }
 
 .dashboard-last-refresh {
-  color: #bbb;
+  color: var(--color-text-muted);
   font-size: 0.92rem;
 }
 
 .active-date-filter {
   margin-top: 10px;
   padding: 8px 12px;
-  background: rgba(24, 144, 255, 0.1);
-  border: 1px solid rgba(24, 144, 255, 0.3);
-  border-radius: 4px;
+  background: rgba(79, 174, 147, 0.12);
+  border: 1px solid var(--color-verdigris-500);
+  border-radius: var(--radius-sm);
   font-size: 14px;
-  color: #1890ff;
+  color: var(--color-verdigris-300);
 }
 
 .active-date-filter strong {
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .dashboard-filters {
   margin-bottom: 30px;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-lg);
 }
 
 .filters-header {
@@ -3401,11 +3692,17 @@ ANSWER MODAL STYLING
   cursor: pointer;
   padding: 16px 20px;
   user-select: none;
-  color: #fff;
+  color: var(--color-text-primary);
+  min-height: 44px;
+}
+
+.filters-header:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: -3px;
 }
 
 .filters-header:hover {
-  background: #222;
+  background: var(--color-ground-raised);
   border-radius: 8px;
 }
 
@@ -3418,7 +3715,7 @@ ANSWER MODAL STYLING
   flex: 1;
   margin: 0 12px;
   font-size: 12px;
-  color: #aaa;
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3426,7 +3723,7 @@ ANSWER MODAL STYLING
 
 .filters-toggle-arrow {
   font-size: 13px;
-  color: #aaa;
+  color: var(--color-text-muted);
   transition: transform 0.3s ease;
   display: inline-block;
   flex-shrink: 0;
@@ -3520,7 +3817,7 @@ ANSWER MODAL STYLING
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -3543,10 +3840,10 @@ ANSWER MODAL STYLING
   width: 100%;
   box-sizing: border-box;
   padding: 8px 12px;
-  border: 1px solid #333;
-  border-radius: 4px;
-  background: #ffffff;
-  color: #000000;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-paper);
+  color: var(--color-text-on-paper);
   min-width: 140px;
   font-size: 12px;
 }
@@ -3558,9 +3855,9 @@ ANSWER MODAL STYLING
 .admin-response-item {
   display: flex;
   align-items: center;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: var(--color-ground-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 15px 20px;
   margin-bottom: 15px;
   cursor: pointer;
@@ -3568,8 +3865,13 @@ ANSWER MODAL STYLING
 }
 
 .admin-response-item:hover {
-  border-color: #646cff;
-  background: #222;
+  border-color: var(--color-brass-500);
+  background: var(--color-ground-raised);
+}
+
+.admin-response-item:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .response-student {
@@ -3580,13 +3882,13 @@ ANSWER MODAL STYLING
 
 .student-name {
   font-weight: bold;
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 16px;
   margin-bottom: 4px;
 }
 
 .student-email {
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
@@ -3595,26 +3897,26 @@ ANSWER MODAL STYLING
 }
 
 .response-subject-topic {
-  color: #28a745;
+  color: var(--color-verdigris-300);
   font-size: 14px;
   margin-bottom: 5px;
   font-weight: 500;
 }
 
 .response-question-preview {
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 14px;
   line-height: 1.4;
   margin-bottom: 8px;
 }
 
 .response-metadata {
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
 .response-arrow {
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 24px;
   font-weight: bold;
   transition: transform 0.3s ease;
@@ -3627,15 +3929,15 @@ ANSWER MODAL STYLING
 
 .student-info-section {
   margin-bottom: 30px;
-  background: rgba(100, 108, 255, 0.1);
-  border: 1px solid rgba(100, 108, 255, 0.3);
+  background: rgba(201, 154, 59, 0.1);
+  border: 1px solid rgba(201, 154, 59, 0.3);
   border-radius: 8px;
   padding: 15px;
 }
 
 .student-info-section h3 {
   margin: 0 0 15px 0;
-  color: #646cff;
+  color: var(--color-brass-500);
   font-size: 18px;
 }
 
@@ -3647,12 +3949,12 @@ ANSWER MODAL STYLING
 
 .student-info-details p {
   margin: 5px 0;
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
 .student-info-details strong {
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 /************************************************
@@ -3948,23 +4250,25 @@ BULK UPLOAD STYLING
 }
 
 .bulk-upload-format-info {
-  background-color: #f9f9f9;
+  background-color: var(--color-surface-paper-elevated);
+  color: var(--color-text-on-paper);
   padding: 15px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   margin-bottom: 20px;
 }
 
 .bulk-upload-format-info h4 {
   margin-top: 0;
-  color: #1890ff;
+  color: var(--color-brass-700);
 }
 
 .bulk-upload-format-info code {
   display: block;
-  background-color: #fff;
+  background-color: var(--color-surface-paper);
+  color: var(--color-text-on-paper);
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   font-family: 'Courier New', monospace;
   font-size: 12px;
   white-space: pre-line;
@@ -3973,20 +4277,22 @@ BULK UPLOAD STYLING
 .bulk-upload-progress {
   margin-top: 15px;
   padding: 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   font-size: 13px;
 }
 
 .bulk-upload-progress.success {
-  background-color: #f6ffed;
-  border: 1px solid #b7eb8f;
-  color: #52c41a;
+  background-color: var(--color-surface-paper-elevated);
+  border: var(--border-width-thin) solid var(--color-success);
+  border-left: 4px solid var(--color-success);
+  color: var(--color-text-on-paper);
 }
 
 .bulk-upload-progress.error {
-  background-color: #ffebee;
-  border: 1px solid #ffcdd2;
-  color: #f5222d;
+  background-color: var(--color-surface-paper-elevated);
+  border: var(--border-width-thin) solid var(--color-danger);
+  border-left: 4px solid var(--color-danger);
+  color: var(--color-text-on-paper);
 }
 
 .csv-format-example {
@@ -3996,16 +4302,17 @@ BULK UPLOAD STYLING
 }
 
 .security-warning {
-  background-color: #fff2e6;
+  background-color: var(--color-surface-paper-elevated);
+  color: var(--color-text-on-paper);
   padding: 15px;
-  border-radius: 5px;
-  border-left: 4px solid #faad14;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-warning);
   margin: 20px 0;
 }
 
 .security-warning h4 {
   margin-top: 0;
-  color: #faad14;
+  color: var(--color-brass-700);
 }
 
 /************************************************
@@ -4017,37 +4324,38 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 .admin-actions-bar {
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700);
 }
 
 .bulk-upload-button {
-  background-color: #1890ff;
-  color: white;
-  border: none;
+  background: linear-gradient(180deg, var(--color-brass-300) 0%, var(--color-brass-500) 55%, var(--color-brass-600) 100%);
+  color: var(--color-text-inverse);
+  border: var(--border-width-base) solid var(--color-brass-700);
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 
 .bulk-upload-button:hover {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
+  background: linear-gradient(180deg, var(--color-brass-100) 0%, var(--color-brass-300) 55%, var(--color-brass-500) 100%);
+  border-color: var(--color-brass-500);
 }
 
 .admin-actions-description {
   margin-left: 10px;
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .delete-button-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-text-inverse);
 }
 
 .delete-button-danger:hover {
-  background-color: #c82333;
-  border-color: #bd2130;
+  background: #c23c4a;
+  border-color: #c23c4a;
 }
 
 .admin-action-btn {
@@ -4064,28 +4372,28 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 }
 
 .admin-action-edit:hover:not(:disabled) {
-  background-color: #1677ff;
-  border-color: #69b1ff;
+  background-color: var(--color-verdigris-500);
+  border-color: var(--color-verdigris-300);
 }
 
 .admin-action-require:hover:not(:disabled) {
-  background-color: #722ed1;
-  border-color: #b37feb;
+  background-color: var(--color-copper-500);
+  border-color: var(--color-copper-300);
 }
 
 .admin-action-deactivate:hover:not(:disabled) {
-  background-color: #d48806;
-  border-color: #ffd666;
+  background-color: var(--color-warning);
+  border-color: var(--color-brass-300);
 }
 
 .admin-action-reactivate:hover:not(:disabled) {
-  background-color: #389e0d;
-  border-color: #95de64;
+  background-color: var(--color-success);
+  border-color: var(--color-verdigris-300);
 }
 
 .admin-action-delete:hover:not(:disabled) {
-  background-color: #cf1322;
-  border-color: #ff7875;
+  background-color: var(--color-danger);
+  border-color: #f0a3ac;
 }
 
 .admin-action-btn:disabled {
@@ -4106,10 +4414,11 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 .message-individual-list {
   max-height: 220px;
   overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 8px 12px;
-  background: #fafafa;
+  background: var(--color-surface-paper);
+  color: var(--color-text-on-paper);
 }
 
 .message-individual-item {
@@ -4119,6 +4428,7 @@ BULK UPLOAD MODAL AND BUTTON STYLES
   padding: 4px 0;
   font-size: 13px;
   cursor: pointer;
+  color: var(--color-text-on-paper);
 }
 
 .message-individual-item input[type="checkbox"] {
@@ -4127,31 +4437,31 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 }
 
 .message-recipient-count {
-  background: #e6f7ff;
-  border: 1px solid #91d5ff;
-  border-radius: 4px;
+  background: var(--color-surface-paper-elevated);
+  border: var(--border-width-thin) solid var(--color-verdigris-500);
+  border-radius: var(--radius-md);
   padding: 8px 12px;
   margin-bottom: 12px;
   font-size: 13px;
-  color: #0050b3;
+  color: var(--color-text-on-paper);
 }
 
 .message-body-textarea {
   width: 100%;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   resize: vertical;
-  color: #333;
+  color: var(--color-text-on-paper);
 }
 
 .message-hint {
   margin: 0 0 6px;
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .class-modal-large {
@@ -4160,7 +4470,7 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 
 .class-manager-description {
   margin-bottom: 15px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .class-manager-form-row {
@@ -4497,22 +4807,23 @@ ACCESS CONTROL TREE STYLING
   font-size: 14px;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  border-radius: var(--radius-sm);
   padding: 10px;
-  background-color: #f9f9f9;
+  background-color: var(--color-surface-paper);
+  color: var(--color-text-on-paper);
 }
 
 .access-control-header {
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-brass-700);
 }
 
 .access-control-header h4 {
   margin: 0 0 5px 0;
   font-size: 16px;
-  color: #333;
+  color: var(--color-text-on-paper);
 }
 
 .access-tree {
@@ -4521,28 +4832,29 @@ ACCESS CONTROL TREE STYLING
 
 .subject-node {
   margin-bottom: 8px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background-color: #fff;
+  border: 1px solid var(--color-brass-700);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-paper-elevated);
 }
 
 .subject-header {
   display: flex;
   align-items: center;
   padding: 8px 10px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #e0e0e0;
+  background-color: var(--color-surface-paper-elevated);
+  border-bottom: 1px solid var(--color-brass-700);
 }
 
 .expand-button {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   background: none;
   border: none;
+  box-shadow: none;
   cursor: pointer;
   padding: 0;
   margin-right: 8px;
@@ -4552,7 +4864,13 @@ ACCESS CONTROL TREE STYLING
 }
 
 .expand-button:hover {
-  background-color: #e0e0e0;
+  background-color: var(--color-brass-100);
+  transform: none;
+}
+
+.expand-button:focus-visible {
+  outline: 3px solid var(--color-focus-ring-on-paper);
+  outline-offset: 2px;
 }
 
 .tree-checkbox-label {
@@ -4576,17 +4894,17 @@ ACCESS CONTROL TREE STYLING
 
 .tree-checkbox-label strong {
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-on-paper);
 }
 
 .topics-container {
-  background-color: #fff;
-  border-top: 1px solid #e0e0e0;
+  background-color: var(--color-surface-paper);
+  border-top: 1px solid var(--color-brass-700);
 }
 
 .topic-node {
   padding: 6px 10px 6px 35px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(138, 100, 36, 0.3);
   transition: background-color 0.2s;
 }
 
@@ -4595,12 +4913,12 @@ ACCESS CONTROL TREE STYLING
 }
 
 .topic-node:hover {
-  background-color: #f8f8f8;
+  background-color: var(--color-brass-100);
 }
 
 .topic-node .tree-checkbox-label {
   font-weight: normal;
-  color: #555;
+  color: var(--color-text-on-paper-muted);
 }
 
 /* Loading and empty states */
@@ -4608,7 +4926,7 @@ ACCESS CONTROL TREE STYLING
 .access-tree-empty {
   padding: 20px;
   text-align: center;
-  color: #666;
+  color: var(--color-text-on-paper-muted);
   font-style: italic;
 }
 
@@ -4621,13 +4939,13 @@ ACCESS CONTROL TREE STYLING
 
 /* Ensure checkboxes are properly aligned */
 .tree-checkbox-label input[type="checkbox"]:indeterminate {
-  background-color: #646cff;
-  border-color: #646cff;
+  background-color: var(--color-brass-500);
+  border-color: var(--color-brass-500);
 }
 
 .tree-checkbox-label input[type="checkbox"]:checked {
-  background-color: #646cff;
-  border-color: #646cff;
+  background-color: var(--color-brass-500);
+  border-color: var(--color-brass-500);
 }
 
 /* Admin modal adjustments for access control */
@@ -4660,7 +4978,7 @@ ANALYTICS MODULE STYLING
 }
 
 .analytics-header h2 {
-  color: #646cff;
+  color: var(--color-brass-500);
   margin-bottom: 10px;
 }
 
@@ -4708,17 +5026,17 @@ ANALYTICS MODULE STYLING
 .view-selector label,
 .filter-selector label {
   font-weight: 500;
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
 .view-selector select,
 .filter-selector select {
   padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background-color: #2a2a2a;
-  color: #fff;
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-primary);
   min-width: 200px;
 }
 
@@ -4741,26 +5059,26 @@ ANALYTICS MODULE STYLING
 .filter-input {
   width: 100%;
   padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  background-color: #ffffff;
-  color: #000000;
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-brass-700);
+  background-color: var(--color-surface-paper);
+  color: var(--color-text-on-paper);
   font-size: 14px;
   transition: border-color 0.3s ease;
 }
 
-.filter-input:focus {
-  outline: none;
-  border-color: #646cff;
-  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+.filter-input:focus-visible {
+  outline: 3px solid var(--color-focus-ring-on-paper);
+  outline-offset: 1px;
+  border-color: var(--color-brass-500);
 }
 
 .filter-input::placeholder {
-  color: #666;
+  color: var(--color-text-on-paper-muted);
 }
 
 .filter-info {
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 12px;
   margin-top: 5px;
   font-style: italic;
@@ -4803,8 +5121,8 @@ ANALYTICS MODULE STYLING
 }
 
 .result-item.selected {
-  background-color: rgba(100, 108, 255, 0.2);
-  border-left: 3px solid #646cff;
+  background-color: rgba(201, 154, 59, 0.2);
+  border-left: 3px solid var(--color-brass-500);
 }
 
 .result-item:last-child {
@@ -4851,7 +5169,7 @@ ANALYTICS MODULE STYLING
 }
 
 .load-analytics-btn {
-  background-color: #646cff;
+  background-color: var(--color-brass-500);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -4862,7 +5180,7 @@ ANALYTICS MODULE STYLING
 }
 
 .load-analytics-btn:hover:not(:disabled) {
-  background-color: #535bf2;
+  background-color: var(--color-brass-600);
 }
 
 .load-analytics-btn:disabled {
@@ -4879,7 +5197,7 @@ ANALYTICS MODULE STYLING
 }
 
 .analytics-section h3 {
-  color: #646cff;
+  color: var(--color-brass-500);
   margin-bottom: 20px;
   font-size: 24px;
 }
@@ -5168,8 +5486,9 @@ ANALYTICS MODULE STYLING
 
 /* Progress Chart Container */
 .progress-chart-container {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--color-surface-paper);
+  border: var(--border-width-base) solid var(--color-brass-700);
+  border-radius: var(--radius-md);
   padding: 20px;
   margin: 10px 0;
   max-width: 100%;
@@ -5183,14 +5502,16 @@ ANALYTICS MODULE STYLING
   border-radius: 4px;
 }
 
-/* Chart Legend */
+/* Chart Legend — sits on the same parchment card as the canvas, so it keeps
+   dark-on-light (paper) text tokens rather than the app's dark-ground ones. */
 .chart-legend {
   margin-top: 20px;
   text-align: center;
   padding: 15px;
-  background: #f8f9fa;
+  background: var(--color-surface-paper-elevated);
   border-radius: 6px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--color-brass-700);
+  color: var(--color-text-on-paper);
 }
 
 .legend-items {
@@ -5215,7 +5536,7 @@ ANALYTICS MODULE STYLING
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   font-size: 14px;
-  color: #333;
+  color: var(--color-text-on-paper);
 }
 
 /************************************************

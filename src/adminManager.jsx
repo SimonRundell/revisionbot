@@ -1044,29 +1044,29 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 width={'99%'}>
                 
                 <div className="admin-actions-bar">
-                    <button 
+                    <button
                         onClick={showAddUserModal}
                         className="bulk-upload-button rightgap"
                     >
-                        ➕ Add User
+                        <span aria-hidden="true">➕</span> Add User
                     </button>
-                    <button 
+                    <button
                         onClick={showBulkUploadModal}
                         className="bulk-upload-button rightgap"
                     >
-                        📤 Bulk Upload Students
+                        <span aria-hidden="true">📤</span> Bulk Upload Students
                     </button>
                     <button
                         onClick={openClassModal}
                         className="bulk-upload-button rightgap"
                     >
-                        🏫 Manage Classes
+                        <span aria-hidden="true">🏫</span> Manage Classes
                     </button>
                     <button
                         onClick={() => setMessageModalVisible(true)}
                         className="bulk-upload-button rightgap"
                     >
-                        📧 Message Users
+                        <span aria-hidden="true">📧</span> Message Users
                     </button>
                     <span className="admin-actions-description">
                         Add individual users manually, upload multiple student accounts from CSV file, manage class options, or send messages to groups and individuals
@@ -1077,8 +1077,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 <div className="search-filters">
                     <div className="filter-row">
                         <div className="filter-group">
-                            <label>Search Students/Admins:</label>
+                            <label htmlFor="admin-user-search">Search Students/Admins:</label>
                             <input
+                                id="admin-user-search"
                                 type="text"
                                 className="filter-input"
                                 placeholder="Search by name or email..."
@@ -1087,8 +1088,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             />
                         </div>
                         <div className="filter-group">
-                            <label>Filter by Department/Class:</label>
+                            <label htmlFor="admin-department-filter">Filter by Department/Class:</label>
                             <input
+                                id="admin-department-filter"
                                 type="text"
                                 className="filter-input"
                                 placeholder="Search by class/department..."
@@ -1097,8 +1099,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             />
                         </div>
                         <div className="filter-group">
-                            <label>User Type:</label>
+                            <label htmlFor="admin-user-type-filter">User Type:</label>
                             <select
+                                id="admin-user-type-filter"
                                 className="filter-select"
                                 value={selectedFilterType}
                                 onChange={(e) => setSelectedFilterType(e.target.value)}
@@ -1109,8 +1112,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                             </select>
                         </div>
                         <div className="filter-group">
-                            <label>Status:</label>
+                            <label htmlFor="admin-status-filter">Status:</label>
                             <select
+                                id="admin-status-filter"
                                 className="filter-select"
                                 value={selectedStatusFilter}
                                 onChange={(e) => setSelectedStatusFilter(e.target.value)}
@@ -1147,15 +1151,15 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                 <table border="1" className="admin-user-table">
                     <thead>
                         <tr>
-                            <th className="col-id">ID</th>
-                            <th>User Name</th>
-                            <th>Email</th>
-                            <th>Class</th>
-                            <th className="col-locale">Locale</th>
-                            <th className="col-avatar">Avatar</th>
-                            <th>Level</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th className="col-id" scope="col">ID</th>
+                            <th scope="col">User Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Class</th>
+                            <th className="col-locale" scope="col">Locale</th>
+                            <th className="col-avatar" scope="col">Avatar</th>
+                            <th scope="col">Level</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1203,12 +1207,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {deleteModalVisible && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={handleDeleteCancel}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Confirm Delete</h2>
                         <p>
                             Are you sure you want to delete user <strong>{userToDelete?.userName}</strong>?
@@ -1236,12 +1242,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {deactivateModalVisible && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span
+                        <button
+                            type="button"
                             className="close"
                             onClick={handleDeactivateCancel}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Confirm Deactivation</h2>
                         <p>
                             Are you sure you want to deactivate user <strong>{userToDeactivate?.userName}</strong>?
@@ -1269,12 +1277,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {reactivateModalVisible && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span
+                        <button
+                            type="button"
                             className="close"
                             onClick={handleReactivateCancel}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Confirm Reactivation</h2>
                         <p>
                             Are you sure you want to reactivate user <strong>{userToReactivate?.userName}</strong>?
@@ -1302,21 +1312,24 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {addModalVisible && (
                 <div className="modal">
                     <div className="modal-content edit-modal-large">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={handleAddCancel}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Add New User</h2>
                         <table border="1" className="edit-modal-table">
                             <tbody>
                                 <tr>
-                                    <td>Name *</td>
+                                    <td><label htmlFor="add-user-name">Name *</label></td>
                                     <td>
-                                        <input 
-                                            type="text" 
-                                            value={addForm.name} 
+                                        <input
+                                            id="add-user-name"
+                                            type="text"
+                                            value={addForm.name}
                                             onChange={e => setAddForm(prev => ({ ...prev, name: e.target.value }))}
                                             className="full-width-input"
                                             placeholder="Enter full name"
@@ -1324,11 +1337,12 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Email/Login *</td>
+                                    <td><label htmlFor="add-user-email">Email/Login *</label></td>
                                     <td>
-                                        <input 
-                                            type="email" 
-                                            value={addForm.email} 
+                                        <input
+                                            id="add-user-email"
+                                            type="email"
+                                            value={addForm.email}
                                             onChange={e => setAddForm(prev => ({ ...prev, email: e.target.value }))}
                                             className="full-width-input"
                                             placeholder="Enter email address"
@@ -1336,22 +1350,25 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Password *</td>
+                                    <td><label htmlFor="add-user-password">Password *</label></td>
                                     <td>
-                                        <input 
-                                            type="password" 
-                                            value={addForm.password} 
+                                        <input
+                                            id="add-user-password"
+                                            type="password"
+                                            value={addForm.password}
                                             onChange={e => setAddForm(prev => ({ ...prev, password: e.target.value }))}
                                             className="full-width-input"
                                             placeholder="Enter password"
+                                            autoComplete="new-password"
                                         />
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Class</td>
+                                    <td><label htmlFor="add-user-class">Class</label></td>
                                     <td>
                                         {classes.length > 0 ? (
                                             <select
+                                                id="add-user-class"
                                                 value={addForm.department}
                                                 onChange={e => setAddForm(prev => ({ ...prev, department: e.target.value }))}
                                                 className="full-width-input"
@@ -1362,9 +1379,10 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                                 ))}
                                             </select>
                                         ) : (
-                                            <input 
-                                                type="text" 
-                                                value={addForm.department} 
+                                            <input
+                                                id="add-user-class"
+                                                type="text"
+                                                value={addForm.department}
                                                 onChange={e => setAddForm(prev => ({ ...prev, department: e.target.value }))}
                                                 className="full-width-input"
                                                 placeholder="Enter class/department"
@@ -1441,51 +1459,57 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {editModalVisible && (
                 <div className="modal">
                     <div className="modal-content edit-modal-large">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={handleEditCancel}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Edit User: {userToEdit?.userName}</h2>
                         <table border="1" className="edit-modal-table">
                             <tbody>
                                 <tr>
-                                    <td>Name</td>
+                                    <td><label htmlFor="edit-user-name">Name</label></td>
                                     <td>
-                                        <input 
-                                            type="text" 
-                                            value={editForm.name} 
+                                        <input
+                                            id="edit-user-name"
+                                            type="text"
+                                            value={editForm.name}
                                             onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
                                             className="full-width-input"
                                         />
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Email/Login</td>
+                                    <td><label htmlFor="edit-user-email">Email/Login</label></td>
                                     <td>
-                                        <input 
-                                            type="text" 
-                                            value={editForm.email} 
+                                        <input
+                                            id="edit-user-email"
+                                            type="text"
+                                            value={editForm.email}
                                             onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))}
                                             className="full-width-input"
                                         />
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>New Password</td>
+                                    <td><label htmlFor="edit-user-password">New Password</label></td>
                                     <td>
-                                        <input 
-                                            type="password" 
-                                            value={editForm.password} 
+                                        <input
+                                            id="edit-user-password"
+                                            type="password"
+                                            value={editForm.password}
                                             onChange={e => setEditForm(prev => ({ ...prev, password: e.target.value }))}
                                             placeholder="Leave blank to keep current password"
                                             className="full-width-input"
+                                            autoComplete="new-password"
                                         />
                                         {editForm.password.trim() !== '' && (
                                             <label className="admin-checkbox-container" style={{marginTop: '10px'}}>
-                                                <span className="leftgap"><input 
-                                                    type="checkbox" 
+                                                <span className="leftgap"><input
+                                                    type="checkbox"
                                                     checked={editForm.sendCredentials}
                                                     onChange={e => setEditForm(prev => ({ ...prev, sendCredentials: e.target.checked }))}
                                                 /></span>
@@ -1495,10 +1519,11 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Class</td>
+                                    <td><label htmlFor="edit-user-class">Class</label></td>
                                     <td>
                                         {classes.length > 0 ? (
                                             <select
+                                                id="edit-user-class"
                                                 value={editForm.department}
                                                 onChange={e => setEditForm(prev => ({ ...prev, department: e.target.value }))}
                                                 className="full-width-input"
@@ -1509,9 +1534,10 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                                 ))}
                                             </select>
                                         ) : (
-                                            <input 
-                                                type="text" 
-                                                value={editForm.department} 
+                                            <input
+                                                id="edit-user-class"
+                                                type="text"
+                                                value={editForm.department}
                                                 onChange={e => setEditForm(prev => ({ ...prev, department: e.target.value }))}
                                                 className="full-width-input"
                                             />
@@ -1587,12 +1613,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {classModalVisible && (
                 <div className="modal">
                     <div className="modal-content class-modal-large">
-                        <span
+                        <button
+                            type="button"
                             className="close"
                             onClick={closeClassModal}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Manage Classes</h2>
                         <p className="class-manager-description">
                             Create and maintain the class list used for manual student class assignment.
@@ -1604,6 +1632,7 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                 value={classFormName}
                                 onChange={(event) => setClassFormName(event.target.value)}
                                 placeholder="Enter class name"
+                                aria-label="Class name"
                                 className="full-width-input"
                             />
                             <button onClick={handleSaveClass} className="leftgap">
@@ -1619,9 +1648,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                         <table border="1" className="edit-modal-table topgap">
                             <thead>
                                 <tr>
-                                    <th>Class</th>
-                                    <th>Assigned Users</th>
-                                    <th>Actions</th>
+                                    <th scope="col">Class</th>
+                                    <th scope="col">Assigned Users</th>
+                                    <th scope="col">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1659,12 +1688,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {deleteClassModalVisible && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span
+                        <button
+                            type="button"
                             className="close"
                             onClick={handleDeleteClassCancel}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Confirm Class Deletion</h2>
                         <p>
                             Are you sure you want to delete class <strong>{classToDelete?.className}</strong>?
@@ -1695,12 +1726,14 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {bulkUploadModalVisible && (
                 <div className="modal">
                     <div className="modal-content bulk-upload-modal">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={closeBulkUploadModal}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>📤 Bulk Upload Students</h2>
                         
                         <div className="bulk-upload-format-section">
@@ -1807,12 +1840,13 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
             {messageModalVisible && (
                 <div className="modal">
                     <div className="modal-content message-modal">
-                        <span className="close" onClick={closeMessageModal}>&times;</span>
+                        <button type="button" className="close" onClick={closeMessageModal} aria-label="Close">&times;</button>
                         <h2>📧 Message Users</h2>
 
                         <div className="form-group">
-                            <label><strong>Send to:</strong></label>
+                            <label htmlFor="message-target-type"><strong>Send to:</strong></label>
                             <select
+                                id="message-target-type"
                                 className="filter-select"
                                 value={messageTargetType}
                                 onChange={(e) => {
@@ -1830,8 +1864,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
 
                         {messageTargetType === 'by-class' && (
                             <div className="form-group">
-                                <label><strong>Class:</strong></label>
+                                <label htmlFor="message-target-class"><strong>Class:</strong></label>
                                 <select
+                                    id="message-target-class"
                                     className="filter-select"
                                     value={messageTargetClass}
                                     onChange={(e) => setMessageTargetClass(e.target.value)}
@@ -1846,8 +1881,8 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
 
                         {messageTargetType === 'individuals' && (
                             <div className="form-group">
-                                <label><strong>Select recipients:</strong></label>
-                                <div className="message-individual-list">
+                                <label id="message-recipients-label"><strong>Select recipients:</strong></label>
+                                <div className="message-individual-list" role="group" aria-labelledby="message-recipients-label">
                                     {users.filter(u => Number(u.is_active) !== 0).map(u => (
                                         <label key={u.id} className="message-individual-item">
                                             <input
@@ -1873,8 +1908,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                         </div>
 
                         <div className="form-group">
-                            <label><strong>Subject:</strong></label>
+                            <label htmlFor="message-subject"><strong>Subject:</strong></label>
                             <input
+                                id="message-subject"
                                 type="text"
                                 className="filter-input"
                                 value={messageSubject}
@@ -1884,9 +1920,11 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                         </div>
 
                         <div className="form-group">
-                            <label><strong>Message:</strong></label>
-                            <p className="message-hint">Use <code>{'{{NAME}}'}</code> to personalise with each recipient&apos;s name.</p>
+                            <label htmlFor="message-body"><strong>Message:</strong></label>
+                            <p className="message-hint" id="message-body-hint">Use <code>{'{{NAME}}'}</code> to personalise with each recipient&apos;s name.</p>
                             <textarea
+                                id="message-body"
+                                aria-describedby="message-body-hint"
                                 className="message-body-textarea"
                                 rows={8}
                                 value={messageBody}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Spin } from 'antd';
 
@@ -28,6 +28,61 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
     const [pastResponses, setPastResponses] = useState([]);
     const [selectedResponse, setSelectedResponse] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const reviewModalRef = useRef(null);
+    const lastFocusedElementRef = useRef(null);
+
+    /**
+     * Focus management for the past-answer review modal — same pattern as
+     * StudentInterface's answer modal (focus on open, Tab trap, Escape to
+     * close, restore focus to the triggering list item on close).
+     */
+    useEffect(() => {
+        if (!selectedResponse) {
+            return;
+        }
+
+        const modalNode = reviewModalRef.current;
+        modalNode?.focus();
+
+        const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setSelectedResponse(null);
+                return;
+            }
+            if (event.key !== 'Tab' || !modalNode) {
+                return;
+            }
+
+            const focusable = Array.from(modalNode.querySelectorAll(focusableSelector));
+            if (focusable.length === 0) {
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            lastFocusedElementRef.current?.focus?.();
+        };
+    }, [selectedResponse]);
+
+    const handleSelectResponse = (response) => {
+        lastFocusedElementRef.current = document.activeElement;
+        setSelectedResponse(response);
+    };
 
     /**
      * Load past responses for the current user from the API
@@ -79,8 +134,9 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
 
             <div className="past-answers-section">
                 {isLoading ? (
-                    <div className="past-answers-loading">
+                    <div className="past-answers-loading" role="status" aria-live="polite">
                         <Spin size="large" />
+                        <span className="sr-only">Loading past answers…</span>
                     </div>
                 ) : (
                     <>
@@ -95,9 +151,18 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                     <div
                                         key={response.responseId}
                                         className="past-response-item"
-                                        onClick={() => setSelectedResponse(response)}
+                                        onClick={() => handleSelectResponse(response)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                handleSelectResponse(response);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={`Response ${index + 1}: ${response.subjectName} > ${response.topicName}`}
                                     >
-                                        <div className="response-number">#{index + 1}</div>
+                                        <div className="response-number" aria-hidden="true">#{index + 1}</div>
                                         <div className="response-preview">
                                             <div className="response-subject-topic">
                                                 {response.subjectName} &gt; {response.topicName}
@@ -117,7 +182,7 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="response-arrow">&rarr;</div>
+                                        <div className="response-arrow" aria-hidden="true">&rarr;</div>
                                     </div>
                                 ))}
                             </div>
@@ -127,10 +192,10 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
             </div>
 
             {selectedResponse && (
-                <div className="answer-modal">
-                    <div className="answer-modal-content">
+                <div className="answer-modal" role="dialog" aria-modal="true" aria-labelledby="review-answer-modal-title">
+                    <div className="answer-modal-content" ref={reviewModalRef} tabIndex={-1}>
                         <div className="answer-modal-header">
-                            <h2>Review Past Answer</h2>
+                            <h2 id="review-answer-modal-title">Review Past Answer</h2>
                             <button
                                 className="close-modal"
                                 onClick={() => setSelectedResponse(null)}
@@ -191,8 +256,8 @@ function PastAnswersViewer ({userId, currentUser, config, setSendErrorMessage, s
                                             <span
                                                 className="teacher-rating-display"
                                                 style={{
-                                                    color: selectedResponse.teacherRating === 'R' ? '#dc3545' :
-                                                        selectedResponse.teacherRating === 'A' ? '#ffc107' : '#28a745'
+                                                    color: selectedResponse.teacherRating === 'R' ? 'var(--color-danger)' :
+                                                        selectedResponse.teacherRating === 'A' ? 'var(--color-warning)' : 'var(--color-success)'
                                                 }}
                                             >
                                                 ({selectedResponse.teacherRating === 'R'

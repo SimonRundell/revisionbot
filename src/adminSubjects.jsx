@@ -1046,17 +1046,18 @@ const handleImportFile = async (event) => {
 
     return (
         <>
-        {isLoading && <div className="central-overlay-spinner">
-                <div className="spinner-text">&nbsp;&nbsp;
+        {isLoading && <div className="central-overlay-spinner" role="status" aria-live="polite">
+                <div className="spinner-text">
                     <Spin size="large" />
                     Processing...
                 </div>
             </div>}
             <div className="quiz-builder-header">
                 <h2>Quiz Builder</h2>
-                <button 
+                <button
                     onClick={toggleStatistics}
                     className="statistics-toggle-btn"
+                    aria-expanded={showStatistics}
                 >
                     {showStatistics ? 'Hide Statistics' : 'Show Statistics'}
                 </button>
@@ -1271,19 +1272,21 @@ const handleImportFile = async (event) => {
                                 <div className="question-item-content">
                                     {!showBulkActions && (
                                         <div className="reorder-controls">
-                                            <button 
+                                            <button
                                                 onClick={() => handleMoveUp(index)}
                                                 className="reorder-btn"
                                                 disabled={index === 0}
                                                 title="Move up"
+                                                aria-label={`Move question ${index + 1} up`}
                                             >
                                                 ↑
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleMoveDown(index)}
                                                 className="reorder-btn"
                                                 disabled={index === questions.length - 1}
                                                 title="Move down"
+                                                aria-label={`Move question ${index + 1} down`}
                                             >
                                                 ↓
                                             </button>
@@ -1295,26 +1298,38 @@ const handleImportFile = async (event) => {
                                             checked={selectedQuestions.includes(question.id)}
                                             onChange={(e) => handleQuestionSelect(question.id, e.target.checked)}
                                             className="question-checkbox"
+                                            aria-label={`Select question ${index + 1} for bulk action`}
                                         />
                                     )}
-                                    <div 
+                                    <div
                                         onClick={() => !showBulkActions && handleEditQuestion(question)}
+                                        onKeyDown={(event) => {
+                                            if (showBulkActions) return;
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                handleEditQuestion(question);
+                                            }
+                                        }}
+                                        role={showBulkActions ? undefined : 'button'}
+                                        tabIndex={showBulkActions ? undefined : 0}
                                         className={`question-link ${showBulkActions ? 'bulk-mode' : ''}`}
                                         title={showBulkActions ? 'Bulk selection mode' : 'Click to edit question'}
+                                        aria-label={showBulkActions ? undefined : `Edit question ${index + 1}`}
                                     >
                                         <span className="question-id">Q{question.id}</span>
                                         <RichTextContent value={firstthreesentances(question.question)} className="question-text question-text-preview" />
                                     </div>
                                     {!showBulkActions && (
-                                        <button 
+                                        <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleDeleteQuestion(question);
                                             }}
                                             className="delete-btn"
                                             title="Delete question"
+                                            aria-label={`Delete question ${index + 1}`}
                                         >
-                                            🗑️
+                                            <span aria-hidden="true">🗑️</span>
                                         </button>
                                     )}
                                 </div>
@@ -1351,15 +1366,17 @@ const handleImportFile = async (event) => {
             {showSubjectModal && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={() => {
                                 setShowSubjectModal(false);
                                 setNewSubject('');
                             }}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Create New Subject</h2>
                         <div className="subject-dropdown-container">
                             <label htmlFor="new-subject">Subject Name:</label>
@@ -1394,16 +1411,18 @@ const handleImportFile = async (event) => {
             {showTopicModal && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={() => {
                                 setShowTopicModal(false);
                                 setNewTopic('');
                                 setNewTopicSubject('');
                             }}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Create New Topic</h2>
                         <div className="subject-dropdown-container">
                             <label htmlFor="new-topic-subject">Parent Subject:</label>
@@ -1455,8 +1474,9 @@ const handleImportFile = async (event) => {
             {showQuestionModal && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={() => {
                                 setShowQuestionModal(false);
                                 setNewQuestion('');
@@ -1464,9 +1484,10 @@ const handleImportFile = async (event) => {
                                 setNewQuestionMarkScheme('');
                                 setNewQuestionFiles([]);
                             }}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Create New Question</h2>
                         <div className="subject-dropdown-container">
                             <label htmlFor="new-question-topic">Parent Topic:</label>
@@ -1584,8 +1605,9 @@ const handleImportFile = async (event) => {
             {showEditQuestionModal && editingQuestion && (
                 <div className="modal">
                     <div className="modal-content">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={() => {
                                 setShowEditQuestionModal(false);
                                 setEditingQuestion(null);
@@ -1594,9 +1616,10 @@ const handleImportFile = async (event) => {
                                 setEditQuestionMarkScheme('');
                                 setEditQuestionFiles([]);
                             }}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Edit Question Number: {editingQuestion.id}</h2>
                         <div className="subject-dropdown-container">
                             <label htmlFor="edit-question-topic">Parent Topic:</label>
@@ -1715,12 +1738,14 @@ const handleImportFile = async (event) => {
             {showBulkQuestionModal && (
                 <div className="modal">
                     <div className="modal-content bulk-upload-modal">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={closeBulkQuestionModal}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>📥 Bulk Upload Questions</h2>
 
                         <div className="bulk-upload-format-section">
@@ -1801,15 +1826,17 @@ const handleImportFile = async (event) => {
             {showDeleteModal && deleteTarget && (
                 <div className="modal">
                     <div className="modal-content delete-modal">
-                        <span 
-                            className="close" 
+                        <button
+                            type="button"
+                            className="close"
                             onClick={() => {
                                 setShowDeleteModal(false);
                                 setDeleteTarget(null);
                             }}
+                            aria-label="Close"
                         >
                             &times;
-                        </span>
+                        </button>
                         <h2>Confirm Delete</h2>
                         <div className="delete-warning">
                             <p>⚠️ Are you sure you want to delete this {deleteTarget.type}?</p>

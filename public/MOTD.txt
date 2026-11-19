@@ -4,5 +4,6 @@
   <p>Recent changes and fixes include:</p>
   <ul>
   <li>Improved security</li>
+  <li>WCAG 2.1 AA Review and changes to Semantic elements</li>
   </ul>
   </div>

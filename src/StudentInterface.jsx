@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Spin } from 'antd';
 import { handleApiCall } from './utils/apiHelpers';
@@ -46,7 +46,57 @@ function StudentInterface ({ userId,
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId] = useState(() => 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11));
     const [answeredQuestionIds, setAnsweredQuestionIds] = useState([]);
-    
+    const answerModalRef = useRef(null);
+    const lastFocusedElementRef = useRef(null);
+
+    /**
+     * Focus management for the answer modal: focuses the dialog when it opens,
+     * traps Tab navigation inside it, closes on Escape, and restores focus to
+     * whatever triggered it on close (WCAG 2.1 AA 2.1.2 / 2.4.3).
+     */
+    useEffect(() => {
+        if (!showAnswerModal) {
+            return;
+        }
+
+        const modalNode = answerModalRef.current;
+        modalNode?.focus();
+
+        const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setShowAnswerModal(false);
+                return;
+            }
+            if (event.key !== 'Tab' || !modalNode) {
+                return;
+            }
+
+            const focusable = Array.from(modalNode.querySelectorAll(focusableSelector));
+            if (focusable.length === 0) {
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            lastFocusedElementRef.current?.focus?.();
+        };
+    }, [showAnswerModal]);
+
     /**
      * Parse user access data from JSON string or return object directly
      * Handles both string JSON and object formats with error recovery
@@ -315,6 +365,7 @@ function StudentInterface ({ userId,
      * @param {Object} question - The selected question object containing id, question text, attachments, etc.
      */
     const handleQuestionSelect = (question) => {
+        lastFocusedElementRef.current = document.activeElement;
         setSelectedQuestion(question);
         setStudentAnswer('');
         setStudentGraphic(null);
@@ -503,11 +554,18 @@ function StudentInterface ({ userId,
             </div>
         `;
         
+        // This modal is built with raw DOM (not React) because it must outlive
+        // the answer-modal's own unmount; give it the same dialog semantics,
+        // focus trap and Escape handling as the React-driven modals.
+        feedbackModal.setAttribute('role', 'dialog');
+        feedbackModal.setAttribute('aria-modal', 'true');
+        feedbackModal.setAttribute('aria-labelledby', 'ai-feedback-heading');
+
         feedbackModal.innerHTML = `
-            <div class="ai-feedback-content">
+            <div class="ai-feedback-content" tabindex="-1">
                 <div class="ai-feedback-header">
-                    <h2>AI Assessment & Feedback</h2>
-                    <button class="close-feedback" id="close-feedback-btn">×</button>
+                    <h2 id="ai-feedback-heading">AI Assessment &amp; Feedback</h2>
+                    <button class="close-feedback" id="close-feedback-btn" aria-label="Close">×</button>
                 </div>
                 <div class="ai-feedback-body">
                     ${questionSection}
@@ -522,24 +580,63 @@ function StudentInterface ({ userId,
                 </div>
             </div>
         `;
+        const previouslyFocusedElement = document.activeElement;
         document.body.appendChild(feedbackModal);
 
         // Add event listeners to properly handle modal closing
         const closeBtn = feedbackModal.querySelector('#close-feedback-btn');
         const continueBtn = feedbackModal.querySelector('#continue-studying-btn');
-        
+        const contentEl = feedbackModal.querySelector('.ai-feedback-content');
+
         /**
          * Handle modal close action and state cleanup
          * Removes modal from DOM and resets component state
          */
         const handleClose = () => {
+            document.removeEventListener('keydown', handleKeyDown);
             feedbackModal.remove();
             setShowAnswerModal(false); // Properly reset the state
             setSelectedQuestion(null); // Reset selected question
             setStudentAnswer(''); // Reset answer
             setStudentGraphic(null); // Reset graphic
             setGraphicPreview(null); // Reset graphic preview
+            previouslyFocusedElement?.focus?.();
         };
+
+        const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+        /**
+         * Trap Tab navigation inside the modal and close it on Escape
+         * (WCAG 2.1 AA 2.1.2 / 2.4.3 — this modal lives outside React's tree).
+         */
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                handleClose();
+                return;
+            }
+            if (event.key !== 'Tab') {
+                return;
+            }
+
+            const focusable = Array.from(feedbackModal.querySelectorAll(focusableSelector));
+            if (focusable.length === 0) {
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        contentEl.focus();
 
         closeBtn.addEventListener('click', handleClose);
         continueBtn.addEventListener('click', handleClose);
@@ -562,8 +659,8 @@ function StudentInterface ({ userId,
     return (
         <>
             {isLoadingAI && (
-                <div className="central-overlay-spinner">
-                    <div className="spinner-text">&nbsp;&nbsp;
+                <div className="central-overlay-spinner" role="status" aria-live="polite">
+                    <div className="spinner-text">
                         <Spin size="large" />
                         Checking answer with AI...
                     </div>
@@ -573,10 +670,15 @@ function StudentInterface ({ userId,
             <div className="student-interface">
                 <div className="interface-header">
                     <h2>Practice Questions</h2>
-                    
+
                 </div>
 
-                {isLoading && <Spin size="large" />}
+                {isLoading && (
+                    <div role="status" aria-live="polite">
+                        <Spin size="large" />
+                        <span className="sr-only">Loading…</span>
+                    </div>
+                )}
 
                 <div className="subject-dropdown-container">
                     <label htmlFor="subject-select">Subject:</label>
@@ -617,11 +719,11 @@ function StudentInterface ({ userId,
                 {selectedTopic && questions.length > 0 && (
                     <div className="questions-grid">
 
-                        <button 
-                            onClick={handleRandomQuestion} 
+                        <button
+                            onClick={handleRandomQuestion}
                             className="random-question-btn"
                         >
-                            🎲 Random Question
+                            <span aria-hidden="true">🎲</span> Random Question
                         </button>
                         <div className="questions-list">
                             {questions.map((question, index) => {
@@ -632,11 +734,20 @@ function StudentInterface ({ userId,
                                     key={question.id}
                                     className={`question-item ${isAnswered ? 'question-answered' : ''}`}
                                     onClick={() => handleQuestionSelect(question)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            handleQuestionSelect(question);
+                                        }
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
                                     title={isAnswered ? 'You have previously answered this question. Click to retry.' : ''}
+                                    aria-label={`Question ${index + 1}${isAnswered ? ', previously answered' : ''}`}
                                 >
                                     <div className="question-number">
                                         Q{index + 1}
-                                        {isAnswered && <span className="answered-badge">✓</span>}
+                                        {isAnswered && <span className="answered-badge" aria-hidden="true">✓</span>}
                                     </div>
                                     <div className="question-preview">
                                         <div className="question-text">
@@ -644,12 +755,12 @@ function StudentInterface ({ userId,
                                         </div>
                                         {question.attachments != "[]" && (
                                             <div className="attachment-indicator">
-                                                📎 Has attachments
+                                                <span aria-hidden="true">📎</span> Has attachments
                                             </div>
                                         )}
                                     </div>
                                     <div className="question-status">
-                                        <div className="response-arrow">→</div>
+                                        <div className="response-arrow" aria-hidden="true">→</div>
                                     </div>
                                 </div>
                             );
@@ -659,13 +770,14 @@ function StudentInterface ({ userId,
                 )}
 
                 {showAnswerModal && selectedQuestion && (
-                    <div className="answer-modal">
-                        <div className="answer-modal-content">
+                    <div className="answer-modal" role="dialog" aria-modal="true" aria-labelledby="answer-modal-title">
+                        <div className="answer-modal-content" ref={answerModalRef} tabIndex={-1}>
                             <div className="answer-modal-header">
-                                <h2>Answer Question</h2>
+                                <h2 id="answer-modal-title">Answer Question</h2>
                                 <button
                                     className="close-modal"
                                     onClick={() => setShowAnswerModal(false)}
+                                    aria-label="Close"
                                 >
                                     ×
                                 </button>
@@ -698,7 +810,7 @@ function StudentInterface ({ userId,
                                 <div className="graphic-upload-section">
                                     <h3>Upload Graphic (Optional):</h3>
                                     <label className="upload-button">
-                                        📎 Upload Graphic (PNG/JPG/GIF/BMP, max 5MB)
+                                        <span aria-hidden="true">📎</span> Upload Graphic (PNG/JPG/GIF/BMP, max 5MB)
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -706,16 +818,16 @@ function StudentInterface ({ userId,
                                             style={{ display: 'none' }}
                                         />
                                     </label>
-                                    
+
                                     {graphicPreview && (
                                         <div className="graphic-preview">
-                                            <img src={graphicPreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '200px' }} />
-                                            <button 
+                                            <img src={graphicPreview} alt="Preview of your uploaded graphic" style={{ maxWidth: '100%', maxHeight: '200px' }} />
+                                            <button
                                                 className="remove-graphic-btn"
                                                 onClick={handleRemoveGraphic}
                                                 type="button"
                                             >
-                                                ✕ Remove Graphic
+                                                <span aria-hidden="true">✕</span> Remove Graphic
                                             </button>
                                         </div>
                                     )}
