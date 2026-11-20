@@ -79,7 +79,7 @@ function RagSummary({ stats }) {
       </div>
 
       <p className="rag-summary-note">
-        Ratings include your teacher's assessment where available, with AI estimates for responses not yet reviewed.
+        Ratings include your teacher&apos;s assessment where available, with AI estimates for responses not yet reviewed.
       </p>
     </div>
   );
@@ -272,7 +272,7 @@ function StudentProgressChart({ data }) {
           <div><strong>Weeks Tracked:</strong> {data.weeklyAverages?.length || 0}</div>
         </div>
         {data.progressData.length > 1 && (
-          <p style={{ marginTop: '10px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+          <p style={{ marginTop: '10px', fontSize: '12px', color: 'var(--color-text-on-paper-muted)', fontStyle: 'italic' }}>
             Progress {formatDateRange(data.progressData[0].date, data.progressData[data.progressData.length - 1].date)}
           </p>
         )}

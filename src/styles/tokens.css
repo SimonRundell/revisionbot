@@ -6,9 +6,9 @@
  * Every text/background color pairing below has been checked
  * against the WCAG 2.1 contrast formula before being added here.
  * Ratios are noted inline. Pairings not listed here must be
- * verified individually before use (see graphicdesign.md Phase 7).
- * This file is dark-theme-only by design decision (no light-mode
- * token set) — see graphicdesign.md §8.
+ * verified individually before use.
+ * This file is dark-theme-only by design decision — no light-mode
+ * token set exists, and none is planned.
  ****************************************************************/
 
 :root {
@@ -53,6 +53,14 @@
   --color-warning: #d9a441; /* on ground-primary: 8.4:1 */
   --color-danger: #e0636f;  /* on ground-primary: 5.5:1 */
   --color-info: #7fb0d0;    /* on ground-primary: 8.1:1 */
+
+  /* ---- Status, on-paper variants (for status text sitting on the parchment-ledger
+     table surfaces, not the dark ground — the dark-ground set above is too light
+     to pass 4.5:1 on --color-surface-paper) ---- */
+  --color-success-on-paper: #2f6b3a; /* on surface-paper: 5.3:1 */
+  --color-warning-on-paper: #7a4e0f; /* on surface-paper: 6.0:1 */
+  --color-danger-on-paper: #8c2f39;  /* on surface-paper: 6.7:1 */
+  --color-info-on-paper: #1a6b78;    /* on surface-paper: 5.1:1 */
 
   /* ---- Focus (never color alone; pick the variant that matches the surface behind it) ---- */
   --color-focus-ring: #ffd27a;          /* for controls on dark grounds: 13.2:1 vs ground-primary */

@@ -546,7 +546,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .filter-summary {
   margin-bottom: 10px;
   margin-top: 10px;
-  color: #000000;
+  color: var(--color-text-muted);
   font-size: 0.9em;
 }
 
@@ -670,7 +670,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 /* Data tables render as a parchment ledger — a self-contained light card
    regardless of whether the table sits on the dark page background or
    inside a dark .modal-content, so text color here is explicit, never
-   inherited from the ancestor (see graphicdesign.md Phase 5 notes). */
+   inherited from the ancestor. */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -890,7 +890,7 @@ tbody tr td {
 
 /* Scoped rather than a blanket `.form-group label` rule, in case a future
    screen reuses .form-group on a light/parchment surface where brass text
-   would fail contrast — see graphicdesign.md Phase 5 notes. */
+   would fail contrast. */
 .auth-card .form-group label,
 .login-container .form-group label,
 .modal-content .form-group label {
@@ -1040,15 +1040,24 @@ FILE INPUT STYLING
   height: 0;
 }
 
+/* The real <input type="file"> is visually hidden (0×0) so its own outline
+   would never be seen — forward keyboard focus onto the visible label that
+   triggers it instead (WCAG 2.1 AA 2.4.7). Relies on the label being the
+   hidden input's next sibling, which is how every instance is markup'd. */
+.file-input-hidden:focus-visible + .file-input-button {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
 .file-input-button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: var(--border-width-thin) solid var(--color-brass-700);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
-  color: white;
+  background-color: var(--color-ground-elevated);
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: border-color 0.25s;
   display: inline-block;
@@ -1060,9 +1069,9 @@ FILE INPUT STYLING
   border-color: var(--color-brass-500);
 }
 
-.file-input-button:focus,
 .file-input-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 1px;
 }
 
 /************************************************
@@ -1200,7 +1209,7 @@ ADMIN SUBJECTS STYLING
 }
 
 .remove-file-btn:hover {
-  background-color: #c23c4a;
+  filter: brightness(1.15);
 }
 
 .file-upload-info {
@@ -1426,7 +1435,7 @@ ADMIN SUBJECTS STYLING
 }
 
 .bulk-delete-btn:hover:not(:disabled) {
-  background-color: #c23c4a;
+  filter: brightness(1.15);
 }
 
 .bulk-delete-btn:disabled {
@@ -1563,8 +1572,7 @@ ADMIN SUBJECTS STYLING
 }
 
 .delete-confirm-btn:hover {
-  background-color: #c23c4a;
-  border-color: #c23c4a;
+  filter: brightness(1.15);
 }
 
 /* Reorder Controls */
@@ -1926,7 +1934,7 @@ BACKUP DATA SECTION STYLING
 }
 
 .export-btn:hover {
-  background-color: #3f9672;
+  background-color: var(--color-verdigris-500);
 }
 
 .export-btn:disabled {
@@ -2337,24 +2345,26 @@ LARGE DESKTOP STYLES
   font-style: italic;
 }
 
-/* Analytics badge display */
+/* Analytics badge display — a parchment card, same reasoning as the
+   parchment-ledger tables: a self-contained light surface with explicit
+   on-paper text color regardless of the dark ground behind it. */
 .analytics-badges-section {
   margin-top: 24px;
   padding: 16px;
-  background: #f8f9fa;
+  background: var(--color-surface-paper);
   border-radius: 8px;
-  border: 1px solid #e1e5e9;
+  border: var(--border-width-thin) solid var(--color-brass-700);
 }
 
 .analytics-badges-section h4 {
   margin: 0 0 12px 0;
   font-size: 15px;
-  color: #333;
+  color: var(--color-text-on-paper);
 }
 
 .analytics-badges-loading,
 .analytics-badges-empty {
-  color: #9ca3af;
+  color: var(--color-text-on-paper-muted);
   font-size: 13px;
   margin: 0;
 }
@@ -2382,7 +2392,7 @@ LARGE DESKTOP STYLES
 
 .analytics-badge-label {
   font-size: 11px;
-  color: #555;
+  color: var(--color-text-on-paper-muted);
   line-height: 1.3;
 }
 
@@ -2401,12 +2411,12 @@ LARGE DESKTOP STYLES
 }
 
 .analytics-badges-loading-small {
-  color: #aaa;
+  color: var(--color-text-on-paper-muted);
   font-size: 12px;
 }
 
 .analytics-badges-empty-small {
-  color: #ccc;
+  color: var(--color-text-on-paper-muted);
   font-size: 14px;
 }
 
@@ -2422,7 +2432,7 @@ LARGE DESKTOP STYLES
 }
 
 .sortable-th.sort-active {
-  background-color: rgba(24, 144, 255, 0.18);
+  background-color: rgba(201, 154, 59, 0.22);
 }
 
 .sort-indicator {
@@ -2434,7 +2444,12 @@ LARGE DESKTOP STYLES
 
 .sortable-th.sort-active .sort-indicator {
   opacity: 1;
-  color: #1890ff;
+  color: var(--color-brass-300);
+}
+
+.sortable-th:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: -3px;
 }
 
 
@@ -2603,7 +2618,8 @@ LARGE DESKTOP STYLES
 }
 
 .question-answered:hover {
-  background: #2d3748;
+  background: var(--color-ground-raised);
+  filter: brightness(1.12);
 }
 
 .question-answered .question-number {
@@ -2761,7 +2777,7 @@ ANSWER MODAL STYLING
 
 .attachments-section h4 {
   margin: 0 0 15px 0;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 16px;
 }
 
@@ -2802,7 +2818,7 @@ ANSWER MODAL STYLING
   justify-content: center;
   font-weight: 700;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -2905,12 +2921,12 @@ ANSWER MODAL STYLING
 
 .rich-text-blocked-msg {
   padding: 6px 12px;
-  background: #7f1d1d;
-  color: #fca5a5;
+  background: rgba(224, 99, 111, 0.18);
+  color: var(--color-danger);
   font-size: 13px;
   font-weight: 600;
   text-align: center;
-  border-bottom: 1px solid #991b1b;
+  border-bottom: 1px solid var(--color-danger);
 }
 
 .rich-text-toolbar {
@@ -2977,49 +2993,6 @@ ANSWER MODAL STYLING
 .rich-text-editor .ProseMirror em,
 .rich-text-render em {
   font-style: italic;
-}
-
-.rich-text-editor--light {
-  background: #ffffff;
-  border-color: #d4d4d4;
-}
-
-.rich-text-editor--light .rich-text-toolbar {
-  background: #f6f7fb;
-  border-bottom-color: #d4d4d4;
-}
-
-.rich-text-editor--light .rich-text-toolbar-button {
-  background: #ffffff;
-  border-color: #c7cad8;
-  color: #1f2937;
-}
-
-.rich-text-editor--light .rich-text-toolbar-button:hover:not(:disabled),
-.rich-text-editor--light .rich-text-toolbar-button.is-active {
-  border-color: #4f46e5;
-  background: #eef0ff;
-}
-
-.rich-text-editor--light .ProseMirror {
-  color: #111827;
-}
-
-.rich-text-editor--light .ProseMirror p.is-editor-empty:first-child::before {
-  color: #9ca3af;
-}
-
-.rich-text-editor--light .ProseMirror pre {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-}
-
-.rich-text-editor--light .ProseMirror code {
-  background: rgba(17, 24, 39, 0.1);
-}
-
-.rich-text-editor--light .ProseMirror blockquote {
-  color: #374151;
 }
 
 .rich-text-editor .ProseMirror p.is-editor-empty:first-child::before {
@@ -3409,12 +3382,12 @@ ANSWER MODAL STYLING
 
 .response-metadata p {
   margin: 5px 0;
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
 .response-metadata strong {
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 /************************************************
@@ -4354,8 +4327,7 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 }
 
 .delete-button-danger:hover {
-  background: #c23c4a;
-  border-color: #c23c4a;
+  filter: brightness(1.15);
 }
 
 .admin-action-btn {
@@ -4487,24 +4459,28 @@ BULK UPLOAD MODAL AND BUTTON STYLES
   max-width: 600px;
 }
 
+/* This whole bulk-upload modal body is a parchment card living inside the
+   dark .modal-content — same self-contained-light-surface reasoning as the
+   parchment-ledger tables (see comment above the global `table` rule). */
 .bulk-upload-format-section {
   margin-bottom: 20px;
   padding: 15px;
-  background-color: #f9f9f9;
+  background-color: var(--color-surface-paper);
   border-radius: 4px;
 }
 
 .bulk-upload-format-description {
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-on-paper-muted);
   margin-bottom: 10px;
 }
 
 .bulk-upload-format-code {
   display: block;
-  background-color: #fff;
+  background-color: var(--color-surface-paper-elevated);
+  color: var(--color-text-on-paper);
   padding: 10px;
-  border: 1px solid #ddd;
+  border: var(--border-width-thin) solid var(--color-brass-700);
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 12px;
@@ -4513,7 +4489,7 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 
 .bulk-upload-format-notes {
   font-size: 11px;
-  color: #888;
+  color: var(--color-text-on-paper-muted);
   margin-top: 10px;
 }
 
@@ -4522,14 +4498,14 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 }
 
 .bulk-upload-password-hint {
-  color: #666;
+  color: var(--color-text-on-paper-muted);
   font-size: 11px;
 }
 
 .bulk-upload-file-selected {
   margin-top: 10px;
   font-size: 12px;
-  color: #52c41a;
+  color: var(--color-success-on-paper);
 }
 
 .bulk-upload-progress-container {
@@ -4542,47 +4518,48 @@ BULK UPLOAD MODAL AND BUTTON STYLES
 .bulk-upload-progress-success {
   background-color: #f6ffed;
   border: 1px solid #b7eb8f;
-  color: #52c41a;
+  color: var(--color-success-on-paper);
 }
 
 .bulk-upload-progress-error {
   background-color: #ffebee;
   border: 1px solid #ffcdd2;
-  color: #f5222d;
+  color: var(--color-danger-on-paper);
 }
 
 .bulk-upload-submit-button {
-  background-color: #52c41a;
+  background-color: var(--color-success-on-paper);
+  color: var(--color-text-primary);
   cursor: pointer;
 }
 
 .bulk-upload-submit-button:disabled {
-  background-color: #ccc;
+  background-color: var(--color-ground-elevated);
   cursor: not-allowed;
 }
 
 .bulk-upload-submit-button:hover:not(:disabled) {
-  background-color: #73d13d;
+  filter: brightness(1.15);
 }
 
 .bulk-upload-access-section {
   margin: 20px 0;
   padding: 15px;
-  background-color: #f8f9fa;
+  background-color: var(--color-surface-paper);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: var(--border-width-thin) solid var(--color-brass-700);
 }
 
 .bulk-upload-access-section h4 {
   margin: 0 0 10px 0;
-  color: #1890ff;
+  color: var(--color-verdigris-700);
   font-size: 16px;
 }
 
 .bulk-upload-access-description {
   margin: 0 0 15px 0;
   font-size: 14px;
-  color: #666;
+  color: var(--color-text-on-paper-muted);
   line-height: 1.4;
 }
 
@@ -4858,9 +4835,14 @@ ACCESS CONTROL TREE STYLING
   cursor: pointer;
   padding: 0;
   margin-right: 8px;
-  color: #666;
+  color: var(--color-text-on-paper-muted);
   border-radius: 2px;
   transition: background-color 0.2s;
+}
+
+.expand-button:focus-visible {
+  outline: 3px solid var(--color-focus-ring-on-paper);
+  outline-offset: 1px;
 }
 
 .expand-button:hover {
@@ -4967,8 +4949,8 @@ ANALYTICS MODULE STYLING
 
 .analytics-module {
   padding: 20px;
-  background-color: #1e1e1e;
-  color: #fff;
+  background-color: var(--color-ground-primary);
+  color: var(--color-text-primary);
   min-height: 100vh;
 }
 
@@ -4983,7 +4965,7 @@ ANALYTICS MODULE STYLING
 }
 
 .analytics-header p {
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 16px;
 }
 
@@ -5051,7 +5033,7 @@ ANALYTICS MODULE STYLING
 
 .search-filter label {
   font-size: 13px;
-  color: #aaa;
+  color: var(--color-text-muted);
   margin-bottom: 5px;
   display: block;
 }
@@ -5096,7 +5078,7 @@ ANALYTICS MODULE STYLING
   border-radius: 6px 6px 0 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   font-weight: 500;
-  color: #ccc;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -5120,6 +5102,11 @@ ANALYTICS MODULE STYLING
   background-color: rgba(255, 255, 255, 0.08);
 }
 
+.result-item:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: -3px;
+}
+
 .result-item.selected {
   background-color: rgba(201, 154, 59, 0.2);
   border-left: 3px solid var(--color-brass-500);
@@ -5132,21 +5119,21 @@ ANALYTICS MODULE STYLING
 .student-name,
 .department-name,
 .question-text {
-  color: #fff;
+  color: var(--color-text-primary);
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .student-location,
 .question-meta {
-  color: #aaa;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
 .no-results {
   padding: 20px;
   text-align: center;
-  color: #666;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -5170,7 +5157,7 @@ ANALYTICS MODULE STYLING
 
 .load-analytics-btn {
   background-color: var(--color-brass-500);
-  color: white;
+  color: var(--color-text-inverse);
   border: none;
   padding: 10px 20px;
   border-radius: 4px;
@@ -5184,7 +5171,7 @@ ANALYTICS MODULE STYLING
 }
 
 .load-analytics-btn:disabled {
-  background-color: #444;
+  background-color: var(--color-ground-elevated);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -5203,7 +5190,7 @@ ANALYTICS MODULE STYLING
 }
 
 .analytics-section h4 {
-  color: #fff;
+  color: var(--color-text-primary);
   margin: 25px 0 15px 0;
   font-size: 18px;
 }
@@ -5232,18 +5219,18 @@ ANALYTICS MODULE STYLING
 }
 
 .rag-stat.red {
-  background-color: rgba(220, 53, 69, 0.1);
-  border: 1px solid rgba(220, 53, 69, 0.3);
+  background-color: rgba(224, 99, 111, 0.12);
+  border: 1px solid rgba(224, 99, 111, 0.35);
 }
 
 .rag-stat.amber {
-  background-color: rgba(255, 193, 7, 0.1);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  background-color: rgba(217, 164, 65, 0.12);
+  border: 1px solid rgba(217, 164, 65, 0.35);
 }
 
 .rag-stat.green {
-  background-color: rgba(40, 167, 69, 0.1);
-  border: 1px solid rgba(40, 167, 69, 0.3);
+  background-color: rgba(76, 175, 135, 0.12);
+  border: 1px solid rgba(76, 175, 135, 0.35);
 }
 
 .rag-label {
@@ -5259,7 +5246,7 @@ ANALYTICS MODULE STYLING
 
 .rag-percent {
   font-size: 14px;
-  color: #ccc;
+  color: var(--color-text-muted);
 }
 
 /* Table Styling for Analytics */
@@ -5268,37 +5255,25 @@ ANALYTICS MODULE STYLING
   overflow-x: auto;
 }
 
+/* Colors are intentionally not overridden here — the global "parchment ledger"
+   table/th/td/thead rules already give these tables the correct light,
+   self-contained surface with explicit on-paper text color (see the comment
+   above the global `table` rule). This block only adds .table-container's own
+   structural chrome (rounded outer corners, horizontal scroll). */
 .table-container table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #ffffff;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #ddd;
 }
 
 .table-container th {
-  background-color: #f8f9fa;
-  color: #333;
   padding: 12px;
   text-align: left;
-  font-weight: 600;
-  border-bottom: 2px solid #dee2e6;
 }
 
 .table-container td {
   padding: 10px 12px;
-  border-bottom: 1px solid #dee2e6;
-  color: #333;
-  background-color: #ffffff;
-}
-
-.table-container tr:hover {
-  background-color: #f8f9fa;
-}
-
-.table-container tr:hover td {
-  background-color: #f8f9fa;
 }
 
 /* Analytics table toolbar: title + export button side by side */
@@ -5320,9 +5295,9 @@ ANALYTICS MODULE STYLING
   padding: 4px 12px;
   font-size: 13px;
   font-weight: 500;
-  color: #555;
-  background: #f5f5f5;
-  border: 1px solid #d9d9d9;
+  color: var(--color-text-on-paper);
+  background: var(--color-surface-paper-elevated);
+  border: var(--border-width-thin) solid var(--color-brass-700);
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
@@ -5330,60 +5305,66 @@ ANALYTICS MODULE STYLING
 }
 
 .export-csv-btn:hover {
-  background: #e6f7ff;
-  border-color: #1890ff;
-  color: #1890ff;
+  background: var(--color-surface-paper);
+  border-color: var(--color-brass-500);
 }
 
-/* RAG Status Cells */
+.export-csv-btn:focus-visible {
+  outline: 3px solid var(--color-focus-ring-on-paper);
+  outline-offset: 1px;
+}
+
+/* RAG Status Cells — these sit on the parchment-ledger table surface, so they
+   use the on-paper status tokens (dark enough for 4.5:1 on surface-paper),
+   not the dark-ground --color-danger/warning/success tokens used elsewhere. */
 .red-stat {
-  color: #dc3545 !important;
+  color: var(--color-danger-on-paper) !important;
   font-weight: 600;
 }
 
 .amber-stat {
-  color: #e67e00 !important;
+  color: var(--color-warning-on-paper) !important;
   font-weight: 600;
 }
 
 .green-stat {
-  color: #28a745 !important;
+  color: var(--color-success-on-paper) !important;
   font-weight: 600;
 }
 
 .improvement-stat {
-  color: #17a2b8 !important;
+  color: var(--color-info-on-paper) !important;
   font-weight: 600;
 }
 
 .rag-red {
-  color: #dc3545;
+  color: var(--color-danger-on-paper);
   font-weight: bold;
 }
 
 .rag-amber {
-  color: #e67e00;
+  color: var(--color-warning-on-paper);
   font-weight: bold;
 }
 
 .rag-green {
-  color: #28a745;
+  color: var(--color-success-on-paper);
   font-weight: bold;
 }
 
 .rag-unrated {
-  color: #6c757d;
+  color: var(--color-text-on-paper-muted);
   font-weight: bold;
 }
 
 .rag-stat.unrated {
-  color: #6c757d !important;
+  color: var(--color-text-muted) !important;
 }
 
 .rag-stat.unrated .rag-label,
 .rag-stat.unrated .rag-count,
 .rag-stat.unrated .rag-percent {
-  color: #6c757d !important;
+  color: var(--color-text-muted) !important;
 }
 
 /* Responsive Analytics */
@@ -5410,6 +5391,18 @@ ANALYTICS MODULE STYLING
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Without this, .filter-selector-column's row layout (.search-filter beside
+     .results-column, the latter min-width: 300px) overflows horizontally
+     below ~620px — a 1.4.10 reflow failure at 320px/400% zoom. */
+  .filter-selector-column {
+    flex-direction: column;
+  }
+
+  .results-column {
+    min-width: 0;
+    width: 100%;
   }
 }
 
@@ -5443,45 +5436,54 @@ ANALYTICS MODULE STYLING
   border-color: #b7eb8f;
 }
 
-/* Clickable Student Names in Analytics */
+/* Clickable Student/Department Names in Analytics — rendered inside the
+   parchment-ledger table surface, so they use the on-paper verdigris shade
+   (passes 4.5:1 on surface-paper) rather than the dark-ground link color. */
 .clickable-student-name {
   cursor: pointer !important;
-  color: #1890ff !important;
+  color: var(--color-verdigris-700) !important;
   text-decoration: underline !important;
   transition: all 0.2s ease;
 }
 
 .clickable-student-name:hover {
-  color: #40a9ff !important;
+  color: var(--color-verdigris-500) !important;
   text-decoration: none !important;
   font-weight: bold;
-  background-color: rgba(24, 144, 255, 0.1);
+  background-color: rgba(79, 174, 147, 0.15);
   padding: 2px 4px;
   border-radius: 3px;
 }
 
-/* Modal Chart Styling */
+.clickable-student-name:focus-visible {
+  outline: 3px solid var(--color-focus-ring-on-paper);
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
+/* Modal Chart Styling — kept in sync with the antd ConfigProvider Modal
+   tokens set in main.jsx rather than left as hardcoded Vite-scaffold hex. */
 .ant-modal-content {
-  background-color: #1a1a1a !important;
-  border: 1px solid #333 !important;
+  background-color: var(--color-ground-raised) !important;
+  border: var(--border-width-thin) solid var(--color-brass-700) !important;
 }
 
 .ant-modal-header {
-  background-color: #1a1a1a !important;
-  border-bottom: 1px solid #333 !important;
+  background-color: var(--color-ground-raised) !important;
+  border-bottom: var(--border-width-thin) solid var(--color-brass-700) !important;
 }
 
 .ant-modal-title {
-  color: #fff !important;
+  color: var(--color-text-primary) !important;
 }
 
 .ant-modal-close-x {
-  color: #fff !important;
+  color: var(--color-text-primary) !important;
 }
 
 .ant-modal-body {
-  background-color: #1a1a1a !important;
-  color: #fff !important;
+  background-color: var(--color-ground-raised) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Progress Chart Container */
@@ -5498,7 +5500,7 @@ ANALYTICS MODULE STYLING
 .progress-chart-container canvas {
   max-width: 100% !important;
   height: auto !important;
-  border: 1px solid #d9d9d9;
+  border: var(--border-width-thin) solid var(--color-brass-700);
   border-radius: 4px;
 }
 
@@ -5550,7 +5552,7 @@ ANALYTICS MODULE STYLING
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid #ddd;
+  border: var(--border-width-thin) solid var(--color-brass-700);
   border-radius: 4px;
   margin-bottom: 20px;
 }
@@ -5585,10 +5587,10 @@ ANALYTICS MODULE STYLING
     display: block;
     text-align: center;
     font-size: 11px;
-    color: #888;
+    color: var(--color-text-on-paper-muted);
     padding: 4px;
-    background: #f9f9f9;
-    border-bottom: 1px solid #eee;
+    background: var(--color-surface-paper-elevated);
+    border-bottom: var(--border-width-thin) solid var(--color-brass-700);
   }
 }
 

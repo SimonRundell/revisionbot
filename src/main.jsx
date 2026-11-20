@@ -12,7 +12,7 @@ import { initGenericModalA11y } from './utils/genericModalA11y.js'
  * steampunk palette instead of antd's default theme. Token values
  * reference the CSS custom properties in src/styles/tokens.css so
  * there is a single source of truth for color across plain CSS and
- * antd — see graphicdesign.md §4.
+ * antd.
 *****************************************************************/
 
 const steampunkAntdTheme = {

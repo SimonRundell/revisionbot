@@ -1391,11 +1391,11 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Admin Level</td>
+                                    <th scope="row">Admin Level</th>
                                     <td>
                                         <label className="admin-checkbox-container">
-                                            <span className="leftgap"><input 
-                                                type="checkbox" 
+                                            <span className="leftgap"><input
+                                                type="checkbox"
                                                 checked={addForm.admin}
                                                 onChange={e => setAddForm(prev => ({ ...prev, admin: e.target.checked }))}
                                             /></span>
@@ -1404,11 +1404,11 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Locale</td>
+                                    <th scope="row" id="add-user-locale-label">Locale</th>
                                     <td>
-                                        <SelectLocale 
-                                            config={config} 
-                                            userLocale={addForm.locale} 
+                                        <SelectLocale
+                                            config={config}
+                                            userLocale={addForm.locale}
                                             setUserLocale={(locale) => setAddForm(prev => ({ ...prev, locale }))}
                                             setSendErrorMessage={setSendErrorMessage}
                                             setSendSuccessMessage={setSendSuccessMessage}
@@ -1416,9 +1416,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Avatar</td>
+                                    <th scope="row" id="add-user-avatar-label">Avatar</th>
                                     <td>
-                                        <AvatarManager 
+                                        <AvatarManager
                                             currentAvatar={addForm.avatar}
                                             onAvatarChange={handleAddAvatarChange}
                                             setSendErrorMessage={setSendErrorMessage}
@@ -1427,9 +1427,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Access Control</td>
+                                    <th scope="row" id="add-user-access-label">Access Control</th>
                                     <td>
-                                        <AccessControlTree 
+                                        <AccessControlTree
                                             config={config}
                                             currentUser={currentUser}
                                             userAccess={addForm.userAccess}
@@ -1545,11 +1545,11 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Admin Level</td>
+                                    <th scope="row">Admin Level</th>
                                     <td>
                                         <label className="admin-checkbox-container">
-                                            <span className="leftgap"><input 
-                                                type="checkbox" 
+                                            <span className="leftgap"><input
+                                                type="checkbox"
                                                 checked={editForm.admin}
                                                 onChange={e => setEditForm(prev => ({ ...prev, admin: e.target.checked }))}
                                             /></span>
@@ -1558,11 +1558,11 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Locale</td>
+                                    <th scope="row" id="edit-user-locale-label">Locale</th>
                                     <td>
-                                        <SelectLocale 
-                                            config={config} 
-                                            userLocale={editForm.locale} 
+                                        <SelectLocale
+                                            config={config}
+                                            userLocale={editForm.locale}
                                             setUserLocale={(locale) => setEditForm(prev => ({ ...prev, locale }))}
                                             setSendErrorMessage={setSendErrorMessage}
                                             setSendSuccessMessage={setSendSuccessMessage}
@@ -1570,9 +1570,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Avatar</td>
+                                    <th scope="row" id="edit-user-avatar-label">Avatar</th>
                                     <td>
-                                        <AvatarManager 
+                                        <AvatarManager
                                             currentAvatar={editForm.avatar}
                                             onAvatarChange={handleAvatarChange}
                                             setSendErrorMessage={setSendErrorMessage}
@@ -1581,9 +1581,9 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Access Control</td>
+                                    <th scope="row" id="edit-user-access-label">Access Control</th>
                                     <td>
-                                        <AccessControlTree 
+                                        <AccessControlTree
                                             config={config}
                                             currentUser={currentUser}
                                             userAccess={editForm.userAccess}
@@ -1757,11 +1757,12 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                         <table border="1" className="edit-modal-table">
                             <tbody>
                                 <tr>
-                                    <td className="bulk-upload-password-label">Default Password</td>
+                                    <th scope="row" className="bulk-upload-password-label"><label htmlFor="bulk-upload-default-password">Default Password</label></th>
                                     <td>
-                                        <input 
-                                            type="text" 
-                                            value={defaultPassword} 
+                                        <input
+                                            type="text"
+                                            id="bulk-upload-default-password"
+                                            value={defaultPassword}
                                             onChange={e => setDefaultPassword(e.target.value)}
                                             className="full-width-input"
                                             placeholder="e.g., student123"
@@ -1772,11 +1773,11 @@ function AdminManager({config, currentUser, setSendSuccessMessage, setSendErrorM
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>CSV File</td>
+                                    <th scope="row">CSV File</th>
                                     <td>
                                         <div className="file-input-wrapper">
-                                            <input 
-                                                type="file" 
+                                            <input
+                                                type="file"
                                                 id="csv-upload"
                                                 className="file-input-hidden"
                                                 accept=".csv" 

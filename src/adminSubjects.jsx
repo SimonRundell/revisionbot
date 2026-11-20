@@ -1189,7 +1189,7 @@ const handleImportFile = async (event) => {
 
             {selectedSubject && topics.length === 0 && (
                 <div className="no-topics-message">
-                    <p style={{ color: '#666', fontStyle: 'italic', marginTop: '15px' }}>
+                    <p style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', marginTop: '15px' }}>
                         No topics found for this subject. Use the dropdown above to create your first topic.
                     </p>
                 </div>
@@ -1768,15 +1768,15 @@ const handleImportFile = async (event) => {
                         <table border="1" className="edit-modal-table">
                             <tbody>
                                 <tr>
-                                    <td>Target Topic</td>
+                                    <th scope="row">Target Topic</th>
                                     <td>{selectedTopicDetails?.topic || 'Selected topic'}</td>
                                 </tr>
                                 <tr>
-                                    <td>CSV File</td>
+                                    <th scope="row">CSV File</th>
                                     <td>
                                         <div className="file-input-wrapper">
-                                            <input 
-                                                type="file" 
+                                            <input
+                                                type="file"
                                                 id="question-csv-upload"
                                                 className="file-input-hidden"
                                                 accept=".csv"

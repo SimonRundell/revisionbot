@@ -1,7 +1,7 @@
 # AIRevision Bot Educational Assessment System
 by Simon Rundell for CodeMonkey.design
 
-**Version 0.5.1** — June 2026
+**Version 0.7.0** — June 2026
 
 A comprehensive web-based educational revision platform featuring AI-powered feedback, student practice interfaces, teacher review dashboards, advanced analytics, and a student reward/badge system.
 
@@ -131,7 +131,33 @@ A comprehensive web-based educational revision platform featuring AI-powered fee
 - **AI Integration**: Google Gemini 2.5 Flash API
 - **Email System**: PHPMailer with SMTP support
 - **Security**: Protected API endpoints with content-type validation
-- **Styling**: Custom CSS with responsive design and steampunk theme
+- **Styling**: Token-driven steampunk design system (`src/styles/tokens.css`) consumed by both plain CSS and Ant Design's `ConfigProvider` theme, WCAG 2.1 AA accessibility pass across every screen — see [Accessibility & Design System](#-accessibility--design-system) below
+
+## ♿ Accessibility & Design System
+
+The frontend carries a Victorian steampunk visual redesign (brass/copper/verdigris metals on gunmetal grounds, parchment-toned content surfaces, Cinzel/Spectral typefaces) built together with a WCAG 2.1 AA accessibility pass across every screen, rather than as two separate efforts — decoration on top of untokenized, inaccessible markup would just have produced a prettier version of the same problem.
+
+### Design tokens
+All color, type, spacing, radius, elevation and motion values live in `src/styles/tokens.css` as CSS custom properties — the single source of truth consumed by both plain CSS and Ant Design's own theme (wired via `ConfigProvider` in `src/main.jsx`, so every antd `Table`/`Modal`/`Form`/`Upload` etc. matches the rest of the app instead of rendering in antd's default theme). Every text/background color pairing defined in `tokens.css` carries its computed WCAG contrast ratio in an inline comment, not an eyeballed guess. The app is **dark-theme-only by design decision** — no light-mode token set exists or is planned.
+
+### WCAG 2.1 AA coverage
+- **Contrast**, computed against the WCAG relative-luminance formula for every pairing used: body text on the main background ≈15.6:1, button ink on the primary brass accent ≈7.3:1, and a separate "on-paper" status-color set (danger/warning/success/info) for text that sits on the app's light parchment-style table surfaces, since the main dark-ground status colors aren't dark enough to pass there.
+- **Keyboard operability**: every clickable element that isn't a native `<button>`/`<a>` (card-style question items, clickable table rows, sortable column headers, student/class drill-down links, the file-picker trigger behind "Choose Image") has a `role`, `tabIndex`, a keydown handler, and a visible `:focus-visible` indicator.
+- **Dialog semantics**: every modal — including the ~20 structurally-identical admin modals, handled by one shared DOM-observer module (`src/utils/genericModalA11y.js`) instead of duplicated per-component code — gets `role="dialog"`, `aria-modal`, an accessible name, Tab-focus trapping, Escape-to-close, and focus restoration to the triggering element on close.
+- **Forms**: inputs across login, registration, password reset, account management, and admin CRUD screens have a programmatically associated `<label>`.
+- **Live regions**: async states (loading spinners, AI feedback generation, blocked-paste notices) announce via `role="status"`/`role="alert"` with `aria-live`, not visual feedback alone.
+- **Charts**: the canvas-rendered RAG progress charts (`StudentProgress.jsx`, `AnalyticsModule.jsx`) carry `role="img"` plus a descriptive label, and a visually-hidden data table with the same numbers, since canvas pixels convey nothing to assistive technology.
+- **Status is never color-only**: RAG ratings, the active nav item, and form validation state are all paired with an icon, text label, or ARIA state in addition to color.
+- **Motion**: all transitions/animations respect `prefers-reduced-motion` via one global override in `tokens.css`.
+- **Landmarks**: `<nav aria-label="Main">`, `<header>`, `<main>`, a logical heading hierarchy on every screen, `aria-current="page"` on the active nav item, and `aria-hidden` on decorative imagery/emoji.
+
+### Known gaps (minor, documented rather than silently dropped)
+- A couple of shared sub-components (`SelectLocale`, `AvatarManager`) don't accept an `id` prop, so their labels in a few admin/account forms are visual-only rather than programmatically `<label for>`-associated — fixing it would mean changing a shared component's API for a cosmetic gain.
+- `register.jsx` got the same baseline treatment as the live screens, but it's currently dead code — self-registration is disabled in the product.
+- File-type attachment icons (PDF/Word/Excel/etc.) keep their distinct brand-recognition colors rather than the steampunk palette — intentional, since they're functional iconography, not decoration.
+
+### Verification status
+This pass was built and verified with `npm run build`/`npm run lint` (clean) and extensive static/code-level review — contrast computed mathematically, markup reasoned through manually — but **no browser or screen reader was available in the environment this work was done in**, so none of it has actually been seen rendered, operated by keyboard, or heard by assistive technology. Treat it as implemented-and-statically-verified, not browser-verified, until someone does a manual pass: a keyboard-only walkthrough of login → quiz → progress and admin login → create question → view analytics; an NVDA/VoiceOver smoke test of the same flows; and a check at 400% browser zoom on the widest screens (Admin Dashboard, Analytics, the admin user/question tables).
 
 ## 🛡️ API Security Status - FULLY SECURED
 
@@ -702,6 +728,16 @@ const chartData = progressData.map(entry => ({
    - Foreign key constraints for data integrity
 
 ## Recent Enhancements
+
+### v0.7.0 — Steampunk Design System & WCAG 2.1 AA Accessibility Overhaul (June 2026)
+
+A full visual redesign and accessibility pass across every screen in the app — see [Accessibility & Design System](#-accessibility--design-system) above for the full report. Highlights:
+
+- **New design-token system** (`src/styles/tokens.css`): color, type, spacing, radius, elevation and motion values with WCAG contrast ratios computed and documented inline; wired into Ant Design via `ConfigProvider` (`src/main.jsx`) so antd components match the rest of the app instead of rendering in antd's default theme.
+- **Google Fonts** (Cinzel/Spectral) replacing system-default typography; `index.html` and `src/cmFloatAd.jsx` updated to the current department branding ("Faculty of Cybersecurity and Digital Technologies").
+- **Accessibility fixes across every screen**: landmarks and heading hierarchy; keyboard support and visible focus indicators added to every non-native clickable element; proper dialog semantics (focus trap, Escape-to-close, focus restoration) on every modal, including a single shared `src/utils/genericModalA11y.js` module covering ~20 structurally-identical admin dialogs; labelled form fields throughout login, registration, password reset, account management and admin CRUD screens; `aria-live` regions on loading/async states; text-table alternatives for the canvas-rendered RAG progress charts; `prefers-reduced-motion` support.
+- Several genuine pre-existing bugs found and fixed along the way, including invisible (black-on-near-black) text, RAG status colors that failed contrast against the app's light table surfaces, un-keyboard-reachable clickable cards, and a few leftover generic-SaaS-template colors/gradients.
+- Verified with `npm run build`/`npm run lint` after every phase; **not yet verified in a real browser or with a screen reader** — see the Verification status note above.
 
 ### v0.5.0 — Architecture Consolidation (June 2026)
 

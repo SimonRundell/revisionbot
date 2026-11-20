@@ -47,8 +47,9 @@ const StudentProgressChart = ({ data }) => {
         return Array.from(weekMap.values()).sort((a, b) => a.week.localeCompare(b.week));
     }, [data]);
 
+    const weekly = buildWeeklyCounts();
+
     useEffect(() => {
-        const weekly = buildWeeklyCounts();
         if (weekly.length === 0) return;
 
         const canvas = canvasRef.current;
@@ -142,7 +143,35 @@ const StudentProgressChart = ({ data }) => {
     
     return (
         <div className="progress-chart-container">
-            <canvas ref={canvasRef} style={{ display: 'block', margin: '0 auto' }} />
+            <canvas
+                ref={canvasRef}
+                role="img"
+                aria-label="Weekly RAG distribution bar chart. The data behind it is in the table below."
+                style={{ display: 'block', margin: '0 auto' }}
+            />
+            {weekly.length > 0 && (
+                <table className="sr-only">
+                    <caption>Weekly RAG distribution — number of red, amber and green rated responses per week</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Week</th>
+                            <th scope="col">Red</th>
+                            <th scope="col">Amber</th>
+                            <th scope="col">Green</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {weekly.map((row) => (
+                            <tr key={row.week}>
+                                <th scope="row">{row.week}</th>
+                                <td>{row.red}</td>
+                                <td>{row.amber}</td>
+                                <td>{row.green}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
             <div className="chart-legend">
                 <div className="legend-items">
                     <span className="legend-item"><span style={{ color: '#ff4d4f', fontSize: '16px', fontWeight: 'bold' }}>■</span> Red</span>
@@ -155,7 +184,7 @@ const StudentProgressChart = ({ data }) => {
                     <div><strong>Weeks Tracked:</strong> {data.weeklyAverages?.length || 0}</div>
                 </div>
                 {data.progressData && data.progressData.length > 1 && (
-                    <p style={{ marginTop: '10px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+                    <p style={{ marginTop: '10px', fontSize: '12px', color: 'var(--color-text-on-paper-muted)', fontStyle: 'italic' }}>
                         Progress {formatDateRange(data.progressData[0].date, data.progressData[data.progressData.length - 1].date)}
                     </p>
                 )}
@@ -427,7 +456,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
             if (parsed) {
                 setStudentRewardsCache(prev => ({ ...prev, [key]: parsed }));
             }
-        } catch (_) { /* silently ignore */ }
+        } catch { /* silently ignore */ }
     }, [config.api, currentUser.token]);
 
 
@@ -685,7 +714,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedStudents.map((student, index) => {
+                                    {sortedStudents.map((student) => {
                                         const studentData = students.find(s => s.userName === student.name);
                                         const studentId = studentData ? studentData.id : null;
                                         const rewards = studentId ? studentRewardsCache[studentId.toString()] : null;
@@ -698,12 +727,16 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                                         <span
                                                             className="clickable-student-name"
                                                             onClick={() => loadStudentProgress(studentId, student.name)}
-                                                            style={{
-                                                                cursor: 'pointer',
-                                                                color: '#1890ff',
-                                                                textDecoration: 'underline'
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                                    e.preventDefault();
+                                                                    loadStudentProgress(studentId, student.name);
+                                                                }
                                                             }}
+                                                            role="button"
+                                                            tabIndex={0}
                                                             title="Click to view progress graph"
+                                                            aria-label={`View progress graph for ${student.name}`}
                                                         >
                                                             {student.name}
                                                         </span>
@@ -1101,9 +1134,18 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                                     <td>
                                         <span
                                             className="clickable-student-name"
-                                            style={{ cursor: 'pointer', color: '#1890ff', textDecoration: 'underline' }}
                                             title="Click to view class detail"
                                             onClick={() => { setSelectedView('department'); setSelectedDepartment(row.department); }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    setSelectedView('department');
+                                                    setSelectedDepartment(row.department);
+                                                }
+                                            }}
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label={`View detail for class ${row.department}`}
                                         >
                                             {row.department}
                                         </span>
@@ -1135,7 +1177,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
             </div>
 
             {isLoading && (
-                <div className="central-overlay-spinner">
+                <div className="central-overlay-spinner" role="status" aria-live="polite">
                     <div className="spinner-content">
                         <Spin size="large" />
                         <p>Loading analytics...</p>
@@ -1146,9 +1188,10 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
             <div className="analytics-controls">
                 <div className="controls-row">
                     <div className="view-selector">
-                        <label>Analysis Type:</label>
-                        <select 
-                            value={selectedView} 
+                        <label htmlFor="analytics-view-select">Analysis Type:</label>
+                        <select
+                            id="analytics-view-select"
+                            value={selectedView}
                             onChange={(e) => setSelectedView(e.target.value)}
                         >
                             <option value="department">By Class/Department</option>
@@ -1162,8 +1205,9 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 {selectedView === 'department' && (
                     <div className="filter-selector-column">
                         <div className="search-filter">
-                            <label>Search Departments:</label>
+                            <label htmlFor="department-filter-input">Search Departments:</label>
                             <input
+                                id="department-filter-input"
                                 type="text"
                                 placeholder="Type to filter departments..."
                                 value={departmentFilter}
@@ -1177,10 +1221,19 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                             </div>
                             <div className="results-list">
                                 {filteredDepartments.map((dept, index) => (
-                                    <div 
-                                        key={index} 
+                                    <div
+                                        key={index}
                                         className={`result-item ${selectedDepartment === dept ? 'selected' : ''}`}
                                         onClick={() => setSelectedDepartment(dept)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setSelectedDepartment(dept);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-pressed={selectedDepartment === dept}
                                     >
                                         <div className="department-name">{dept}</div>
                                     </div>
@@ -1196,8 +1249,9 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 {selectedView === 'student' && (
                     <div className="filter-selector-column">
                         <div className="search-filter">
-                            <label>Search Students:</label>
+                            <label htmlFor="student-filter-input">Search Students:</label>
                             <input
+                                id="student-filter-input"
                                 type="text"
                                 placeholder="Type student name or department..."
                                 value={studentFilter}
@@ -1211,10 +1265,19 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                             </div>
                             <div className="results-list">
                                 {filteredStudents.map((student) => (
-                                    <div 
-                                        key={student.id} 
+                                    <div
+                                        key={student.id}
                                         className={`result-item ${selectedStudent === student.id.toString() ? 'selected' : ''}`}
                                         onClick={() => setSelectedStudent(student.id.toString())}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setSelectedStudent(student.id.toString());
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-pressed={selectedStudent === student.id.toString()}
                                     >
                                         <div className="student-name">{student.userName}</div>
                                         <div className="student-location">{student.userClass}</div>
@@ -1231,8 +1294,9 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 {selectedView === 'question' && (
                     <div className="filter-selector-column">
                         <div className="search-filter">
-                            <label>Search Questions:</label>
+                            <label htmlFor="question-filter-input">Search Questions:</label>
                             <input
+                                id="question-filter-input"
                                 type="text"
                                 placeholder="Type question, topic, or subject..."
                                 value={questionFilter}
@@ -1246,10 +1310,19 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                             </div>
                             <div className="results-list">
                                 {filteredQuestions.map((question) => (
-                                    <div 
-                                        key={question.id} 
+                                    <div
+                                        key={question.id}
                                         className={`result-item ${selectedQuestion === question.id.toString() ? 'selected' : ''}`}
                                         onClick={() => setSelectedQuestion(question.id.toString())}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setSelectedQuestion(question.id.toString());
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-pressed={selectedQuestion === question.id.toString()}
                                     >
                                         <div className="question-text">{question.question.substring(0, 80)}...</div>
                                         <div className="question-meta">{question.subject} › {question.topic}</div>
@@ -1280,7 +1353,7 @@ const AnalyticsModule = ({ config, currentUser, setSendErrorMessage, setSendSucc
                 footer={null}
             >
                 {progressLoading ? (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <div style={{ textAlign: 'center', padding: '40px' }} role="status" aria-live="polite">
                         <Spin size="large" />
                         <p>Loading progress data...</p>
                     </div>
